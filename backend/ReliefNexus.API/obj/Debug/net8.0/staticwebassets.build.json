@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "EkueMnmZivq1MoAy42fdDGyONpR6BmxXWIG5M2LEuH0=",
+  "Source": "ReliefNexus.API",
+  "BasePath": "_content/ReliefNexus.API",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
