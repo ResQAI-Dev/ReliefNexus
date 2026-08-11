@@ -1,3 +1,8 @@
+using Microsoft.EntityFrameworkCore;
+using ReliefNexus.API.Data;
+using ReliefNexus.API.Interfaces;
+using ReliefNexus.API.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // ======================================================
@@ -10,8 +15,16 @@ builder.Services.AddControllers();
 // Add API Explorer
 builder.Services.AddEndpointsApiExplorer();
 
-// Add Swagger
+// Test Swagger
 builder.Services.AddSwaggerGen();
+
+// Add PostgreSQL + Entity Framework Core
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection")
+    )
+);
+builder.Services.AddScoped<IUserService, UserService>();
 
 var app = builder.Build();
 
