@@ -57,6 +57,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // ======================================================
 
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 // ======================================================
 // JWT AUTHENTICATION
@@ -109,6 +110,14 @@ builder.Services.AddAuthorization();
 var app = builder.Build();
 
 // ======================================================
+// INITIAL DATA SEEDING
+// ======================================================
+
+await SeedData.InitializeAsync(
+    app.Services,
+    app.Configuration);
+
+// ======================================================
 // HTTP REQUEST PIPELINE
 // ======================================================
 
@@ -135,3 +144,5 @@ app.MapControllers();
 // ======================================================
 
 app.Run();
+
+

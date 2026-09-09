@@ -1,37 +1,56 @@
 using Microsoft.AspNetCore.Mvc;
 using ReliefNexus.API.DTOs;
 using ReliefNexus.API.Interfaces;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 
 namespace ReliefNexus.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private readonly IUserService _userService;
-    private readonly IConfiguration _configuration;
+    private readonly IAuthService _authService;
 
-    public AuthController(
-        IUserService userService,
-        IConfiguration configuration)
+    public AuthController(IAuthService authService)
     {
-        _userService = userService;
-        _configuration = configuration;
+        _authService = authService;
     }
 
-    [HttpPost("login")]
-    public async Task<IActionResult> Login(LoginDto loginDto)
+    // REGISTER
+    [HttpPost("register")]
+    public async Task<ActionResult<AuthDto>> Register(
+        [FromBody] AuthDto dto)
     {
-        var user = await _userService.LoginAsync(
-            loginDto.Email,
-            loginDto.Password
-        );
+        try
+        {
+            var response = await _authService.RegisterAsync(dto);
 
-        if (user == null)
+            if (response == null)
+                return BadRequest(new
+                {
+                    message = "Invalid registration data"
+                });
+
+            return StatusCode(
+                StatusCodes.Status201Created,
+                response);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new
+            {
+                message = ex.Message
+            });
+        }
+    }
+
+    // LOGIN
+    [HttpPost("login")]
+    public async Task<ActionResult<AuthDto>> Login(
+        [FromBody] AuthDto dto)
+    {
+        var response = await _authService.LoginAsync(dto);
+
+        if (response == null)
         {
             return Unauthorized(new
             {
@@ -39,75 +58,25 @@ public class AuthController : ControllerBase
             });
         }
 
-        var token = GenerateJwtToken(user);
-
-        var response = new LoginResponseDto
-        {
-            Token = token,
-
-            User = new UserResponseDto
-            {
-                Id = user.Id,
-                FullName = user.FullName,
-                Email = user.Email,
-                Role = user.Role,
-                IsActive = user.IsActive,
-                CreatedAt = user.CreatedAt
-            }
-        };
-
         return Ok(response);
     }
 
-    private string GenerateJwtToken(Models.User user)
+    // REFRESH TOKEN
+    [HttpPost("refresh")]
+    public async Task<ActionResult<AuthDto>> Refresh(
+        [FromBody] AuthDto dto)
     {
-        var claims = new[]
+        var response = await _authService.RefreshAsync(
+            dto.RefreshToken ?? string.Empty);
+
+        if (response == null)
         {
-            new Claim(
-                JwtRegisteredClaimNames.Sub,
-                user.Id.ToString()
-            ),
+            return Unauthorized(new
+            {
+                message = "Invalid refresh token"
+            });
+        }
 
-            new Claim(
-                JwtRegisteredClaimNames.Email,
-                user.Email
-            ),
-
-            new Claim(
-                ClaimTypes.Name,
-                user.FullName
-            ),
-
-            new Claim(
-                ClaimTypes.Role,
-                user.Role
-            )
-        };
-
-        var key = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(
-                _configuration["Jwt:Key"]!
-            )
-        );
-
-        var credentials = new SigningCredentials(
-            key,
-            SecurityAlgorithms.HmacSha256
-        );
-
-        var expiryMinutes = Convert.ToDouble(
-            _configuration["Jwt:ExpiryMinutes"]
-        );
-
-        var token = new JwtSecurityToken(
-            issuer: _configuration["Jwt:Issuer"],
-            audience: _configuration["Jwt:Audience"],
-            claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(expiryMinutes),
-            signingCredentials: credentials
-        );
-
-        return new JwtSecurityTokenHandler()
-            .WriteToken(token);
+        return Ok(response);
     }
 }
