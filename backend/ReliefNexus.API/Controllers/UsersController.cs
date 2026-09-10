@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ReliefNexus.API.Data;
 using ReliefNexus.API.DTOs;
-using ReliefNexus.API.Helpers;
 using ReliefNexus.API.Interfaces;
 using ReliefNexus.API.Models;
 
@@ -24,11 +23,11 @@ public class UsersController : ControllerBase
         _context = context;
     }
 
-    // ======================================================
+    // =========================================================
     // CREATE USER
-    // ======================================================
+    // =========================================================
 
-    [Authorize(Roles = RoleConstants.SystemAdministrator)]
+    [Authorize(Roles = "SystemAdministrator")]
     [HttpPost]
     public async Task<IActionResult> CreateUser(UserDto userDto)
     {
@@ -40,27 +39,32 @@ public class UsersController : ControllerBase
                 Email = userDto.Email,
                 PasswordHash = userDto.Password ?? string.Empty,
                 Role = string.IsNullOrWhiteSpace(userDto.Role)
-                    ? RoleConstants.AffectedUser
+                    ? "AffectedUser"
                     : userDto.Role,
                 RoleRequestStatus = "Approved",
-                IsActive = true
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
             };
 
-            var createdUser = await _userService.CreateUserAsync(user);
+            var createdUser =
+                await _userService.CreateUserAsync(user);
 
             return Ok(MapToDto(createdUser));
         }
         catch (InvalidOperationException ex)
         {
-            return Conflict(new { message = ex.Message });
+            return Conflict(new
+            {
+                message = ex.Message
+            });
         }
     }
 
-    // ======================================================
+    // =========================================================
     // GET ALL USERS
-    // ======================================================
+    // =========================================================
 
-    [Authorize(Roles = RoleConstants.SystemAdministrator)]
+    [Authorize(Roles = "SystemAdministrator")]
     [HttpGet]
     public async Task<IActionResult> GetUsers()
     {
@@ -73,41 +77,60 @@ public class UsersController : ControllerBase
         return Ok(response);
     }
 
-    // ======================================================
-    // GET PENDING ROLE REQUESTS
-    // ======================================================
+    // =========================================================
+    // GET USER BY ID
+    // =========================================================
 
-    [Authorize(Roles = RoleConstants.SystemAdministrator)]
+    [Authorize(Roles = "SystemAdministrator")]
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetUserById(Guid id)
+    {
+        var user = await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == id);
+
+        if (user == null)
+        {
+            return NotFound(new
+            {
+                message = "User not found"
+            });
+        }
+
+        return Ok(MapToDto(user));
+    }
+
+    // =========================================================
+    // GET PENDING ROLE REQUESTS
+    // =========================================================
+
+    [Authorize(Roles = "SystemAdministrator")]
     [HttpGet("pending-role-requests")]
     public async Task<IActionResult> GetPendingRoleRequests()
     {
-        var requests = await _context.Users
+        var users = await _context.Users
+            .AsNoTracking()
             .Where(u => u.RoleRequestStatus == "Pending")
-            .OrderBy(u => u.CreatedAt)
-            .Select(u => new
-            {
-                u.Id,
-                u.FullName,
-                u.Email,
-                u.Role,
-                u.RoleRequestStatus,
-                u.IsActive,
-                u.CreatedAt
-            })
+            .OrderByDescending(u => u.CreatedAt)
             .ToListAsync();
 
-        return Ok(requests);
+        var response = users
+            .Select(MapToDto)
+            .ToList();
+
+        return Ok(response);
     }
 
-    // ======================================================
+    // =========================================================
     // APPROVE ROLE REQUEST
-    // ======================================================
+    // =========================================================
 
-    [Authorize(Roles = RoleConstants.SystemAdministrator)]
-    [HttpPut("{id}/approve-role")]
+    [Authorize(Roles = "SystemAdministrator")]
+    [HttpPut("{id:guid}/approve-role")]
     public async Task<IActionResult> ApproveRole(Guid id)
     {
-        var user = await _context.Users.FindAsync(id);
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == id);
 
         if (user == null)
         {
@@ -121,15 +144,7 @@ public class UsersController : ControllerBase
         {
             return BadRequest(new
             {
-                message = "This role request is not pending."
-            });
-        }
-
-        if (!RoleConstants.AllRoles.Contains(user.Role))
-        {
-            return BadRequest(new
-            {
-                message = "Invalid role request."
+                message = "This role request has already been processed"
             });
         }
 
@@ -140,23 +155,21 @@ public class UsersController : ControllerBase
 
         return Ok(new
         {
-            message = "Role request approved successfully.",
-            userId = user.Id,
-            role = user.Role,
-            status = user.RoleRequestStatus,
-            isActive = user.IsActive
+            message = "Role request approved successfully",
+            user = MapToDto(user)
         });
     }
 
-    // ======================================================
+    // =========================================================
     // REJECT ROLE REQUEST
-    // ======================================================
+    // =========================================================
 
-    [Authorize(Roles = RoleConstants.SystemAdministrator)]
-    [HttpPut("{id}/reject-role")]
+    [Authorize(Roles = "SystemAdministrator")]
+    [HttpPut("{id:guid}/reject-role")]
     public async Task<IActionResult> RejectRole(Guid id)
     {
-        var user = await _context.Users.FindAsync(id);
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == id);
 
         if (user == null)
         {
@@ -170,7 +183,7 @@ public class UsersController : ControllerBase
         {
             return BadRequest(new
             {
-                message = "This role request is not pending."
+                message = "This role request has already been processed"
             });
         }
 
@@ -181,20 +194,17 @@ public class UsersController : ControllerBase
 
         return Ok(new
         {
-            message = "Role request rejected successfully.",
-            userId = user.Id,
-            role = user.Role,
-            status = user.RoleRequestStatus,
-            isActive = user.IsActive
+            message = "Role request rejected successfully",
+            user = MapToDto(user)
         });
     }
 
-    // ======================================================
+    // =========================================================
     // UPDATE USER
-    // ======================================================
+    // =========================================================
 
-    [Authorize(Roles = RoleConstants.SystemAdministrator)]
-    [HttpPut("{id}")]
+    [Authorize(Roles = "SystemAdministrator")]
+    [HttpPut("{id:guid}")]
     public async Task<IActionResult> UpdateUser(
         Guid id,
         UserDto userDto)
@@ -232,15 +242,16 @@ public class UsersController : ControllerBase
         }
     }
 
-    // ======================================================
+    // =========================================================
     // DELETE USER
-    // ======================================================
+    // =========================================================
 
-    [Authorize(Roles = RoleConstants.SystemAdministrator)]
-    [HttpDelete("{id}")]
+    [Authorize(Roles = "SystemAdministrator")]
+    [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteUser(Guid id)
     {
-        var deleted = await _userService.DeleteUserAsync(id);
+        var deleted =
+            await _userService.DeleteUserAsync(id);
 
         if (!deleted)
         {
@@ -256,9 +267,9 @@ public class UsersController : ControllerBase
         });
     }
 
-    // ======================================================
-    // MAP USER TO DTO
-    // ======================================================
+    // =========================================================
+    // MAP USER → DTO
+    // =========================================================
 
     private static UserDto MapToDto(User user)
     {

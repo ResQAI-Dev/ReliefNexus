@@ -15,6 +15,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Controllers
 builder.Services.AddControllers();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendPolicy", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
 // API Explorer
 builder.Services.AddEndpointsApiExplorer();
@@ -130,6 +140,9 @@ if (app.Environment.IsDevelopment())
 // HTTPS
 app.UseHttpsRedirection();
 
+// CORS
+app.UseCors("FrontendPolicy");
+
 // Authentication
 app.UseAuthentication();
 
@@ -144,5 +157,7 @@ app.MapControllers();
 // ======================================================
 
 app.Run();
+
+
 
 

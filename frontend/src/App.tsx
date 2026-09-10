@@ -1,8 +1,13 @@
-import LandingPage from "./pages/LandingPage";
+﻿import { AuthProvider } from "./context/AuthContext";
+import AppRoutes from "./routes/AppRoutes";
 import "./App.css";
 
 function App() {
-  return <LandingPage />;
+  return (
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
+  );
 }
 
 export default App;
