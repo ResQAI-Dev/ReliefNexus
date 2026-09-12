@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -39,12 +39,12 @@ const LoginPage = () => {
 
       if (user.role === "SystemAdministrator") {
         navigate("/dashboard/system-administrator");
-      } else if (user.role === "ReliefCoordinator") {
-        navigate("/dashboard/relief-coordinator");
-      } else if (user.role === "FieldVolunteer") {
-        navigate("/dashboard/field-volunteer");
-      } else if (user.role === "AffectedUser") {
-        navigate("/dashboard/affected-user");
+      } else if (
+        user.role === "ReliefCoordinator" ||
+        user.role === "FieldVolunteer" ||
+        user.role === "AffectedUser"
+      ) {
+        navigate("/dashboard/user");
       } else {
         navigate("/");
       }
