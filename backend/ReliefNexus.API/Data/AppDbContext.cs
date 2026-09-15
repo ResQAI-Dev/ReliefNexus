@@ -11,9 +11,16 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<User> Users { get; set; }
+    public DbSet<RiskPrediction> RiskPredictions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<RiskPrediction>().ToTable("RiskPredictions");
+        modelBuilder.Entity<RiskFactor>().ToTable("RiskFactors");
     }
 }
+
+
+

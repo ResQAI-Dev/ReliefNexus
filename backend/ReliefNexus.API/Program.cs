@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -67,6 +67,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // ======================================================
 
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IRiskPredictionService, RiskPredictionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 // ======================================================
@@ -157,6 +158,8 @@ app.MapControllers();
 // ======================================================
 
 app.Run();
+
+
 
 
 
