@@ -58,6 +58,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IUserService, UserService>();
 
+// Component 2 – Population Vulnerability & Impact Assessment
+builder.Services.AddScoped<IVulnerabilityService, VulnerabilityService>();
+
 // ======================================================
 // JWT AUTHENTICATION
 // ======================================================
