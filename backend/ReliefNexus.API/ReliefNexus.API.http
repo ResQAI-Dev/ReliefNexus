@@ -1,0 +1,6 @@
+@ReliefNexus.API_HostAddress = http://localhost:5186
+
+GET {{ReliefNexus.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
