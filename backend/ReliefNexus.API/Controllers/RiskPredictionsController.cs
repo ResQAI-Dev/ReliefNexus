@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ReliefNexus.API.AI.Tools;
 using ReliefNexus.API.DTOs;
 using ReliefNexus.API.Interfaces;
+using ReliefNexus.API.Models;
 
 namespace ReliefNexus.API.Controllers;
 
@@ -11,22 +13,55 @@ namespace ReliefNexus.API.Controllers;
 public class RiskPredictionsController : ControllerBase
 {
     private readonly IRiskPredictionService _service;
-    private readonly IWeatherService _weatherService;
+    private readonly IAgentExecutionService _agentExecutionService;
+    private readonly DisasterDataTool _disasterDataTool;
 
     public RiskPredictionsController(
         IRiskPredictionService service,
-        IWeatherService weatherService)
+        IAgentExecutionService agentExecutionService,
+        DisasterDataTool disasterDataTool)
     {
         _service = service;
-        _weatherService = weatherService;
+        _agentExecutionService = agentExecutionService;
+        _disasterDataTool = disasterDataTool;
     }
 
     [HttpPost]
     public async Task<ActionResult<RiskPredictionDto>> Create(
         RiskPredictionDto request)
     {
-        var result = await _service.CreateAsync(request);
-        return Ok(result);
+        var inputSummary =
+            $"Location={request.Location}; " +
+            $"Latitude={request.Latitude}; " +
+            $"Longitude={request.Longitude}; " +
+            $"Rainfall24h={request.Rainfall24h}; " +
+            $"RiverLevel={request.RiverLevel}; " +
+            $"HistoricalFloodCount={request.HistoricalFloodCount}";
+
+        var execution =
+            await _agentExecutionService.StartAsync(inputSummary);
+
+        try
+        {
+            var result = await _service.CreateAsync(request);
+
+            var outputSummary =
+                $"DisasterType={result.DisasterType}; " +
+                $"RiskScore={result.RiskScore:F2}; " +
+                $"RiskLevel={result.RiskLevel}; " +
+                $"Confidence={result.Confidence:F2}";
+
+            await _agentExecutionService.CompleteAsync(
+                execution.Id,
+                result.Id!.Value,
+                outputSummary);
+
+            return Ok(result);
+        }
+        catch
+        {
+            throw;
+        }
     }
 
     [HttpGet]
@@ -36,18 +71,13 @@ public class RiskPredictionsController : ControllerBase
         return Ok(await _service.GetPagedAsync(query));
     }
 
-    [HttpGet("weather/{latitude}/{longitude}")]
-    public async Task<ActionResult<WeatherDataDto>> GetWeather(
-        double latitude,
-        double longitude)
+    [HttpGet("external-events")]
+    public async Task<IActionResult> GetExternalEvents()
     {
-        var weather = await _weatherService
-            .GetCurrentWeatherAsync(latitude, longitude);
+        var events =
+            await _disasterDataTool.GetRecentEventsAsync();
 
-        if (weather == null)
-            return BadRequest("Unable to retrieve weather data.");
-
-        return Ok(weather);
+        return Ok(events);
     }
 
     [HttpGet("location/{location}")]
@@ -70,13 +100,95 @@ public class RiskPredictionsController : ControllerBase
     }
 
     [HttpGet("pending-approval")]
-    public async Task<ActionResult<List<RiskPredictionDto>>> GetPendingApproval()
+    public async Task<ActionResult<List<RiskPredictionDto>>>
+        GetPendingApproval()
     {
         return Ok(await _service.GetPendingApprovalAsync());
     }
 
+    [HttpGet("agent-executions")]
+    public async Task<ActionResult<List<RiskAgentExecution>>>
+        GetAgentExecutions()
+    {
+        return Ok(await _agentExecutionService.GetAllAsync());
+    }
+
+    [HttpGet("{id:guid}/agent-executions")]
+    public async Task<ActionResult<List<RiskAgentExecution>>>
+        GetAgentExecutionsByPrediction(Guid id)
+    {
+        return Ok(
+            await _agentExecutionService
+                .GetByPredictionIdAsync(id));
+    }
+
+    [HttpGet("{id:guid}/explain")]
+    public async Task<IActionResult> Explain(Guid id)
+    {
+        var prediction =
+            await _service.GetByIdAsync(id);
+
+        if (prediction == null)
+            return NotFound();
+
+        var topFactors =
+            prediction.RiskFactors
+                .OrderByDescending(x => x.Contribution)
+                .Take(3)
+                .Select(x => x.Factor)
+                .ToList();
+
+        var explanation =
+            topFactors.Count switch
+            {
+                0 =>
+                    $"Risk score for {prediction.Location} " +
+                    $"is {prediction.RiskScore:F2}%. " +
+                    "No dominant risk factors were recorded.",
+
+                1 =>
+                    $"Risk score for {prediction.Location} " +
+                    $"is {prediction.RiskScore:F2}%. " +
+                    $"The main contributing factor is " +
+                    $"{topFactors[0]}.",
+
+                2 =>
+                    $"Risk score for {prediction.Location} " +
+                    $"is {prediction.RiskScore:F2}%. " +
+                    $"The main contributing factors are " +
+                    $"{topFactors[0]} and {topFactors[1]}.",
+
+                _ =>
+                    $"Risk score for {prediction.Location} " +
+                    $"is {prediction.RiskScore:F2}%. " +
+                    $"The main contributing factors are " +
+                    $"{topFactors[0]}, {topFactors[1]}, " +
+                    $"and {topFactors[2]}."
+            };
+
+        return Ok(new
+        {
+            prediction.Id,
+            prediction.Location,
+            prediction.DisasterType,
+            prediction.RiskScore,
+            prediction.RiskLevel,
+            prediction.Confidence,
+            prediction.RiskFactors,
+            prediction.Recommendations,
+            prediction.PredictionSource,
+            prediction.ModelVersion,
+            prediction.RequiresHumanApproval,
+            prediction.IsApproved,
+            prediction.ApprovalStatus,
+            Explanation = explanation,
+            GeneratedAt = DateTime.UtcNow
+        });
+    }
+
     [HttpPut("{id:guid}/approve")]
-    public async Task<ActionResult<RiskPredictionDto>> Approve(Guid id)
+    public async Task<ActionResult<RiskPredictionDto>>
+        Approve(Guid id)
     {
         var result = await _service.ApproveAsync(id);
 
@@ -87,7 +199,8 @@ public class RiskPredictionsController : ControllerBase
     }
 
     [HttpPut("{id:guid}/reject")]
-    public async Task<ActionResult<RiskPredictionDto>> Reject(Guid id)
+    public async Task<ActionResult<RiskPredictionDto>>
+        Reject(Guid id)
     {
         var result = await _service.RejectAsync(id);
 
@@ -98,7 +211,8 @@ public class RiskPredictionsController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<RiskPredictionDto>> GetById(Guid id)
+    public async Task<ActionResult<RiskPredictionDto>>
+        GetById(Guid id)
     {
         var result = await _service.GetByIdAsync(id);
 

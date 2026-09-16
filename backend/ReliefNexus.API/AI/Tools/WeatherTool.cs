@@ -1,20 +1,18 @@
-using System.Net.Http.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
-using ReliefNexus.API.DTOs;
-using ReliefNexus.API.Interfaces;
 
-namespace ReliefNexus.API.Services;
+namespace ReliefNexus.API.AI.Tools;
 
-public class WeatherService : IWeatherService
+public class WeatherTool
 {
     private readonly HttpClient _httpClient;
 
-    public WeatherService(HttpClient httpClient)
+    public WeatherTool(HttpClient httpClient)
     {
         _httpClient = httpClient;
     }
 
-    public async Task<WeatherDataDto?> GetCurrentWeatherAsync(
+    public async Task<WeatherData?> GetCurrentWeatherAsync(
         double latitude,
         double longitude)
     {
@@ -30,28 +28,35 @@ public class WeatherService : IWeatherService
 
         try
         {
-            var response =
+            using var response =
                 await _httpClient.GetAsync(url);
 
             response.EnsureSuccessStatusCode();
 
+            await using var stream =
+                await response.Content.ReadAsStreamAsync();
+
             var data =
-                await response.Content
-                    .ReadFromJsonAsync<OpenMeteoResponse>();
+                await JsonSerializer.DeserializeAsync<OpenMeteoResponse>(
+                    stream);
 
             if (data?.Current == null)
                 return null;
 
-            return new WeatherDataDto
+            return new WeatherData
             {
                 Latitude = latitude,
                 Longitude = longitude,
-                Temperature = data.Current.Temperature2m,
-                Humidity = data.Current.RelativeHumidity2m,
-                Precipitation = data.Current.Precipitation,
-                WindSpeed = data.Current.WindSpeed10m,
-                RetrievedAt = DateTime.UtcNow,
-                Source = "Open-Meteo"
+                Temperature =
+                    data.Current.Temperature2m,
+                Humidity =
+                    data.Current.RelativeHumidity2m,
+                Precipitation =
+                    data.Current.Precipitation,
+                WindSpeed =
+                    data.Current.WindSpeed10m,
+                Source = "Open-Meteo",
+                RetrievedAt = DateTime.UtcNow
             };
         }
         catch
@@ -80,4 +85,23 @@ public class WeatherService : IWeatherService
         [JsonPropertyName("wind_speed_10m")]
         public double WindSpeed10m { get; set; }
     }
+}
+
+public class WeatherData
+{
+    public double Latitude { get; set; }
+
+    public double Longitude { get; set; }
+
+    public double Temperature { get; set; }
+
+    public double Humidity { get; set; }
+
+    public double Precipitation { get; set; }
+
+    public double WindSpeed { get; set; }
+
+    public string Source { get; set; } = "Open-Meteo";
+
+    public DateTime RetrievedAt { get; set; }
 }

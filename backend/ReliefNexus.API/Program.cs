@@ -1,3 +1,6 @@
+using ReliefNexus.API.AI.Tools;
+using ReliefNexus.API.AI.Agents;
+using ReliefNexus.API.AI.Engines;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -15,7 +18,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Controllers
 builder.Services.AddControllers();
-builder.Services.AddHttpClient<ReliefNexus.API.Interfaces.IWeatherService, ReliefNexus.API.Services.WeatherService>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendPolicy", policy =>
@@ -69,6 +71,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRiskPredictionService, RiskPredictionService>();
+builder.Services.AddScoped<RiskPredictionAgent>();
+builder.Services.AddScoped<RiskEngine>();
+builder.Services.AddHttpClient<DisasterDataTool>();
+builder.Services.AddHttpClient<WeatherTool>();
+builder.Services.AddScoped<IAgentExecutionService, AgentExecutionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 // ======================================================
@@ -159,6 +166,19 @@ app.MapControllers();
 // ======================================================
 
 app.Run();
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

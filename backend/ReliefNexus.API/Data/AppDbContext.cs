@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ReliefNexus.API.Models;
 
 namespace ReliefNexus.API.Data;
@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
 
     public DbSet<User> Users { get; set; }
     public DbSet<RiskPrediction> RiskPredictions { get; set; }
+    public DbSet<RiskAgentExecution> RiskAgentExecutions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -21,6 +22,7 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<RiskFactor>().ToTable("RiskFactors");
     }
 }
+
 
 
 
