@@ -1,4 +1,4 @@
-﻿namespace ReliefNexus.API.Models;
+namespace ReliefNexus.API.Models;
 
 public class RiskPrediction
 {
@@ -34,6 +34,8 @@ public class RiskPrediction
 
     public bool RequiresHumanApproval { get; set; }
     public bool IsApproved { get; set; }
+
+    public string ApprovalStatus { get; set; } = "NotRequired";
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

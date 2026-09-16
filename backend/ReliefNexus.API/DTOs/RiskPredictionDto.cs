@@ -1,4 +1,4 @@
-﻿namespace ReliefNexus.API.DTOs;
+namespace ReliefNexus.API.DTOs;
 
 public class RiskPredictionDto
 {
@@ -37,6 +37,7 @@ public class RiskPredictionDto
 
     public bool RequiresHumanApproval { get; set; }
     public bool IsApproved { get; set; }
+    public string ApprovalStatus { get; set; } = "NotRequired";
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

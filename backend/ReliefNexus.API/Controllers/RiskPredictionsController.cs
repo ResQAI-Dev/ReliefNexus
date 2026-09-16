@@ -11,10 +11,14 @@ namespace ReliefNexus.API.Controllers;
 public class RiskPredictionsController : ControllerBase
 {
     private readonly IRiskPredictionService _service;
+    private readonly IWeatherService _weatherService;
 
-    public RiskPredictionsController(IRiskPredictionService service)
+    public RiskPredictionsController(
+        IRiskPredictionService service,
+        IWeatherService weatherService)
     {
         _service = service;
+        _weatherService = weatherService;
     }
 
     [HttpPost]
@@ -26,9 +30,24 @@ public class RiskPredictionsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<RiskPredictionDto>>> GetAll()
+    public async Task<ActionResult<PaginatedRiskPredictionDto>> GetAll(
+        [FromQuery] RiskPredictionQueryDto query)
     {
-        return Ok(await _service.GetAllAsync());
+        return Ok(await _service.GetPagedAsync(query));
+    }
+
+    [HttpGet("weather/{latitude}/{longitude}")]
+    public async Task<ActionResult<WeatherDataDto>> GetWeather(
+        double latitude,
+        double longitude)
+    {
+        var weather = await _weatherService
+            .GetCurrentWeatherAsync(latitude, longitude);
+
+        if (weather == null)
+            return BadRequest("Unable to retrieve weather data.");
+
+        return Ok(weather);
     }
 
     [HttpGet("location/{location}")]
@@ -42,6 +61,40 @@ public class RiskPredictionsController : ControllerBase
     public async Task<ActionResult<List<RiskPredictionDto>>> GetHighRisk()
     {
         return Ok(await _service.GetHighRiskAsync());
+    }
+
+    [HttpGet("history")]
+    public async Task<ActionResult<List<RiskPredictionDto>>> GetHistory()
+    {
+        return Ok(await _service.GetHistoryAsync());
+    }
+
+    [HttpGet("pending-approval")]
+    public async Task<ActionResult<List<RiskPredictionDto>>> GetPendingApproval()
+    {
+        return Ok(await _service.GetPendingApprovalAsync());
+    }
+
+    [HttpPut("{id:guid}/approve")]
+    public async Task<ActionResult<RiskPredictionDto>> Approve(Guid id)
+    {
+        var result = await _service.ApproveAsync(id);
+
+        if (result == null)
+            return NotFound();
+
+        return Ok(result);
+    }
+
+    [HttpPut("{id:guid}/reject")]
+    public async Task<ActionResult<RiskPredictionDto>> Reject(Guid id)
+    {
+        var result = await _service.RejectAsync(id);
+
+        if (result == null)
+            return NotFound();
+
+        return Ok(result);
     }
 
     [HttpGet("{id:guid}")]
