@@ -68,7 +68,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-
+builder.Services.AddScoped<IWarningService, WarningService>();
+builder.Services.AddScoped<IWarningApprovalService, WarningApprovalService>();
 // ======================================================
 // JWT AUTHENTICATION
 // ======================================================
