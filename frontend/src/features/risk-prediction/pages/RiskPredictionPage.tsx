@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 
 import RiskPredictionForm from "../components/RiskPredictionForm";
-import "../styles/riskPremium.css";
 import RiskMap from "../components/RiskMap";
 import PredictionSummary from "../components/PredictionSummary";
 import PredictionDetailsModal from "../components/PredictionDetailsModal";
@@ -558,3 +557,5 @@ export default function RiskPredictionPage() {
     </div>
   );
 }
+
+
