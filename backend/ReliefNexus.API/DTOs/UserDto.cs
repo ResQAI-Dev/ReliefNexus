@@ -1,6 +1,6 @@
 namespace ReliefNexus.API.DTOs;
 
-public class UserResponseDto
+public class UserDto
 {
     public Guid Id { get; set; }
 
@@ -8,7 +8,9 @@ public class UserResponseDto
 
     public string Email { get; set; } = string.Empty;
 
-    public string Role { get; set; } = string.Empty;
+    public string? Password { get; set; }
+
+    public string Role { get; set; } = "User";
 
     public bool IsActive { get; set; }
 

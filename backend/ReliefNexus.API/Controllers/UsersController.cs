@@ -24,7 +24,7 @@ public class UsersController : ControllerBase
 
     [HttpPost]
     public async Task<IActionResult> CreateUser(
-        CreateUserDto userDto)
+        UserDto userDto)
     {
         try
         {
@@ -32,7 +32,7 @@ public class UsersController : ControllerBase
             {
                 FullName = userDto.FullName,
                 Email = userDto.Email,
-                PasswordHash = userDto.Password,
+                PasswordHash = userDto.Password ?? string.Empty,
                 Role = "User",
                 IsActive = true
             };
@@ -40,7 +40,7 @@ public class UsersController : ControllerBase
             var createdUser =
                 await _userService.CreateUserAsync(user);
 
-            var response = new UserResponseDto
+            var response = new UserDto
             {
                 Id = createdUser.Id,
                 FullName = createdUser.FullName,
@@ -74,7 +74,7 @@ public class UsersController : ControllerBase
             await _userService.GetUsersAsync();
 
         var response = users
-            .Select(user => new UserResponseDto
+            .Select(user => new UserDto
             {
                 Id = user.Id,
                 FullName = user.FullName,
@@ -97,7 +97,7 @@ public class UsersController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateUser(
         Guid id,
-        UpdateUserDto userDto)
+        UserDto userDto)
     {
         try
         {
@@ -105,7 +105,7 @@ public class UsersController : ControllerBase
             {
                 FullName = userDto.FullName,
                 Email = userDto.Email,
-                PasswordHash = userDto.Password,
+                PasswordHash = userDto.Password ?? string.Empty,
                 Role = userDto.Role,
                 IsActive = userDto.IsActive
             };
@@ -125,7 +125,7 @@ public class UsersController : ControllerBase
                 });
             }
 
-            var response = new UserResponseDto
+            var response = new UserDto
             {
                 Id = updatedUser.Id,
                 FullName = updatedUser.FullName,

@@ -24,11 +24,11 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login(LoginDto loginDto)
+    public async Task<IActionResult> Login(AuthDto authDto)
     {
         var user = await _userService.LoginAsync(
-            loginDto.Email,
-            loginDto.Password
+            authDto.Email ?? string.Empty,
+            authDto.Password ?? string.Empty
         );
 
         if (user == null)
@@ -41,11 +41,11 @@ public class AuthController : ControllerBase
 
         var token = GenerateJwtToken(user);
 
-        var response = new LoginResponseDto
+        var response = new AuthDto
         {
-            Token = token,
+            AccessToken = token,
 
-            User = new UserResponseDto
+            User = new UserDto
             {
                 Id = user.Id,
                 FullName = user.FullName,
