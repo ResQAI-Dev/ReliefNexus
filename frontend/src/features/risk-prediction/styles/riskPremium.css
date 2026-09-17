@@ -1,0 +1,470 @@
+﻿/* ============================================================
+   RELIEFNEXUS - PREMIUM RISK PREDICTION EXPERIENCE
+   UI ONLY
+   ============================================================ */
+
+.risk-pro-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      circle at 10% 0%,
+      rgba(37, 99, 235, .08),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 90% 8%,
+      rgba(14, 165, 233, .07),
+      transparent 25%
+    ),
+    #f4f7fb;
+}
+
+/* ============================================================
+   HERO
+   ============================================================ */
+
+.risk-pro-hero {
+  position: relative;
+  overflow: hidden;
+  min-height: 142px;
+  border: 1px solid #d8e3ef;
+  border-radius: 26px;
+  background:
+    linear-gradient(
+      105deg,
+      #ffffff 0%,
+      #f5faff 45%,
+      #e5f2ff 100%
+    );
+  box-shadow:
+    0 18px 50px rgba(15, 23, 42, .08);
+}
+
+.risk-pro-hero::before {
+  content: "";
+  position: absolute;
+  right: -40px;
+  top: -70px;
+  width: 480px;
+  height: 250px;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle,
+      rgba(59, 130, 246, .20),
+      transparent 67%
+    );
+  pointer-events: none;
+}
+
+.risk-pro-hero::after {
+  content: "";
+  position: absolute;
+  right: 2%;
+  bottom: -75px;
+  width: 60%;
+  height: 150px;
+  border-radius: 50%;
+  background:
+    linear-gradient(
+      165deg,
+      rgba(14, 165, 233, .10),
+      rgba(37, 99, 235, .02)
+    );
+  transform: rotate(-6deg);
+  pointer-events: none;
+}
+
+.risk-pro-hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 25px 30px;
+}
+
+.risk-pro-hero-eyebrow {
+  margin-bottom: 7px;
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.risk-pro-hero-title {
+  margin: 0;
+  color: #0f172a;
+  font-size: clamp(26px, 3vw, 42px);
+  font-weight: 900;
+  line-height: 1.02;
+  letter-spacing: -.045em;
+}
+
+.risk-pro-hero-subtitle {
+  margin-top: 10px;
+  max-width: 650px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.risk-pro-agent-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid #dbeafe;
+  border-radius: 999px;
+  background: rgba(255,255,255,.85);
+  padding: 10px 15px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 8px 22px rgba(15,23,42,.06);
+}
+
+.risk-pro-agent-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 4px rgba(16,185,129,.13);
+}
+
+/* ============================================================
+   WORKSPACE
+   ============================================================ */
+
+.risk-pro-workspace {
+  display: grid;
+  grid-template-columns:
+    minmax(300px, 355px)
+    minmax(520px, 1fr)
+    minmax(320px, 380px);
+  gap: 18px;
+  align-items: stretch;
+  margin-top: 18px;
+}
+
+.risk-pro-card {
+  min-width: 0;
+  border: 1px solid #d9e4ef;
+  border-radius: 24px;
+  background: rgba(255,255,255,.97);
+  box-shadow:
+    0 14px 38px rgba(15,23,42,.065),
+    0 2px 7px rgba(15,23,42,.035);
+}
+
+.risk-pro-form-card {
+  overflow: hidden;
+}
+
+.risk-pro-map-card {
+  min-height: 620px;
+  overflow: hidden;
+  padding: 0;
+}
+
+.risk-pro-summary-card {
+  min-height: 620px;
+  overflow: hidden;
+}
+
+/* ============================================================
+   FORM
+   ============================================================ */
+
+.risk-pro-form-card form {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.risk-pro-form-card form > div:first-child {
+  border-bottom: 1px solid #edf2f7 !important;
+  padding: 20px 20px 18px !important;
+}
+
+.risk-pro-form-card form > div:nth-child(2) {
+  padding: 19px !important;
+}
+
+.risk-pro-form-card input[type="text"],
+.risk-pro-form-card input[type="number"] {
+  min-height: 42px;
+  border: 1px solid #d6e1ec !important;
+  border-radius: 12px !important;
+  background: #fbfdff !important;
+  color: #0f172a !important;
+  box-shadow: inset 0 1px 1px rgba(15,23,42,.015);
+}
+
+.risk-pro-form-card input[type="text"]:focus,
+.risk-pro-form-card input[type="number"]:focus {
+  border-color: #2563eb !important;
+  background: #ffffff !important;
+  box-shadow:
+    0 0 0 4px rgba(37,99,235,.09) !important;
+}
+
+.risk-pro-form-card label {
+  color: #334155 !important;
+}
+
+.risk-pro-form-card button[type="submit"] {
+  min-height: 46px;
+  border-radius: 13px !important;
+  background:
+    linear-gradient(
+      135deg,
+      #2563eb,
+      #1d4ed8
+    ) !important;
+  box-shadow:
+    0 11px 24px rgba(37,99,235,.22) !important;
+}
+
+/* Remove browser number arrows */
+.risk-pro-page input[type="number"] {
+  appearance: textfield !important;
+  -moz-appearance: textfield !important;
+}
+
+.risk-pro-page input[type="number"]::-webkit-inner-spin-button,
+.risk-pro-page input[type="number"]::-webkit-outer-spin-button {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+}
+
+/* ============================================================
+   MAP
+   ============================================================ */
+
+.risk-pro-map-card > div {
+  border: 0 !important;
+  border-radius: 24px !important;
+  box-shadow: none !important;
+}
+
+.risk-pro-map-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 18px;
+  border-bottom: 1px solid #e5edf5;
+  background: #ffffff;
+}
+
+.risk-pro-map-title {
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.risk-pro-map-subtitle {
+  margin-top: 3px;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.risk-pro-map-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  padding: 7px 11px;
+  color: #047857;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.risk-pro-map-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+}
+
+/* Map itself */
+.risk-pro-map-body {
+  height: 620px;
+}
+
+/* ============================================================
+   SUMMARY
+   ============================================================ */
+
+.risk-pro-summary-card > * {
+  height: 100%;
+}
+
+.risk-pro-summary-card .rounded-2xl {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* ============================================================
+   ANALYTICS
+   ============================================================ */
+
+.risk-pro-section {
+  margin-top: 18px;
+  border: 1px solid #d9e4ef;
+  border-radius: 24px;
+  background: rgba(255,255,255,.97);
+  box-shadow:
+    0 12px 30px rgba(15,23,42,.05);
+}
+
+.risk-pro-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 19px 22px;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.risk-pro-section-title {
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: -.02em;
+}
+
+.risk-pro-section-subtitle {
+  margin-top: 3px;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.risk-pro-analysis {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.2fr)
+    minmax(0, .8fr);
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.risk-pro-analysis > * {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #d9e4ef !important;
+  border-radius: 22px !important;
+  background: #ffffff !important;
+  box-shadow:
+    0 10px 28px rgba(15,23,42,.045) !important;
+}
+
+/* ============================================================
+   DISASTER GRID
+   ============================================================ */
+
+.risk-pro-disaster-grid {
+  margin-top: 18px;
+  overflow: hidden;
+  border: 1px solid #d9e4ef;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow:
+    0 12px 30px rgba(15,23,42,.05);
+}
+
+.risk-pro-disaster-grid > * {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* ============================================================
+   RECENT PREDICTIONS
+   ============================================================ */
+
+.risk-pro-recent {
+  margin-top: 18px;
+  overflow: hidden;
+  border: 1px solid #d9e4ef;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow:
+    0 12px 30px rgba(15,23,42,.05);
+}
+
+.risk-pro-recent > * {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* ============================================================
+   ERROR STATES
+   ============================================================ */
+
+.risk-pro-error {
+  border: 1px solid #fecdd3;
+  border-radius: 14px;
+  background: #fff1f2;
+  padding: 12px 15px;
+  color: #be123c;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.risk-pro-warning {
+  border: 1px solid #fde68a;
+  border-radius: 14px;
+  background: #fffbeb;
+  padding: 12px 15px;
+  color: #92400e;
+  font-size: 13px;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 1450px) {
+  .risk-pro-workspace {
+    grid-template-columns:
+      minmax(280px, 330px)
+      minmax(430px, 1fr)
+      minmax(300px, 350px);
+  }
+}
+
+@media (max-width: 1200px) {
+  .risk-pro-workspace {
+    grid-template-columns:
+      minmax(300px, 1fr)
+      minmax(360px, 1fr);
+  }
+
+  .risk-pro-summary-card {
+    grid-column: 1 / -1;
+    min-height: 500px;
+  }
+}
+
+@media (max-width: 900px) {
+  .risk-pro-hero-content {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .risk-pro-workspace,
+  .risk-pro-analysis {
+    grid-template-columns: 1fr !important;
+  }
+
+  .risk-pro-summary-card {
+    grid-column: auto;
+  }
+
+  .risk-pro-page {
+    padding-bottom: 20px;
+  }
+}
