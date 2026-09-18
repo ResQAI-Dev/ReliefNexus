@@ -1,4 +1,4 @@
-using ReliefNexus.API.Data;
+﻿using ReliefNexus.API.Data;
 using ReliefNexus.API.Interfaces;
 using ReliefNexus.API.Models;
 using Microsoft.EntityFrameworkCore;
@@ -86,7 +86,10 @@ public class UserService : IUserService
         existingUser.Email =user.Email;
 
         // Hash new password
-        existingUser.PasswordHash =BCrypt.Net.BCrypt.HashPassword(user.PasswordHash);
+        if (!string.IsNullOrWhiteSpace(user.PasswordHash))
+        {
+            existingUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.PasswordHash);
+        }
 
         existingUser.Role =user.Role;
 
@@ -151,3 +154,4 @@ public class UserService : IUserService
         return user;
     }
 }
+
