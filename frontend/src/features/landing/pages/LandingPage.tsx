@@ -1,6 +1,6 @@
-﻿import Navbar from "../components/layout/Navbar";
-import Footer from "../components/layout/Footer";
-import heroImg from "../assets/img1.png";
+﻿import Navbar from "../../../components/layout/Navbar";
+import Footer from "../../../components/layout/Footer";
+import heroImg from "../../../assets/img1.png";
 
 const ArrowIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -468,3 +468,5 @@ const LandingPage = () => {
 };
 
 export default LandingPage;
+
+
