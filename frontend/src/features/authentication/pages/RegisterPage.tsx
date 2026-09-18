@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+﻿import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import heroImage from "../../../assets/img1.png";
@@ -32,6 +32,12 @@ const RegisterPage = () => {
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [address, setAddress] = useState("");
+  const [district, setDistrict] = useState("");
+  const [emergencyContactName, setEmergencyContactName] = useState("");
+  const [emergencyContactPhone, setEmergencyContactPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState("AffectedUser");
@@ -74,7 +80,13 @@ const RegisterPage = () => {
         fullName.trim(),
         email.trim(),
         password,
-        role
+        role,
+        phoneNumber,
+        dateOfBirth,
+        address,
+        district,
+        emergencyContactName,
+        emergencyContactPhone
       );
 
       navigate("/pending");
@@ -158,7 +170,7 @@ const RegisterPage = () => {
 
                   <div className="flex h-[40px] overflow-hidden rounded-[6px] border border-[#cbdfe8] bg-white focus-within:border-[#09afe9]">
                     <span className="flex w-[34px] items-center justify-center border-r border-[#dfebf0] text-[10px] text-[#7896a7]">
-                      ♙
+                      
                     </span>
 
                     <input
@@ -180,7 +192,7 @@ const RegisterPage = () => {
 
                   <div className="flex h-[40px] overflow-hidden rounded-[6px] border border-[#cbdfe8] bg-white focus-within:border-[#09afe9]">
                     <span className="flex w-[34px] items-center justify-center border-r border-[#dfebf0] text-[9px] text-[#7896a7]">
-                      ✉
+                      
                     </span>
 
                     <input
@@ -194,6 +206,89 @@ const RegisterPage = () => {
                   </div>
                 </div>
 
+                {/* ADDITIONAL DETAILS */}
+                <div className="mb-3 grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1.5 block text-[8px] font-bold text-[#173c55]">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      value={phoneNumber}
+                      placeholder="+94 7X XXX XXXX"
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      autoComplete="tel"
+                      className="h-[40px] w-full rounded-[6px] border border-[#cbdfe8] px-3 text-[10px] text-[#153b55] outline-none placeholder:text-[#9aafbb] focus:border-[#09afe9]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-[8px] font-bold text-[#173c55]">
+                      Date of Birth
+                    </label>
+                    <input
+                      type="date"
+                      value={dateOfBirth}
+                      onChange={(e) => setDateOfBirth(e.target.value)}
+                      className="h-[40px] w-full rounded-[6px] border border-[#cbdfe8] px-3 text-[10px] text-[#153b55] outline-none focus:border-[#09afe9]"
+                    />
+                  </div>
+                </div>
+
+                <div className="mb-3">
+                  <label className="mb-1.5 block text-[8px] font-bold text-[#173c55]">
+                    Address
+                  </label>
+                  <input
+                    type="text"
+                    value={address}
+                    placeholder="Your residential address"
+                    onChange={(e) => setAddress(e.target.value)}
+                    autoComplete="street-address"
+                    className="h-[40px] w-full rounded-[6px] border border-[#cbdfe8] px-3 text-[10px] text-[#153b55] outline-none placeholder:text-[#9aafbb] focus:border-[#09afe9]"
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <label className="mb-1.5 block text-[8px] font-bold text-[#173c55]">
+                    District
+                  </label>
+                  <input
+                    type="text"
+                    value={district}
+                    placeholder="Your district"
+                    onChange={(e) => setDistrict(e.target.value)}
+                    className="h-[40px] w-full rounded-[6px] border border-[#cbdfe8] px-3 text-[10px] text-[#153b55] outline-none placeholder:text-[#9aafbb] focus:border-[#09afe9]"
+                  />
+                </div>
+
+                <div className="mb-3 grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1.5 block text-[8px] font-bold text-[#173c55]">
+                      Emergency Contact Name
+                    </label>
+                    <input
+                      type="text"
+                      value={emergencyContactName}
+                      placeholder="Contact person's name"
+                      onChange={(e) => setEmergencyContactName(e.target.value)}
+                      className="h-[40px] w-full rounded-[6px] border border-[#cbdfe8] px-3 text-[10px] text-[#153b55] outline-none placeholder:text-[#9aafbb] focus:border-[#09afe9]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-[8px] font-bold text-[#173c55]">
+                      Emergency Contact Phone
+                    </label>
+                    <input
+                      type="tel"
+                      value={emergencyContactPhone}
+                      placeholder="+94 7X XXX XXXX"
+                      onChange={(e) => setEmergencyContactPhone(e.target.value)}
+                      className="h-[40px] w-full rounded-[6px] border border-[#cbdfe8] px-3 text-[10px] text-[#153b55] outline-none placeholder:text-[#9aafbb] focus:border-[#09afe9]"
+                    />
+                  </div>
+                </div>
                 {/* PASSWORD */}
                 <div className="mb-3 grid grid-cols-2 gap-3">
 
@@ -204,7 +299,7 @@ const RegisterPage = () => {
 
                     <div className="flex h-[40px] overflow-hidden rounded-[6px] border border-[#cbdfe8] bg-white focus-within:border-[#09afe9]">
                       <span className="flex w-[32px] items-center justify-center border-r border-[#dfebf0] text-[9px] text-[#7896a7]">
-                        ▣
+                        
                       </span>
 
                       <input
@@ -233,7 +328,7 @@ const RegisterPage = () => {
 
                     <div className="flex h-[40px] overflow-hidden rounded-[6px] border border-[#cbdfe8] bg-white focus-within:border-[#09afe9]">
                       <span className="flex w-[32px] items-center justify-center border-r border-[#dfebf0] text-[9px] text-[#7896a7]">
-                        ▣
+                        
                       </span>
 
                       <input
@@ -345,7 +440,7 @@ const RegisterPage = () => {
                   type="button"
                   className="flex h-[34px] items-center justify-center gap-2 rounded-[6px] border border-[#cbdfe8] bg-white text-[9px] text-[#29475b]"
                 >
-                  <strong className="text-[10px] text-[#0874e8]">▦</strong>
+                  <strong className="text-[10px] text-[#0874e8]"></strong>
                   Microsoft
                 </button>
               </div>
@@ -443,4 +538,8 @@ const RegisterPage = () => {
 };
 
 export default RegisterPage;
+
+
+
+
 

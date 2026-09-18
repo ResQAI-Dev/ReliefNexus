@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ReliefNexus.API.Data;
@@ -43,6 +43,7 @@ public class UsersController : ControllerBase
                     : userDto.Role,
                 RoleRequestStatus = "Approved",
                 IsActive = true,
+                Permissions = userDto.Permissions ?? new List<string>(),
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -151,6 +152,19 @@ public class UsersController : ControllerBase
         user.RoleRequestStatus = "Approved";
         user.IsActive = true;
 
+        var rolePermissions = await _context.Users
+            .Where(u =>
+                u.Role == user.Role &&
+                u.Id != user.Id &&
+                u.Permissions.Any())
+            .Select(u => u.Permissions)
+            .FirstOrDefaultAsync();
+
+        if (rolePermissions != null)
+        {
+            user.Permissions = rolePermissions.ToList();
+        }
+
         await _context.SaveChangesAsync();
 
         return Ok(new
@@ -217,7 +231,8 @@ public class UsersController : ControllerBase
                 Email = userDto.Email,
                 PasswordHash = userDto.Password ?? string.Empty,
                 Role = userDto.Role,
-                IsActive = userDto.IsActive
+                IsActive = userDto.IsActive,
+                Permissions = userDto.Permissions ?? new List<string>()
             };
 
             var updatedUser =
@@ -240,6 +255,42 @@ public class UsersController : ControllerBase
                 message = ex.Message
             });
         }
+    }
+
+    // =========================================================
+    // UPDATE ROLE PERMISSIONS
+    // =========================================================
+
+    [Authorize(Roles = "SystemAdministrator")]
+    [HttpPut("~/api/permissions/role")]
+    public async Task<IActionResult> UpdateRolePermissions(UserDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Role))
+        {
+            return BadRequest(new
+            {
+                message = "Role is required"
+            });
+        }
+
+        var users = await _context.Users
+            .Where(u => u.Role == dto.Role)
+            .ToListAsync();
+
+        foreach (var user in users)
+        {
+            user.Permissions = dto.Permissions ?? new List<string>();
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = $"Permissions updated for {dto.Role}",
+            role = dto.Role,
+            permissions = dto.Permissions,
+            affectedUsers = users.Count
+        });
     }
 
     // =========================================================
@@ -280,8 +331,10 @@ public class UsersController : ControllerBase
             Email = user.Email,
             Role = user.Role,
             IsActive = user.IsActive,
+            Permissions = user.Permissions ?? new List<string>(),
             CreatedAt = user.CreatedAt,
             Password = null
         };
     }
 }
+

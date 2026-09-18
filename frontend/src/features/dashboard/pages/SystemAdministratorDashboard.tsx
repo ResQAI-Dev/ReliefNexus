@@ -1,8 +1,8 @@
+﻿import NotificationBell from "../../../components/notifications/NotificationBell";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import api from "../../../lib/api/apiClient";
-
 const LogoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
     <path d="M5 20V10" />
@@ -11,7 +11,6 @@ const LogoIcon = () => (
     <path d="M20 20V8" />
   </svg>
 );
-
 const DashboardIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <rect x="3" y="3" width="7" height="7" rx="1.5" />
@@ -20,7 +19,6 @@ const DashboardIcon = () => (
     <rect x="14" y="14" width="7" height="7" rx="1.5" />
   </svg>
 );
-
 const UsersIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <circle cx="9" cy="8" r="3" />
@@ -29,7 +27,6 @@ const UsersIcon = () => (
     <path d="M17 15c2.2.5 3.5 2.1 4 5" />
   </svg>
 );
-
 const VolunteerIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <circle cx="12" cy="8" r="3" />
@@ -37,122 +34,99 @@ const VolunteerIcon = () => (
     <path d="M5 11H3M21 11h-2" />
   </svg>
 );
-
 const RequestIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <rect x="5" y="3" width="14" height="18" rx="2" />
     <path d="M8 8h8M8 12h8M8 16h5" />
   </svg>
 );
-
 const ShieldIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <path d="M12 3 20 6v5c0 5-3.2 8.2-8 10-4.8-1.8-8-5-8-10V6l8-3Z" />
     <path d="m9 12 2 2 4-4" />
   </svg>
 );
-
 const SparkIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <path d="m12 3 1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z" />
     <path d="m19 15 .7 2.3L22 18l-2.3.7L19 21l-.7-2.3L16 18l2.3-.7L19 15Z" />
   </svg>
 );
-
 const MonitorIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <rect x="3" y="4" width="18" height="13" rx="2" />
     <path d="M8 21h8M12 17v4" />
   </svg>
 );
-
 const AuditIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <path d="M5 4h14v16H5z" />
     <path d="M8 8h8M8 12h8M8 16h5" />
   </svg>
 );
-
 const ReportIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <path d="M4 19V5M4 19h16" />
     <path d="m7 15 3-4 3 2 5-6" />
   </svg>
 );
-
 const SettingsIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z" />
     <path d="m19 13 2 1-2 3-2-1a7.6 7.6 0 0 1-2 1l-.3 2h-3.5l-.3-2a7.6 7.6 0 0 1-2-1l-2 1-2-3 2-1a7.6 7.6 0 0 1 0-2l-2-1 2-3 2 1a7.6 7.6 0 0 1 2-1l.3-2h3.5l.3 2a7.6 7.6 0 0 1 2 1l2-1 2 3-2 1a7.6 7.6 0 0 1 0 2Z" />
   </svg>
 );
-
 const UserIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <circle cx="12" cy="8" r="3" />
     <path d="M5 21c.8-4.3 3.1-6.5 7-6.5s6.2 2.2 7 6.5" />
   </svg>
 );
-
 const RiskIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <path d="M12 3 2.8 19h18.4L12 3Z" />
     <path d="M12 9v5M12 17h.01" />
   </svg>
 );
-
 const ImpactIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <circle cx="12" cy="12" r="8" />
     <path d="M12 8v4l3 2" />
   </svg>
 );
-
 const ResourceIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <path d="m12 3 8 4-8 4-8-4 8-4Z" />
     <path d="m4 12 8 4 8-4M4 17l8 4 8-4" />
   </svg>
 );
-
 const AlertIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <path d="M10.3 3.3 2.2 17a2 2 0 0 0 1.7 3h16.2a2 2 0 0 0 1.7-3L13.7 3.3a2 2 0 0 0-3.4 0Z" />
     <path d="M12 9v4M12 17h.01" />
   </svg>
 );
-
 const SearchIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <circle cx="11" cy="11" r="6.5" />
     <path d="m16 16 4 4" />
   </svg>
 );
-
-const BellIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4" />
-  </svg>
-);
-
 const ChevronDownIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="m6 9 6 6 6-6" />
   </svg>
 );
-
 const ArrowUpRightIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <path d="M7 17 17 7M9 7h8v8" />
   </svg>
 );
-
 const CheckIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
     <path d="m5 12 4 4L19 6" />
   </svg>
 );
-
 const LogoutIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <path d="M10 17l5-5-5-5M15 12H3M21 4v16" />
@@ -215,16 +189,13 @@ type AgentStatus = {
   confidence: number | null;
   icon: ReactNode;
 };
-
 const agentStatuses: AgentStatus[] = [];
-
 const roles = [
   "AffectedUser",
   "FieldVolunteer",
   "ReliefCoordinator",
   "SystemAdministrator",
 ];
-
 const permissionList = [
   "View Risk Information",
   "Report Disaster",
@@ -239,7 +210,6 @@ const permissionList = [
   "View Audit Logs",
   "View Reports",
 ];
-
 const menuItems: Array<{
   id: Section;
   label: string;
@@ -256,7 +226,6 @@ const menuItems: Array<{
   { id: "settings", label: "System Settings", icon: <SettingsIcon /> },
   { id: "profile", label: "Profile", icon: <UserIcon /> },
 ];
-
 const userManagementItems = [
   "Affected Users",
   "Field Volunteers",
@@ -269,14 +238,12 @@ const userManagementItems = [
   "Location Sharing",
   "User Profiles",
 ];
-
 const aiAgentManagementItems = [
   "Risk Prediction",
   "Vulnerability & Impact",
   "Resource Optimization",
   "Early Warning & Coordination",
 ];
-
 const agentDefinitions = [
   {
     name: "Risk Prediction Agent",
@@ -299,8 +266,6 @@ const agentDefinitions = [
     icon: <AlertIcon />,
   },
 ];
-
-
 const roleLabel = (role?: string) => {
   switch (role) {
     case "AffectedUser":
@@ -315,14 +280,12 @@ const roleLabel = (role?: string) => {
       return role || "Unknown";
   }
 };
-
 const formatDate = (value?: string) => {
   if (!value) return "No date";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString();
 };
-
 const SystemAdministratorDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -342,6 +305,9 @@ const SystemAdministratorDashboard = () => {
   const [actionLoading, setActionLoading] = useState("");
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
+  const hasPermission = (permission: string) =>
+    user?.role === "SystemAdministrator" ||
+    (user?.permissions ?? []).includes(permission);
 
   const [userSearch, setUserSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("All");
@@ -560,7 +526,12 @@ const SystemAdministratorDashboard = () => {
     setError("");
 
     try {
-      await api.put(`/users/${target.id}/role`, { role });
+      await api.put(`/users/${target.id}`, {
+        fullName: target.fullName,
+        email: target.email,
+        role,
+        isActive: target.isActive,
+      });
       setUsers((current) =>
         current.map((item) =>
           item.id === target.id ? { ...item, role } : item
@@ -584,7 +555,7 @@ const SystemAdministratorDashboard = () => {
     setError("");
 
     try {
-      await api.put(`/users/${request.id}/${action}`);
+      await api.put(`/users/${request.id}/${action}-role`);
       setRoleRequests((current) =>
         current.filter((item) => item.id !== request.id)
       );
@@ -653,6 +624,45 @@ const SystemAdministratorDashboard = () => {
     (item) => item.status === "Running"
   ).length;
 
+  const visibleMenuItems = menuItems.filter((item) => {
+    if (user?.role === "SystemAdministrator") return true;
+    const permissionMap: Record<Section, string | null> = {
+      dashboard: null,
+      users: "Manage Users",
+      "role-requests": "Manage Role Requests",
+      permissions: "Configure Permissions",
+      "ai-agents": "AI Agent Monitoring",
+      monitoring: null,
+      "audit-logs": "View Audit Logs",
+      reports: "View Reports",
+      settings: null,
+      profile: null,
+    };
+    const permission = permissionMap[item.id];
+    return permission === null || hasPermission(permission);
+  });
+
+  const visibleUserManagementItems = userManagementItems.filter((child) => {
+    if (user?.role === "SystemAdministrator") return true;
+    const permissionMap: Record<string, string> = {
+      "Disaster Reports": "Report Disaster",
+      "Relief Requests": "Manage Relief Requests",
+      "Emergency Alerts": "View Emergency Alerts",
+      "Risk Information": "View Risk Information",
+      "Relief Resources": "Manage Relief Resources",
+      "Location Sharing": "Share Location",
+      "Affected Users": "Manage Users",
+      "Field Volunteers": "Manage Users",
+      "Relief Coordinators": "Manage Users",
+      "User Profiles": "Manage Users",
+    };
+    return hasPermission(permissionMap[child] || "Manage Users");
+  });
+
+  const visibleAiAgentManagementItems = aiAgentManagementItems.filter(() =>
+    user?.role === "SystemAdministrator" || hasPermission("AI Agent Monitoring")
+  );
+
   const renderContent = () => {
     switch (section) {
       case "users":
@@ -667,6 +677,7 @@ const SystemAdministratorDashboard = () => {
             onAction={handleUserAction}
             onRoleChange={handleRoleChange}
             selectedModule={selectedUserModule}
+            onRefresh={loadAdminData}
           />
         );
 
@@ -768,7 +779,7 @@ const SystemAdministratorDashboard = () => {
             </p>
 
             <nav className="space-y-1">
-              {menuItems.map((item) => {
+              {visibleMenuItems.map((item) => {
                 if (item.id === "users") {
                   return (
                     <div key={item.id}>
@@ -792,7 +803,7 @@ const SystemAdministratorDashboard = () => {
 
                       {userManagementOpen && (
                         <div className="ml-4 mt-1 space-y-0.5 border-l border-white/10 pl-3">
-                          {userManagementItems.map((child) => (
+                          {visibleUserManagementItems.map((child) => (
                             <button
                               key={child}
                               type="button"
@@ -836,7 +847,7 @@ const SystemAdministratorDashboard = () => {
 
                       {aiAgentManagementOpen && (
                         <div className="ml-4 mt-1 space-y-0.5 border-l border-white/10 pl-3">
-                          {aiAgentManagementItems.map((child) => (
+                          {visibleAiAgentManagementItems.map((child) => (
                             <button
                               key={child}
                               type="button"
@@ -927,13 +938,7 @@ const SystemAdministratorDashboard = () => {
             </div>
 
             <div className="flex items-center gap-4">
-              <button
-                type="button"
-                className="relative flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-50"
-              >
-                <BellIcon />
-                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
-              </button>
+              <NotificationBell />
 
               <div className="hidden h-8 w-px bg-slate-200 sm:block" />
 
@@ -995,7 +1000,6 @@ type OverviewProps = {
   onNavigate: (section: Section) => void;
   loading: boolean;
 };
-
 const OverviewSection = ({
   totalUsers,
   activeUsers,
@@ -1142,7 +1146,7 @@ const OverviewSection = ({
                       {request.fullName || "Unknown user"}
                     </p>
                     <p className="text-[11px] text-slate-400">
-                      {roleLabel(request.role)} Ã¢â‚¬Â¢ {formatDate(request.createdAt)}
+                      {roleLabel(request.role)} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ {formatDate(request.createdAt)}
                     </p>
                   </div>
                   <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-700">
@@ -1192,7 +1196,6 @@ const OverviewSection = ({
     </div>
   );
 };
-
 const userModuleDescription = (module: string) => {
   const descriptions: Record<string, string> = {
     "Affected Users": "Manage affected community members and review their account status.",
@@ -1208,7 +1211,6 @@ const userModuleDescription = (module: string) => {
   };
   return descriptions[module] || "Manage and monitor this system module.";
 };
-
 const UsersSection = ({
   users,
   search,
@@ -1232,6 +1234,7 @@ const UsersSection = ({
   ) => void;
   onRoleChange: (user: UserRecord, role: string) => void;
   selectedModule: string;
+  onRefresh: () => Promise<void>;
 }) => (
   <div className="space-y-6">
     <PageHeading
@@ -1358,7 +1361,6 @@ const UsersSection = ({
     </DashboardCard>
   </div>
 );
-
 const RoleRequestsSection = ({
   requests,
   actionLoading,
@@ -1438,7 +1440,6 @@ const RoleRequestsSection = ({
     </DashboardCard>
   </div>
 );
-
 const PermissionsSection = ({
   selectedRole,
   setSelectedRole,
@@ -1540,7 +1541,6 @@ const PermissionsSection = ({
     </div>
   </div>
 );
-
 const aiModuleDescription = (module: string) => {
   const descriptions: Record<string, string> = {
     "Risk Prediction": "Monitor AI-generated disaster risk scores, confidence, and risk factors.",
@@ -1550,7 +1550,6 @@ const aiModuleDescription = (module: string) => {
   };
   return descriptions[module] || "Monitor and manage this AI agent.";
 };
-
 const AIAgentsSection = ({ selectedModule }: { selectedModule: string }) => (
   <div className="space-y-6">
     <PageHeading
@@ -1598,17 +1597,14 @@ const AIAgentsSection = ({ selectedModule }: { selectedModule: string }) => (
     </div>
   </div>
 );
-
 const healthDisplay = (value?: number) =>
-  typeof value === "number" ? `${value}%` : "â€”";
-
+  typeof value === "number" ? `${value}%` : "—";
 const healthStatus = (value?: number) => {
   if (typeof value !== "number") return "No data";
   if (value >= 90) return "Operational";
   if (value >= 70) return "Degraded";
   return "Critical";
 };
-
 const MonitoringSection = ({ systemHealth }: { systemHealth: SystemHealth | null }) => (
   <div className="space-y-6">
     <PageHeading
@@ -1634,7 +1630,6 @@ const MonitoringSection = ({ systemHealth }: { systemHealth: SystemHealth | null
     </DashboardCard>
   </div>
 );
-
 const AuditLogsSection = ({ logs }: { logs: AuditLog[] }) => (
   <div className="space-y-6">
     <PageHeading
@@ -1664,7 +1659,7 @@ const AuditLogsSection = ({ logs }: { logs: AuditLog[] }) => (
                   {log.description || "No description available."}
                 </p>
                 <p className="mt-2 text-[10px] text-slate-400">
-                  {log.userEmail || "System"} Ã¢â‚¬Â¢ {formatDate(log.createdAt)}
+                  {log.userEmail || "System"} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ {formatDate(log.createdAt)}
                 </p>
               </div>
             </div>
@@ -1674,7 +1669,6 @@ const AuditLogsSection = ({ logs }: { logs: AuditLog[] }) => (
     </DashboardCard>
   </div>
 );
-
 const ReportsSection = () => (
   <div className="space-y-6">
     <PageHeading
@@ -1684,10 +1678,10 @@ const ReportsSection = () => (
     />
 
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <MetricCard label="User Activity" value="Ã¢â‚¬â€" detail="API data required" icon={<UsersIcon />} tone="blue" />
-      <MetricCard label="Incidents" value="Ã¢â‚¬â€" detail="Incident API required" icon={<AlertIcon />} tone="red" />
-      <MetricCard label="AI Decisions" value="Ã¢â‚¬â€" detail="Agent history required" icon={<SparkIcon />} tone="purple" />
-      <MetricCard label="Resources" value="Ã¢â‚¬â€" detail="Resource API required" icon={<ResourceIcon />} tone="green" />
+      <MetricCard label="User Activity" value="—" detail="API data required" icon={<UsersIcon />} tone="blue" />
+      <MetricCard label="Incidents" value="—" detail="Incident API required" icon={<AlertIcon />} tone="red" />
+      <MetricCard label="AI Decisions" value="—" detail="Agent history required" icon={<SparkIcon />} tone="purple" />
+      <MetricCard label="Resources" value="—" detail="Resource API required" icon={<ResourceIcon />} tone="green" />
     </div>
 
     <DashboardCard title="Report Center" subtitle="Ready for live reporting APIs">
@@ -1704,7 +1698,6 @@ const ReportsSection = () => (
     </DashboardCard>
   </div>
 );
-
 const SettingsSection = ({
   settings,
   setSettings,
@@ -1788,7 +1781,6 @@ const SettingsSection = ({
     </DashboardCard>
   </div>
 );
-
 const ProfileSection = ({
   user,
   onLogout,
@@ -1816,7 +1808,7 @@ const ProfileSection = ({
 
         <div className="space-y-2">
           <ProfileItem label="Full Name" value={user?.fullName || "System Administrator"} />
-          <ProfileItem label="Email" value={user?.email || "Ã¢â‚¬â€"} />
+          <ProfileItem label="Email" value={user?.email || "—"} />
           <ProfileItem label="Role" value="System Administrator" />
           <ProfileItem label="Account Status" value={user?.isActive ? "Active" : "Inactive"} />
         </div>
@@ -1832,7 +1824,6 @@ const ProfileSection = ({
     </DashboardCard>
   </div>
 );
-
 const PageHeading = ({
   eyebrow,
   title,
@@ -1869,7 +1860,6 @@ const PageHeading = ({
     </div>
   </div>
 );
-
 const MetricCard = ({
   label,
   value,
@@ -1911,7 +1901,6 @@ const MetricCard = ({
     </div>
   );
 };
-
 const DashboardCard = ({
   title,
   subtitle,
@@ -1946,13 +1935,12 @@ const DashboardCard = ({
     {children}
   </section>
 );
-
 const HealthBar = ({ label, value }: { label: string; value: number | null | undefined }) => (
   <div>
     <div className="mb-2 flex items-center justify-between">
       <span className="text-xs font-semibold text-slate-600">{label}</span>
       <span className="text-xs font-bold text-slate-700">
-        {typeof value === "number" ? `${value}%` : "â€”"}
+        {typeof value === "number" ? `${value}%` : "—"}
       </span>
     </div>
     <div className="h-2 overflow-hidden rounded-full bg-slate-100">
@@ -1963,7 +1951,6 @@ const HealthBar = ({ label, value }: { label: string; value: number | null | und
     </div>
   </div>
 );
-
 const HealthMetric = ({
   label,
   value,
@@ -1982,7 +1969,6 @@ const HealthMetric = ({
     <p className="mt-1 text-[10px] font-semibold text-emerald-600">{status}</p>
   </div>
 );
-
 const SettingRow = ({
   title,
   description,
@@ -2016,14 +2002,12 @@ const SettingRow = ({
     </button>
   </div>
 );
-
 const ProfileItem = ({ label, value }: { label: string; value: string }) => (
   <div className="flex gap-3 text-xs">
     <span className="w-28 font-semibold text-slate-400">{label}</span>
     <span className="font-bold text-slate-700">{value}</span>
   </div>
 );
-
 const EmptyState = ({ text }: { text: string }) => (
   <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-400">
     {text}
@@ -2031,6 +2015,35 @@ const EmptyState = ({ text }: { text: string }) => (
 );
 
 export default SystemAdministratorDashboard;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

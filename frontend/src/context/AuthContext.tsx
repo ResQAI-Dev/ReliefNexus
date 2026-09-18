@@ -24,7 +24,13 @@ interface AuthContextType {
     fullName: string,
     email: string,
     password: string,
-    role: string
+    role: string,
+    phoneNumber: string,
+    dateOfBirth: string,
+    address: string,
+    district: string,
+    emergencyContactName: string,
+    emergencyContactPhone: string
   ) => Promise<RegisterResponse>;
   logout: () => void;
   loading: boolean;
@@ -78,13 +84,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     fullName: string,
     email: string,
     password: string,
-    role: string
+    role: string,
+    phoneNumber: string,
+    dateOfBirth: string,
+    address: string,
+    district: string,
+    emergencyContactName: string,
+    emergencyContactPhone: string
   ): Promise<RegisterResponse> => {
     return registerUser({
       fullName,
       email,
       password,
       role,
+      phoneNumber,
+      dateOfBirth,
+      address,
+      district,
+      emergencyContactName,
+      emergencyContactPhone,
     });
   };
 

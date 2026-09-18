@@ -1,4 +1,4 @@
-using ReliefNexus.API.AI.Tools;
+﻿using ReliefNexus.API.AI.Tools;
 using ReliefNexus.API.AI.Agents;
 using ReliefNexus.API.AI.Engines;
 using Microsoft.EntityFrameworkCore;
@@ -75,6 +75,10 @@ builder.Services.AddScoped<RiskPredictionAgent>();
 builder.Services.AddScoped<RiskEngine>();
 builder.Services.AddHttpClient<DisasterDataTool>();
 builder.Services.AddHttpClient<WeatherTool>();
+builder.Services.AddHttpClient<RiverGaugeTool>();
+builder.Services.AddHttpClient<HistoricalDisasterTool>();
+builder.Services.AddHttpClient<PopulationTool>();
+builder.Services.AddHttpClient<DrainageDataTool>();
 builder.Services.AddScoped<IAgentExecutionService, AgentExecutionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
@@ -120,7 +124,26 @@ builder.Services.AddAuthentication(
 // AUTHORIZATION
 // ======================================================
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    foreach (var permission in ReliefNexus.API.Helpers.RoleConstants.AllPermissions)
+    {
+        options.AddPolicy(
+            $"Permission:{permission}",
+            policy =>
+            {
+                policy.RequireAuthenticatedUser();
+
+                policy.RequireAssertion(context =>
+                    context.User.IsInRole(
+                        ReliefNexus.API.Helpers.RoleConstants.SystemAdministrator)
+                    ||
+                    context.User.Claims.Any(c =>
+                        c.Type == "permission" &&
+                        c.Value == permission));
+            });
+    }
+});
 
 // ======================================================
 // BUILD APPLICATION
@@ -166,6 +189,8 @@ app.MapControllers();
 // ======================================================
 
 app.Run();
+
+
 
 
 

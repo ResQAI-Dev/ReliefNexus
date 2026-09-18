@@ -22,6 +22,173 @@ namespace ReliefNexus.API.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("ReliefNexus.API.Models.RiskAgentExecution", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AgentName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("InputSummary")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OutputSummary")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("RiskPredictionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("RiskAgentExecutions", (string)null);
+                });
+
+            modelBuilder.Entity("ReliefNexus.API.Models.RiskFactor", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<double>("Contribution")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Factor")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Impact")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("RiskPredictionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<double>("Value")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RiskPredictionId");
+
+                    b.ToTable("RiskFactors", (string)null);
+                });
+
+            modelBuilder.Entity("ReliefNexus.API.Models.RiskPrediction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ApprovalStatus")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double>("Confidence")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DisasterType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double>("DrainageCapacity")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Elevation")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("ForecastRainfall")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("HistoricalFloodCount")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("HistoricalSeverity")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Humidity")
+                        .HasColumnType("double precision");
+
+                    b.Property<bool>("IsApproved")
+                        .HasColumnType("boolean");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("ModelVersion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double>("PopulationDensity")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("PredictionSource")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double>("Rainfall1h")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Rainfall24h")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Rainfall3h")
+                        .HasColumnType("double precision");
+
+                    b.Property<bool>("RequiresHumanApproval")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("RiskLevel")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double>("RiskScore")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("RiverFlow")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("RiverLevel")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("SoilMoisture")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Temperature")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("WindSpeed")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("RiskPredictions", (string)null);
+                });
+
             modelBuilder.Entity("ReliefNexus.API.Models.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -56,7 +223,23 @@ namespace ReliefNexus.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
+                });
+
+            modelBuilder.Entity("ReliefNexus.API.Models.RiskFactor", b =>
+                {
+                    b.HasOne("ReliefNexus.API.Models.RiskPrediction", "RiskPrediction")
+                        .WithMany("RiskFactors")
+                        .HasForeignKey("RiskPredictionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("RiskPrediction");
+                });
+
+            modelBuilder.Entity("ReliefNexus.API.Models.RiskPrediction", b =>
+                {
+                    b.Navigation("RiskFactors");
                 });
 #pragma warning restore 612, 618
         }

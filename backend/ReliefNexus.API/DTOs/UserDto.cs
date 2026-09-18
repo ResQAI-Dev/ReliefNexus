@@ -1,4 +1,4 @@
-namespace ReliefNexus.API.DTOs;
+﻿namespace ReliefNexus.API.DTOs;
 
 public class UserDto
 {
@@ -13,6 +13,8 @@ public class UserDto
     public string Role { get; set; } = "User";
 
     public bool IsActive { get; set; }
+
+    public List<string> Permissions { get; set; } = new();
 
     public DateTime CreatedAt { get; set; }
 }
