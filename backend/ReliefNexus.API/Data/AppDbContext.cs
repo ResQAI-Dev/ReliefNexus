@@ -17,6 +17,13 @@ public class AppDbContext : DbContext
     public DbSet<User> Users { get; set; }
 
     // =========================================================================
+    // Component 1 – Risk Prediction (from develop)
+    // =========================================================================
+
+    public DbSet<RiskPrediction> RiskPredictions { get; set; }
+    public DbSet<RiskAgentExecution> RiskAgentExecutions { get; set; }
+
+    // =========================================================================
     // Component 2 – Population Vulnerability & Impact Assessment
     // Owner: Component 2 team
     // Tables: population_risk_snapshots, critical_infrastructures,
@@ -49,6 +56,12 @@ public class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Component 1 – Risk Prediction (from develop)
+        // ─────────────────────────────────────────────────────────────────────
+        modelBuilder.Entity<RiskPrediction>().ToTable("RiskPredictions");
+        modelBuilder.Entity<RiskFactor>().ToTable("RiskFactors");
 
         // ─────────────────────────────────────────────────────────────────────
         // Component 2 – PopulationRiskSnapshot
@@ -152,4 +165,4 @@ public class AppDbContext : DbContext
                   .HasColumnType("timestamp with time zone");
         });
     }
-}
+}

@@ -1,0 +1,332 @@
+﻿@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+
+@import "tailwindcss";
+
+:root {
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background: #eefaff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+/* ===== RELIEFNEXUS PREMIUM RISK PREDICTION UI ===== */
+/* ============================================================
+   RELIEFNEXUS PREMIUM RISK PREDICTION UI
+   ============================================================ */
+
+.risk-pro-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(37,99,235,.09), transparent 28%),
+    radial-gradient(circle at 92% 5%, rgba(14,165,233,.08), transparent 25%),
+    #f4f7fb;
+  color: #0f172a;
+}
+
+.risk-pro-hero {
+  position: relative;
+  overflow: hidden;
+  min-height: 145px;
+  border: 1px solid #dbe7f2;
+  border-radius: 24px;
+  background:
+    linear-gradient(105deg,#fff 0%,#f7fbff 45%,#e6f2ff 100%);
+  box-shadow: 0 18px 48px rgba(15,23,42,.08);
+}
+
+.risk-pro-hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px 32px;
+}
+
+.risk-pro-hero-eyebrow {
+  margin-bottom: 7px;
+  color: #2563eb;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.risk-pro-hero-title {
+  margin: 0;
+  color: #0f172a;
+  font-size: clamp(28px,3vw,42px);
+  font-weight: 900;
+  line-height: 1.02;
+  letter-spacing: -.045em;
+}
+
+.risk-pro-hero-subtitle {
+  margin-top: 9px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.risk-pro-agent-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid #dbeafe;
+  border-radius: 999px;
+  background: rgba(255,255,255,.9);
+  padding: 10px 15px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 8px 22px rgba(15,23,42,.06);
+}
+
+.risk-pro-agent-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 4px rgba(16,185,129,.12);
+}
+
+.risk-pro-workspace {
+  display: grid;
+  grid-template-columns: 355px minmax(0,1fr) 380px;
+  gap: 18px;
+  margin-top: 18px;
+  align-items: stretch;
+}
+
+.risk-pro-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #d9e5ef;
+  border-radius: 24px;
+  background: rgba(255,255,255,.98);
+  box-shadow:
+    0 16px 40px rgba(15,23,42,.065),
+    0 2px 7px rgba(15,23,42,.03);
+}
+
+.risk-pro-form-card,
+.risk-pro-map-card,
+.risk-pro-summary-card {
+  min-height: 620px;
+}
+
+.risk-pro-form-card > * {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.risk-pro-form-card input[type="text"],
+.risk-pro-form-card input[type="number"] {
+  min-height: 41px;
+  border: 1px solid #d5e0eb !important;
+  border-radius: 11px !important;
+  background: #fbfdff !important;
+  color: #0f172a !important;
+}
+
+.risk-pro-form-card input[type="text"]:focus,
+.risk-pro-form-card input[type="number"]:focus {
+  border-color: #2563eb !important;
+  background: #fff !important;
+  box-shadow: 0 0 0 4px rgba(37,99,235,.09) !important;
+  outline: none !important;
+}
+
+.risk-pro-form-card button[type="submit"] {
+  min-height: 47px;
+  border: 0 !important;
+  border-radius: 13px !important;
+  background: linear-gradient(135deg,#2563eb,#1d4ed8) !important;
+  box-shadow: 0 12px 25px rgba(37,99,235,.22) !important;
+  font-weight: 800 !important;
+}
+
+.risk-pro-page input[type="number"] {
+  appearance: textfield !important;
+  -moz-appearance: textfield !important;
+}
+
+.risk-pro-page input[type="number"]::-webkit-inner-spin-button,
+.risk-pro-page input[type="number"]::-webkit-outer-spin-button {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+}
+
+.risk-pro-map-card .leaflet-container {
+  height: 620px !important;
+  border-radius: 23px !important;
+}
+
+.risk-pro-map-card {
+  position: relative;
+}
+
+.risk-pro-map-card .leaflet-control {
+  box-shadow: 0 10px 22px rgba(15,23,42,.12) !important;
+}
+
+.risk-pro-map-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  padding: 7px 11px;
+  color: #047857;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.risk-pro-map-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+}
+
+.risk-pro-map-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 17px;
+  border-bottom: 1px solid #e6edf4;
+  background: #fff;
+}
+
+.risk-pro-map-title {
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.risk-pro-map-subtitle {
+  margin-top: 3px;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.risk-pro-disaster-grid,
+.risk-pro-recent,
+.risk-pro-section {
+  margin-top: 18px;
+  overflow: hidden;
+  border: 1px solid #d9e5ef;
+  border-radius: 23px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(15,23,42,.05);
+}
+
+.risk-pro-disaster-grid > *,
+.risk-pro-recent > *,
+.risk-pro-section > * {
+  border-color: #e7eef5 !important;
+}
+
+.risk-pro-analysis {
+  display: grid;
+  grid-template-columns: minmax(0,1.15fr) minmax(0,.85fr);
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.risk-pro-analysis > * {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #d9e5ef !important;
+  border-radius: 23px !important;
+  background: #fff !important;
+  box-shadow: 0 12px 30px rgba(15,23,42,.05) !important;
+}
+
+.risk-pro-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 21px;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.risk-pro-section-title {
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: -.02em;
+}
+
+.risk-pro-section-subtitle {
+  margin-top: 3px;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.risk-pro-error {
+  border: 1px solid #fecdd3;
+  border-radius: 13px;
+  background: #fff1f2;
+  padding: 12px 15px;
+  color: #be123c;
+}
+
+.risk-pro-warning {
+  border: 1px solid #fde68a;
+  border-radius: 13px;
+  background: #fffbeb;
+  padding: 12px 15px;
+  color: #92400e;
+}
+
+@media (max-width: 1200px) {
+  .risk-pro-workspace {
+    grid-template-columns: minmax(300px,1fr) minmax(380px,1fr);
+  }
+
+  .risk-pro-summary-card {
+    grid-column: 1 / -1;
+  }
+
+  .risk-pro-analysis {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .risk-pro-hero-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .risk-pro-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .risk-pro-summary-card {
+    grid-column: auto;
+  }
+}
+/* ===== END RELIEFNEXUS PREMIUM RISK PREDICTION UI ===== */
+

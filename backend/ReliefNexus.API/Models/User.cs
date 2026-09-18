@@ -1,3 +1,5 @@
+using ReliefNexus.API.Helpers;
+
 namespace ReliefNexus.API.Models;
 
 public class User
@@ -10,9 +12,11 @@ public class User
 
     public string PasswordHash { get; set; } = string.Empty;
 
-    public string Role { get; set; } = "User";
+    public string Role { get; set; } = RoleConstants.AffectedUser;
 
-   public bool IsActive { get; set; } = true;
+    public string RoleRequestStatus { get; set; } = "Pending";
+
+    public bool IsActive { get; set; } = false;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
