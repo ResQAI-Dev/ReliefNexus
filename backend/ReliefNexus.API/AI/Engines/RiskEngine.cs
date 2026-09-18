@@ -1,4 +1,4 @@
-using ReliefNexus.API.AI.Tools;
+﻿using ReliefNexus.API.AI.Tools;
 using ReliefNexus.API.DTOs;
 
 namespace ReliefNexus.API.AI.Engines;
@@ -131,6 +131,17 @@ public class RiskEngine
     private static DisasterRiskDto CalculateFlood(
         RiskPredictionDto x)
     {
+        if (x.Rainfall24h <= 0 &&
+            x.RiverLevel <= 0 &&
+            x.HistoricalFloodCount <= 0 &&
+            x.ForecastRainfall <= 0 &&
+            x.SoilMoisture <= 0)
+        {
+            return UnavailableRisk(
+                "Flood",
+                "Insufficient flood data");
+        }
+
         var score =
             Normalize(x.Rainfall24h, 250) * 35 +
             Normalize(x.RiverLevel, 6) * 30 +
@@ -141,7 +152,7 @@ public class RiskEngine
         return AvailableRisk(
             "Flood",
             score,
-            "Open-Meteo + Local Risk Inputs");
+            "Open-Meteo + River Gauge + GDACS");
     }
 
     // =====================================================
@@ -151,6 +162,16 @@ public class RiskEngine
     private static DisasterRiskDto CalculateLandslide(
         RiskPredictionDto x)
     {
+        if (x.Rainfall24h <= 0 &&
+            x.SoilMoisture <= 0 &&
+            x.Elevation <= 0 &&
+            x.ForecastRainfall <= 0)
+        {
+            return UnavailableRisk(
+                "Landslide",
+                "Insufficient landslide data");
+        }
+
         var score =
             Normalize(x.Rainfall24h, 250) * 35 +
             Normalize(x.SoilMoisture, 100) * 30 +
@@ -170,11 +191,18 @@ public class RiskEngine
     private static DisasterRiskDto CalculateStorm(
         RiskPredictionDto x)
     {
+        if (!x.WeatherDataAvailable)
+        {
+            return UnavailableRisk(
+                "Storm / Cyclone",
+                "Open-Meteo");
+        }
+
         var score =
             Normalize(x.WindSpeed, 120) * 50 +
-            Normalize(x.Rainfall24h, 250) * 20 +
-            Normalize(x.ForecastRainfall, 200) * 20 +
-            Normalize(x.Humidity, 100) * 10;
+            Normalize(x.Rainfall1h, 10) * 20 +
+            Normalize(x.Humidity, 100) * 15 +
+            Normalize(x.Rainfall24h, 250) * 15;
 
         return AvailableRisk(
             "Storm / Cyclone",
@@ -189,6 +217,23 @@ public class RiskEngine
     private static DisasterRiskDto CalculateDrought(
         RiskPredictionDto x)
     {
+        var droughtInputsAvailable =
+            x.Rainfall24h > 0 ||
+            x.ForecastRainfall > 0 ||
+            x.SoilMoisture > 0;
+
+        if (!droughtInputsAvailable)
+        {
+            return new DisasterRiskDto
+            {
+                DisasterType = "Drought",
+                RiskScore = null,
+                RiskLevel = "No Data",
+                DataAvailable = false,
+                DataSource = "Insufficient drought data"
+            };
+        }
+
         var score =
             (1 - Normalize(x.Rainfall24h, 250)) * 35 +
             (1 - Normalize(x.ForecastRainfall, 200)) * 20 +
@@ -201,7 +246,6 @@ public class RiskEngine
             score,
             "Open-Meteo + Local Risk Inputs");
     }
-
     // =====================================================
     // WILDFIRE
     // =====================================================
@@ -209,12 +253,20 @@ public class RiskEngine
     private static DisasterRiskDto CalculateWildfire(
         RiskPredictionDto x)
     {
+        if (!x.WeatherDataAvailable)
+        {
+            return UnavailableRisk(
+                "Wildfire / Forest Fire",
+                "Open-Meteo");
+        }
+
         var score =
-            Normalize(x.Temperature, 45) * 30 +
-            (1 - Normalize(x.Humidity, 100)) * 25 +
-            (1 - Normalize(x.SoilMoisture, 100)) * 25 +
-            (1 - Normalize(x.Rainfall24h, 250)) * 10 +
-            Normalize(x.WindSpeed, 120) * 10;
+            Math.Max(
+                0,
+                (x.Temperature - 30) / 15) * 30 +
+            (1 - Normalize(x.Humidity, 100)) * 30 +
+            (1 - Normalize(x.Rainfall1h, 10)) * 25 +
+            Normalize(x.WindSpeed, 120) * 15;
 
         return AvailableRisk(
             "Wildfire / Forest Fire",
@@ -266,13 +318,20 @@ public class RiskEngine
             nearest.Latitude,
             nearest.Longitude);
 
+    // Keep the GDACS earthquake calculation unchanged for
+    // locally relevant events, but do not treat a distant
+    // global earthquake as a local risk.
+    if (distance > 500)
+        return UnavailableRisk(
+            "Earthquake",
+            "No locally relevant GDACS earthquake event");
+
     // Local relevance is based primarily on distance.
     var distanceScore =
         distance <= 50 ? 90 :
         distance <= 100 ? 75 :
         distance <= 250 ? 55 :
-        distance <= 500 ? 30 :
-        5;
+        30;
 
     // GDACS alert severity provides a secondary factor.
     var alertScore =
@@ -355,17 +414,20 @@ public class RiskEngine
     private static DisasterRiskDto CalculateLightning(
         RiskPredictionDto x)
     {
-        if (!x.WeatherDataAvailable)
+        // Lightning requires actual short-term rainfall
+        // or forecast rainfall data.
+        if (x.Rainfall3h <= 0 &&
+            x.ForecastRainfall <= 0)
         {
             return UnavailableRisk(
                 "Lightning",
-                "Open-Meteo");
+                "Insufficient Open-Meteo rainfall data");
         }
 
         var score =
-            Normalize(x.Rainfall3h, 150) * 30 +
+            Normalize(x.Rainfall3h, 150) * 35 +
             Normalize(x.Humidity, 100) * 25 +
-            Normalize(x.WindSpeed, 120) * 20 +
+            Normalize(x.WindSpeed, 120) * 15 +
             Normalize(x.Temperature, 45) * 10 +
             Normalize(x.ForecastRainfall, 200) * 15;
 
@@ -389,11 +451,18 @@ public class RiskEngine
                 "Open-Meteo");
         }
 
+        // A heatwave score should only increase when
+        // temperature is actually above the heat threshold.
+        var temperatureScore =
+            Math.Max(
+                0,
+                (x.Temperature - 30) / 15);
+
         var score =
-            Normalize(x.Temperature, 45) * 65 +
+            temperatureScore * 70 +
             (1 - Normalize(x.Humidity, 100)) * 15 +
-            (1 - Normalize(x.Rainfall24h, 250)) * 10 +
-            (1 - Normalize(x.WindSpeed, 120)) * 10;
+            (1 - Normalize(x.Rainfall1h, 10)) * 10 +
+            Normalize(x.WindSpeed, 120) * 5;
 
         return AvailableRisk(
             "Heatwave",
@@ -790,6 +859,106 @@ public class RiskEngine
                 }
             },
 
+            "Drought" => new()
+            {
+                new RiskFactorDto
+                {
+                    Factor = "24-hour Rainfall",
+                    Value = x.Rainfall24h,
+                    Impact = x.Rainfall24h <= 0 ? "No Data" : "Dryness Indicator",
+                    Contribution = Math.Round(
+                        (1 - Normalize(x.Rainfall24h, 250)) * 35, 2)
+                },
+
+                new RiskFactorDto
+                {
+                    Factor = "Forecast Rainfall",
+                    Value = x.ForecastRainfall,
+                    Impact = x.ForecastRainfall <= 0 ? "No Data" : "Dryness Indicator",
+                    Contribution = Math.Round(
+                        (1 - Normalize(x.ForecastRainfall, 200)) * 20, 2)
+                },
+
+                new RiskFactorDto
+                {
+                    Factor = "Temperature",
+                    Value = x.Temperature,
+                    Impact = "Heat Indicator",
+                    Contribution = Math.Round(
+                        Normalize(x.Temperature, 45) * 20, 2)
+                },
+
+                new RiskFactorDto
+                {
+                    Factor = "Humidity",
+                    Value = x.Humidity,
+                    Impact = "Moisture Indicator",
+                    Contribution = Math.Round(
+                        (1 - Normalize(x.Humidity, 100)) * 10, 2)
+                },
+
+                new RiskFactorDto
+                {
+                    Factor = "Soil Moisture",
+                    Value = x.SoilMoisture,
+                    Impact = x.SoilMoisture <= 0 ? "No Data" : "Dryness Indicator",
+                    Contribution = Math.Round(
+                        (1 - Normalize(x.SoilMoisture, 100)) * 15, 2)
+                }
+            },
+
+            "Wildfire / Forest Fire" => new()
+            {
+                new RiskFactorDto
+                {
+                    Factor = "Temperature",
+                    Value = x.Temperature,
+                    Impact = x.Temperature <= 30
+                        ? "Low"
+                        : x.Temperature < 40
+                            ? "High"
+                            : "Very High",
+                    Contribution = Math.Round(
+                        Math.Max(
+                            0,
+                            (x.Temperature - 30) / 15) * 30,
+                        2)
+                },
+                new RiskFactorDto
+                {
+                    Factor = "Humidity",
+                    Value = x.Humidity,
+                    Impact = x.Humidity <= 30
+                        ? "Very Dry"
+                        : x.Humidity <= 50
+                            ? "Dry"
+                            : "Moderate",
+                    Contribution = Math.Round(
+                        (1 - Normalize(x.Humidity, 100)) * 30,
+                        2)
+                },
+                new RiskFactorDto
+                {
+                    Factor = "1-hour Rainfall",
+                    Value = x.Rainfall1h,
+                    Impact = x.Rainfall1h <= 0
+                        ? "No Data"
+                        : "Rainfall Indicator",
+                    Contribution = Math.Round(
+                        (1 - Normalize(x.Rainfall1h, 10)) * 25,
+                        2)
+                },
+                new RiskFactorDto
+                {
+                    Factor = "Wind Speed",
+                    Value = x.WindSpeed,
+                    Impact = GetImpact(x.WindSpeed, 60, 100),
+                    Contribution = Math.Round(
+                        Normalize(x.WindSpeed, 120) * 15,
+                        2)
+                }
+            },
+
             _ => new()
             {
                 new RiskFactorDto
@@ -851,6 +1020,27 @@ public class RiskEngine
                     "Activate fire response readiness",
                     "Protect vulnerable areas",
                     "Prepare evacuation resources"
+                },
+
+                "Drought" => new()
+                {
+                    "Monitor water availability",
+                    "Prepare water conservation measures",
+                    "Review drought response readiness"
+                },
+
+                "Heatwave" => new()
+                {
+                    "Issue heat health guidance",
+                    "Check vulnerable populations",
+                    "Prepare cooling and hydration resources"
+                },
+
+                "Volcanic Eruption" => new()
+                {
+                    "Follow official volcanic warnings",
+                    "Prepare evacuation resources",
+                    "Monitor official emergency instructions"
                 },
 
                 _ => new()
@@ -1020,10 +1210,4 @@ public class RiskEngine
                180.0;
     }
 }
-
-
-
-
-
-
 

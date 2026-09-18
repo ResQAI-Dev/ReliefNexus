@@ -14,6 +14,7 @@ import RecentPredictions from "../components/RecentPredictions";
 import { useRiskPrediction } from "../hooks/useRiskPrediction";
 import { getRiskPredictionEnvironment } from "../services/riskPredictionApi";
 
+
 import type {
   RiskPrediction,
   RiskPredictionRequest,
@@ -120,6 +121,8 @@ export default function RiskPredictionPage() {
       longitude,
     }));
 
+    let locationName = form.location;
+
     // Reverse geocode coordinates -> location name
     try {
       const response = await fetch(
@@ -131,36 +134,34 @@ export default function RiskPredictionPage() {
         }
       );
 
-      if (!response.ok) {
-        return;
-      }
+      if (response.ok) {
+        const data = await response.json();
+        const address = data?.address;
 
-      const data = await response.json();
+        locationName =
+          address?.city ||
+          address?.town ||
+          address?.municipality ||
+          address?.village ||
+          address?.county ||
+          data?.display_name?.split(",")[0] ||
+          form.location;
 
-      const address = data?.address;
+        if (locationName) {
+          console.log(
+            "[Map Location] Selected:",
+            locationName,
+            latitude,
+            longitude
+          );
 
-      const locationName =
-        address?.city ||
-        address?.town ||
-        address?.municipality ||
-        address?.village ||
-        address?.county ||
-        data?.display_name?.split(",")[0];
-
-      if (locationName) {
-        console.log(
-          "[Map Location] Selected:",
-          locationName,
-          latitude,
-          longitude
-        );
-
-        setForm((current) => ({
-          ...current,
-          location: locationName,
-          latitude,
-          longitude,
-        }));
+          setForm((current) => ({
+            ...current,
+            location: locationName,
+            latitude,
+            longitude,
+          }));
+        }
       }
     } catch (error) {
       console.error(
@@ -168,8 +169,90 @@ export default function RiskPredictionPage() {
         error
       );
     }
-  }
 
+    // ============================================================
+    // LOAD REAL ENVIRONMENT DATA FOR SELECTED LOCATION
+    // ============================================================
+    try {
+      console.log(
+        "[Environment] Loading live data:",
+        latitude,
+        longitude
+      );
+
+      const environment =
+        await getRiskPredictionEnvironment(
+          latitude,
+          longitude,
+          locationName
+        );
+
+      console.log(
+        "[Environment] Live data received:",
+        environment
+      );
+
+      setForm((current) => ({
+        ...current,
+
+        latitude,
+        longitude,
+
+        rainfall1h:
+          environment.rainfall1h ??
+          current.rainfall1h,
+
+        rainfall3h:
+          environment.rainfall3h ??
+          current.rainfall3h,
+
+        rainfall24h:
+          environment.rainfall24h ??
+          current.rainfall24h,
+
+        riverLevel:
+          environment.riverLevel ??
+          current.riverLevel,
+
+        riverFlow:
+          environment.riverFlow ??
+          current.riverFlow,
+
+        temperature:
+          environment.temperature ??
+          current.temperature,
+
+        humidity:
+          environment.humidity ??
+          current.humidity,
+
+        windSpeed:
+          environment.windSpeed ??
+          current.windSpeed,
+
+        populationDensity:
+          environment.populationDensity ??
+          current.populationDensity,
+
+        historicalFloodCount:
+          environment.historicalFloodCount ??
+          current.historicalFloodCount,
+
+        historicalSeverity:
+          environment.historicalSeverity ??
+          current.historicalSeverity,
+
+        drainageCapacity:
+          environment.drainageCapacity ??
+          current.drainageCapacity,
+      }));
+    } catch (error) {
+      console.error(
+        "[Environment ERROR] Failed to load live environment data:",
+        error
+      );
+    }
+  }
   // ============================================================
   // LOCATION NAME -> AUTOMATIC LATITUDE / LONGITUDE
   // ============================================================
@@ -234,83 +317,6 @@ export default function RiskPredictionPage() {
 
     return () => window.clearTimeout(timer);
   }, [form.location]);
-  // ============================================================
-  // AUTO LOAD REAL ENVIRONMENT DATA FROM AI AGENT
-  // ============================================================
-  useEffect(() => {
-    const latitude = form.latitude;
-    const longitude = form.longitude;
-
-    if (
-      !isValidLatitude(latitude) ||
-      !isValidLongitude(longitude) ||
-      (latitude === 0 && longitude === 0)
-    ) {
-      return;
-    }
-
-    const timer = window.setTimeout(async () => {
-      try {
-        const environment =
-          await getRiskPredictionEnvironment(
-            latitude,
-            longitude,
-            form.location
-          );
-
-        console.log("[Risk Environment] Agent response:", environment);
-
-        setForm((current) => ({
-          ...current,
-
-          rainfall1h:
-            environment.rainfall1h ?? current.rainfall1h,
-          rainfall3h:
-            environment.rainfall3h ?? current.rainfall3h,
-          rainfall24h:
-            environment.rainfall24h ?? current.rainfall24h,
-
-          riverLevel:
-            environment.riverLevel ?? current.riverLevel,
-          riverFlow:
-            environment.riverFlow ?? current.riverFlow,
-
-          temperature:
-            environment.temperature ?? current.temperature,
-          humidity:
-            environment.humidity ?? current.humidity,
-          windSpeed:
-            environment.windSpeed ?? current.windSpeed,
-
-          soilMoisture:
-            environment.soilMoisture ?? current.soilMoisture,
-          elevation:
-            environment.elevation ?? current.elevation,
-
-          populationDensity:
-            environment.populationDensity ?? current.populationDensity,
-
-          historicalFloodCount:
-            environment.historicalFloodCount ?? current.historicalFloodCount,
-          historicalSeverity:
-            environment.historicalSeverity ?? current.historicalSeverity,
-
-          drainageCapacity:
-            environment.drainageCapacity ?? current.drainageCapacity,
-
-          forecastRainfall:
-            environment.forecastRainfall ?? current.forecastRainfall,
-        }));
-      } catch (error) {
-        console.error(
-          "[Risk Environment ERROR] Failed to load data from Risk Prediction Agent:",
-          error
-        );
-      }
-    }, 500);
-
-    return () => window.clearTimeout(timer);
-  }, [form.latitude, form.longitude]);
   function validateForm(): string | null {
     if (!form.location.trim()) {
       return "Please enter a location.";
@@ -557,5 +563,9 @@ export default function RiskPredictionPage() {
     </div>
   );
 }
+
+
+
+
 
 

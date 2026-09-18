@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ReliefNexus.API.AI.Tools;
 using ReliefNexus.API.DTOs;
@@ -15,18 +15,34 @@ public class RiskPredictionsController : ControllerBase
     private readonly IRiskPredictionService _service;
     private readonly IAgentExecutionService _agentExecutionService;
     private readonly DisasterDataTool _disasterDataTool;
+    private readonly WeatherTool _weatherTool;
+    private readonly RiverGaugeTool _riverGaugeTool;
+    private readonly HistoricalDisasterTool _historicalDisasterTool;
+    private readonly PopulationTool _populationTool;
+    private readonly DrainageDataTool _drainageDataTool;
 
     public RiskPredictionsController(
         IRiskPredictionService service,
         IAgentExecutionService agentExecutionService,
-        DisasterDataTool disasterDataTool)
+        DisasterDataTool disasterDataTool,
+        WeatherTool weatherTool,
+        RiverGaugeTool riverGaugeTool,
+        HistoricalDisasterTool historicalDisasterTool,
+        PopulationTool populationTool,
+        DrainageDataTool drainageDataTool)
     {
         _service = service;
         _agentExecutionService = agentExecutionService;
         _disasterDataTool = disasterDataTool;
+        _weatherTool = weatherTool;
+        _riverGaugeTool = riverGaugeTool;
+        _historicalDisasterTool = historicalDisasterTool;
+        _populationTool = populationTool;
+        _drainageDataTool = drainageDataTool;
     }
 
     [HttpPost]
+    [Authorize(Policy = "Permission:Report Disaster")]
     public async Task<ActionResult<RiskPredictionDto>> Create(
         RiskPredictionDto request)
     {
@@ -43,7 +59,8 @@ public class RiskPredictionsController : ControllerBase
 
         try
         {
-            var result = await _service.CreateAsync(request);
+            var result =
+                await _service.CreateAsync(request);
 
             var outputSummary =
                 $"DisasterType={result.DisasterType}; " +
@@ -65,10 +82,12 @@ public class RiskPredictionsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = "Permission:View Risk Information")]
     public async Task<ActionResult<PaginatedRiskPredictionDto>> GetAll(
         [FromQuery] RiskPredictionQueryDto query)
     {
-        return Ok(await _service.GetPagedAsync(query));
+        return Ok(
+            await _service.GetPagedAsync(query));
     }
 
     [HttpGet("external-events")]
@@ -80,37 +99,186 @@ public class RiskPredictionsController : ControllerBase
         return Ok(events);
     }
 
-    [HttpGet("location/{location}")]
-    public async Task<ActionResult<List<RiskPredictionDto>>> GetByLocation(
-        string location)
+    // ============================================================
+    // LIVE ENVIRONMENT DATA
+    // ============================================================
+
+    [HttpGet("environment-live")]
+    [Authorize(Policy = "Permission:View Risk Information")]
+    public async Task<IActionResult>
+        GetEnvironmentLive(
+            [FromQuery] double latitude,
+            [FromQuery] double longitude,
+            [FromQuery] string? location = null)
     {
-        return Ok(await _service.GetByLocationAsync(location));
+        if (latitude < -90 ||
+            latitude > 90 ||
+            longitude < -180 ||
+            longitude > 180)
+        {
+            return BadRequest(new
+            {
+                message = "Invalid latitude or longitude."
+            });
+        }
+
+        try
+        {
+            // Run external data sources in parallel.
+            var weatherTask =
+                _weatherTool.GetCurrentWeatherAsync(
+                    latitude,
+                    longitude);
+
+            var riverTask =
+                _riverGaugeTool.GetNearestGaugeAsync(
+                    latitude,
+                    longitude);
+
+            var historicalTask =
+                _historicalDisasterTool
+                    .GetHistoricalFloodDataAsync(
+                        latitude,
+                        longitude);
+
+            var populationTask =
+                _populationTool
+                    .GetPopulationDensityAsync(
+                        latitude,
+                        longitude);
+
+            var drainageTask =
+                _drainageDataTool
+                    .GetDrainageIndicatorAsync(
+                        latitude,
+                        longitude);
+
+            await Task.WhenAll(
+                weatherTask,
+                riverTask,
+                historicalTask,
+                populationTask,
+                drainageTask);
+
+            var weather =
+                await weatherTask;
+
+            var river =
+                await riverTask;
+
+            var historical =
+                await historicalTask;
+
+            var population =
+                await populationTask;
+
+            var drainage =
+                await drainageTask;
+
+            var result = new
+                {
+                    Latitude = latitude,
+                    Longitude = longitude,
+
+                    // Open-Meteo current precipitation.
+                    Rainfall1h =
+                        weather?.Precipitation,
+
+                    // Current WeatherTool does not provide
+                    // separate 3h/24h rainfall totals.
+                    rainfall3h = (double?)null,
+                    rainfall24h = (double?)null,
+
+                    RiverLevel =
+                        river?.RiverLevel,
+
+                    RiverFlow =
+                        river?.RiverFlow,
+
+                    Temperature =
+                        weather?.Temperature,
+
+                    Humidity =
+                        weather?.Humidity,
+
+                    WindSpeed =
+                        weather?.WindSpeed,
+
+                    PopulationDensity =
+                        population,
+
+                    HistoricalFloodCount =
+                        historical?.FloodCount,
+
+                    HistoricalSeverity =
+                        historical?.Severity,
+
+                    DrainageCapacity =
+                        drainage,
+
+                    WeatherSource =
+                        weather?.Source ?? "",
+
+                    RiverSource =
+                        river?.Source ?? "",
+
+                    HistoricalSource =
+                        historical?.Source ?? ""
+                };
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                new
+                {
+                    message =
+                        "Failed to retrieve live environment data.",
+                    detail = ex.Message
+                });
+        }
+    }
+
+    [HttpGet("location/{location}")]
+    public async Task<ActionResult<List<RiskPredictionDto>>>
+        GetByLocation(string location)
+    {
+        return Ok(
+            await _service.GetByLocationAsync(location));
     }
 
     [HttpGet("high-risk")]
-    public async Task<ActionResult<List<RiskPredictionDto>>> GetHighRisk()
+    public async Task<ActionResult<List<RiskPredictionDto>>>
+        GetHighRisk()
     {
-        return Ok(await _service.GetHighRiskAsync());
+        return Ok(
+            await _service.GetHighRiskAsync());
     }
 
     [HttpGet("history")]
-    public async Task<ActionResult<List<RiskPredictionDto>>> GetHistory()
+    public async Task<ActionResult<List<RiskPredictionDto>>>
+        GetHistory()
     {
-        return Ok(await _service.GetHistoryAsync());
+        return Ok(
+            await _service.GetHistoryAsync());
     }
 
     [HttpGet("pending-approval")]
     public async Task<ActionResult<List<RiskPredictionDto>>>
         GetPendingApproval()
     {
-        return Ok(await _service.GetPendingApprovalAsync());
+        return Ok(
+            await _service.GetPendingApprovalAsync());
     }
 
     [HttpGet("agent-executions")]
     public async Task<ActionResult<List<RiskAgentExecution>>>
         GetAgentExecutions()
     {
-        return Ok(await _agentExecutionService.GetAllAsync());
+        return Ok(
+            await _agentExecutionService.GetAllAsync());
     }
 
     [HttpGet("{id:guid}/agent-executions")]
@@ -190,7 +358,8 @@ public class RiskPredictionsController : ControllerBase
     public async Task<ActionResult<RiskPredictionDto>>
         Approve(Guid id)
     {
-        var result = await _service.ApproveAsync(id);
+        var result =
+            await _service.ApproveAsync(id);
 
         if (result == null)
             return NotFound();
@@ -202,7 +371,8 @@ public class RiskPredictionsController : ControllerBase
     public async Task<ActionResult<RiskPredictionDto>>
         Reject(Guid id)
     {
-        var result = await _service.RejectAsync(id);
+        var result =
+            await _service.RejectAsync(id);
 
         if (result == null)
             return NotFound();
@@ -214,7 +384,8 @@ public class RiskPredictionsController : ControllerBase
     public async Task<ActionResult<RiskPredictionDto>>
         GetById(Guid id)
     {
-        var result = await _service.GetByIdAsync(id);
+        var result =
+            await _service.GetByIdAsync(id);
 
         if (result == null)
             return NotFound();
@@ -222,3 +393,7 @@ public class RiskPredictionsController : ControllerBase
         return Ok(result);
     }
 }
+
+
+
+

@@ -1,4 +1,4 @@
-using ReliefNexus.API.AI.Engines;
+﻿using ReliefNexus.API.AI.Engines;
 using ReliefNexus.API.AI.Tools;
 using ReliefNexus.API.DTOs;
 
@@ -25,10 +25,6 @@ public class RiskPredictionAgent
     {
         var enriched = request;
 
-        // =========================================
-        // REAL WEATHER DATA
-        // =========================================
-
         if (request.Latitude.HasValue &&
             request.Longitude.HasValue)
         {
@@ -39,27 +35,14 @@ public class RiskPredictionAgent
 
             if (weather != null)
             {
-                enriched.Temperature =
-                    weather.Temperature;
-
-                enriched.Humidity =
-                    weather.Humidity;
-
-                enriched.WindSpeed =
-                    weather.WindSpeed;
-
-                enriched.Rainfall1h =
-                    weather.Precipitation;
-
+                enriched.Temperature = weather.Temperature;
+                enriched.Humidity = weather.Humidity;
+                enriched.WindSpeed = weather.WindSpeed;
+                enriched.Rainfall1h = weather.Precipitation;
                 enriched.WeatherDataAvailable = true;
-                enriched.WeatherSource =
-                    weather.Source;
+                enriched.WeatherSource = weather.Source;
             }
         }
-
-        // =========================================
-        // REAL DISASTER EVENT DATA
-        // =========================================
 
         var externalEvents =
             await _disasterDataTool.GetRecentEventsAsync();
@@ -76,10 +59,6 @@ public class RiskPredictionAgent
                     Longitude = x.Longitude
                 })
                 .ToList();
-
-        // =========================================
-        // RISK ENGINE
-        // =========================================
 
         return _riskEngine.Calculate(enriched);
     }
