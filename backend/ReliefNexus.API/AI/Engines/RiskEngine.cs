@@ -215,38 +215,83 @@ public class RiskEngine
     // =====================================================
 
     private static DisasterRiskDto CalculateDrought(
-        RiskPredictionDto x)
+    RiskPredictionDto x)
+{
+    var hasRainfall =
+        x.Rainfall24h >= 0;
+
+    var hasForecast =
+        x.ForecastRainfall >= 0;
+
+    var hasTemperature =
+        x.WeatherDataAvailable;
+
+    var hasHumidity =
+        x.WeatherDataAvailable;
+
+    var hasSoilMoisture =
+        x.SoilMoisture > 0;
+
+    if (!hasRainfall &&
+        !hasForecast &&
+        !hasTemperature &&
+        !hasHumidity &&
+        !hasSoilMoisture)
     {
-        var droughtInputsAvailable =
-            x.Rainfall24h > 0 ||
-            x.ForecastRainfall > 0 ||
-            x.SoilMoisture > 0;
-
-        if (!droughtInputsAvailable)
-        {
-            return new DisasterRiskDto
-            {
-                DisasterType = "Drought",
-                RiskScore = null,
-                RiskLevel = "No Data",
-                DataAvailable = false,
-                DataSource = "Insufficient drought data"
-            };
-        }
-
-        var score =
-            (1 - Normalize(x.Rainfall24h, 250)) * 35 +
-            (1 - Normalize(x.ForecastRainfall, 200)) * 20 +
-            Normalize(x.Temperature, 45) * 20 +
-            (1 - Normalize(x.Humidity, 100)) * 10 +
-            (1 - Normalize(x.SoilMoisture, 100)) * 15;
-
-        return AvailableRisk(
+        return UnavailableRisk(
             "Drought",
-            score,
-            "Open-Meteo + Local Risk Inputs");
+            "Insufficient drought data");
     }
-    // =====================================================
+
+    var weightedScore = 0.0;
+    var totalWeight = 0.0;
+
+    if (hasRainfall)
+    {
+        weightedScore +=
+            (1 - Normalize(x.Rainfall24h, 250)) * 30;
+        totalWeight += 30;
+    }
+
+    if (hasForecast)
+    {
+        weightedScore +=
+            (1 - Normalize(x.ForecastRainfall, 200)) * 20;
+        totalWeight += 20;
+    }
+
+    if (hasTemperature)
+    {
+        weightedScore +=
+            Normalize(x.Temperature, 45) * 20;
+        totalWeight += 20;
+    }
+
+    if (hasHumidity)
+    {
+        weightedScore +=
+            (1 - Normalize(x.Humidity, 100)) * 15;
+        totalWeight += 15;
+    }
+
+    if (hasSoilMoisture)
+    {
+        weightedScore +=
+            (1 - Normalize(x.SoilMoisture, 1.0)) * 15;
+        totalWeight += 15;
+    }
+
+    var score =
+        totalWeight > 0
+            ? weightedScore / totalWeight * 100
+            : 0;
+
+    return AvailableRisk(
+        "Drought",
+        score,
+        "Open-Meteo + Local Risk Inputs");
+}
+// =====================================================
     // WILDFIRE
     // =====================================================
 
@@ -295,7 +340,7 @@ public class RiskEngine
     if (events.Count == 0)
         return UnavailableRisk(
             "Earthquake",
-            "GDACS");
+            "USGS + GDACS");
 
     var nearest =
         GetNearestEvent(
@@ -308,6 +353,115 @@ public class RiskEngine
     {
         return UnavailableRisk(
             "Earthquake",
+            "USGS + GDACS");
+    }
+
+    var distance =
+        CalculateDistanceKm(
+            x.Latitude,
+            x.Longitude,
+            nearest.Latitude,
+            nearest.Longitude);
+
+    if (distance > 500)
+    {
+        return UnavailableRisk(
+            "Earthquake",
+            "No locally relevant earthquake event");
+    }
+
+    var distanceScore =
+        distance <= 50 ? 90 :
+        distance <= 100 ? 75 :
+        distance <= 250 ? 55 :
+        30;
+
+    double magnitudeScore;
+
+    if (nearest.Magnitude.HasValue)
+    {
+        var magnitude =
+            nearest.Magnitude.Value;
+
+        magnitudeScore =
+            magnitude < 4.0 ? 20 :
+            magnitude < 5.0 ? 40 :
+            magnitude < 6.0 ? 60 :
+            magnitude < 7.0 ? 80 :
+            100;
+    }
+    else
+    {
+        magnitudeScore =
+            string.Equals(
+                nearest.AlertLevel,
+                "Red",
+                StringComparison.OrdinalIgnoreCase) ? 100 :
+            string.Equals(
+                nearest.AlertLevel,
+                "Orange",
+                StringComparison.OrdinalIgnoreCase) ? 75 :
+            string.Equals(
+                nearest.AlertLevel,
+                "Green",
+                StringComparison.OrdinalIgnoreCase) ? 40 :
+            20;
+    }
+
+    var score =
+        Math.Round(
+            (distanceScore * 0.60) +
+            (magnitudeScore * 0.40),
+            2);
+
+    var source =
+        nearest.EventId.StartsWith(
+            "USGS-",
+            StringComparison.OrdinalIgnoreCase)
+            ? "USGS"
+            : "GDACS";
+
+    return AvailableRisk(
+        "Earthquake",
+        score,
+        source);
+}
+// =====================================================
+// TSUNAMI - ACTUAL GDACS EVENTS
+    // =====================================================
+
+    private static DisasterRiskDto CalculateTsunami(
+    RiskPredictionDto x)
+{
+    var events =
+        x.ExternalEvents
+            .Where(e =>
+                e.EventType.Equals(
+                    "TS",
+                    StringComparison.OrdinalIgnoreCase))
+            .Where(e =>
+                e.Latitude.HasValue &&
+                e.Longitude.HasValue)
+            .ToList();
+
+    if (events.Count == 0)
+    {
+        return UnavailableRisk(
+            "Tsunami",
+            "GDACS");
+    }
+
+    var nearest =
+        GetNearestEvent(
+            x,
+            events);
+
+    if (nearest == null ||
+        !nearest.Latitude.HasValue ||
+        !nearest.Longitude.HasValue)
+    {
+        return UnavailableRisk(
+            "Tsunami",
             "GDACS");
     }
 
@@ -318,22 +472,19 @@ public class RiskEngine
             nearest.Latitude,
             nearest.Longitude);
 
-    // Keep the GDACS earthquake calculation unchanged for
-    // locally relevant events, but do not treat a distant
-    // global earthquake as a local risk.
     if (distance > 500)
+    {
         return UnavailableRisk(
-            "Earthquake",
-            "No locally relevant GDACS earthquake event");
+            "Tsunami",
+            "No locally relevant GDACS tsunami event");
+    }
 
-    // Local relevance is based primarily on distance.
     var distanceScore =
-        distance <= 50 ? 90 :
-        distance <= 100 ? 75 :
-        distance <= 250 ? 55 :
-        30;
+        distance <= 50 ? 100 :
+        distance <= 100 ? 90 :
+        distance <= 250 ? 75 :
+        50;
 
-    // GDACS alert severity provides a secondary factor.
     var alertScore =
         string.Equals(
             nearest.AlertLevel,
@@ -356,58 +507,11 @@ public class RiskEngine
             2);
 
     return AvailableRisk(
-        "Earthquake",
+        "Tsunami",
         score,
         "GDACS");
 }
-
 // =====================================================
-// TSUNAMI - ACTUAL GDACS EVENTS
-    // =====================================================
-
-    private static DisasterRiskDto CalculateTsunami(
-        RiskPredictionDto x)
-    {
-        var events =
-            x.ExternalEvents
-                .Where(e =>
-                    e.EventType.Equals(
-                        "TS",
-                        StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-        if (events.Count == 0)
-            return UnavailableRisk(
-                "Tsunami",
-                "GDACS");
-
-        var nearest =
-            GetNearestEvent(
-                x,
-                events);
-
-        var distance =
-            nearest == null
-                ? double.MaxValue
-                : CalculateDistanceKm(
-                    x.Latitude,
-                    x.Longitude,
-                    nearest.Latitude,
-                    nearest.Longitude);
-
-        var score =
-            distance <= 100 ? 95 :
-            distance <= 250 ? 80 :
-            distance <= 500 ? 60 :
-            35;
-
-        return AvailableRisk(
-            "Tsunami",
-            score,
-            "GDACS");
-    }
-
-    // =====================================================
     // LIGHTNING
     // =====================================================
 
@@ -475,48 +579,87 @@ public class RiskEngine
     // =====================================================
 
     private static DisasterRiskDto CalculateVolcanic(
-        RiskPredictionDto x)
+    RiskPredictionDto x)
+{
+    var events =
+        x.ExternalEvents
+            .Where(e =>
+                e.EventType.Equals(
+                    "VO",
+                    StringComparison.OrdinalIgnoreCase))
+            .Where(e =>
+                e.Latitude.HasValue &&
+                e.Longitude.HasValue)
+            .ToList();
+
+    if (events.Count == 0)
     {
-        var events =
-            x.ExternalEvents
-                .Where(e =>
-                    e.EventType.Equals(
-                        "VO",
-                        StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-        if (events.Count == 0)
-            return UnavailableRisk(
-                "Volcanic Eruption",
-                "GDACS");
-
-        var nearest =
-            GetNearestEvent(
-                x,
-                events);
-
-        var distance =
-            nearest == null
-                ? double.MaxValue
-                : CalculateDistanceKm(
-                    x.Latitude,
-                    x.Longitude,
-                    nearest.Latitude,
-                    nearest.Longitude);
-
-        var score =
-            distance <= 100 ? 95 :
-            distance <= 250 ? 80 :
-            distance <= 500 ? 60 :
-            30;
-
-        return AvailableRisk(
+        return UnavailableRisk(
             "Volcanic Eruption",
-            score,
             "GDACS");
     }
 
-    // =====================================================
+    var nearest =
+        GetNearestEvent(
+            x,
+            events);
+
+    if (nearest == null ||
+        !nearest.Latitude.HasValue ||
+        !nearest.Longitude.HasValue)
+    {
+        return UnavailableRisk(
+            "Volcanic Eruption",
+            "GDACS");
+    }
+
+    var distance =
+        CalculateDistanceKm(
+            x.Latitude,
+            x.Longitude,
+            nearest.Latitude,
+            nearest.Longitude);
+
+    if (distance > 500)
+    {
+        return UnavailableRisk(
+            "Volcanic Eruption",
+            "No locally relevant GDACS volcanic event");
+    }
+
+    var distanceScore =
+        distance <= 50 ? 100 :
+        distance <= 100 ? 90 :
+        distance <= 250 ? 75 :
+        50;
+
+    var alertScore =
+        string.Equals(
+            nearest.AlertLevel,
+            "Red",
+            StringComparison.OrdinalIgnoreCase) ? 100 :
+        string.Equals(
+            nearest.AlertLevel,
+            "Orange",
+            StringComparison.OrdinalIgnoreCase) ? 75 :
+        string.Equals(
+            nearest.AlertLevel,
+            "Green",
+            StringComparison.OrdinalIgnoreCase) ? 40 :
+        20;
+
+    var score =
+        Math.Round(
+            (distanceScore * 0.70) +
+            (alertScore * 0.30),
+            2);
+
+    return AvailableRisk(
+        "Volcanic Eruption",
+        score,
+        "GDACS");
+}
+// =====================================================
     // AVALANCHE
     // =====================================================
 
@@ -903,7 +1046,7 @@ public class RiskEngine
                     Value = x.SoilMoisture,
                     Impact = x.SoilMoisture <= 0 ? "No Data" : "Dryness Indicator",
                     Contribution = Math.Round(
-                        (1 - Normalize(x.SoilMoisture, 100)) * 15, 2)
+                        (1 - Normalize(x.SoilMoisture, 1.0)) * 15, 2)
                 }
             },
 
@@ -1152,8 +1295,9 @@ public class RiskEngine
                     x.Event.AlertLevel,
                 Latitude =
                     x.Event.Latitude,
-                Longitude =
-                    x.Event.Longitude
+                Longitude = x.Event.Longitude,
+                Magnitude = x.Event.Magnitude,
+                DepthKm = x.Event.DepthKm
             })
             .FirstOrDefault();
     }
@@ -1210,4 +1354,11 @@ public class RiskEngine
                180.0;
     }
 }
+
+
+
+
+
+
+
 

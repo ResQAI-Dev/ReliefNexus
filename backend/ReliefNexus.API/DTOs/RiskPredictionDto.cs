@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace ReliefNexus.API.DTOs;
 
@@ -11,6 +11,10 @@ public class RiskPredictionDto
     public double? Latitude { get; set; }
 
     public double? Longitude { get; set; }
+
+    public double? Magnitude { get; set; }
+
+    public double? DepthKm { get; set; }
 
     public double Rainfall1h { get; set; }
 
@@ -74,6 +78,9 @@ public class RiskPredictionDto
     public List<ExternalDisasterEventDto> ExternalEvents { get; set; } = new();
 
     [JsonIgnore]
+    public bool SoilMoistureDataAvailable { get; set; }
+
+    [JsonIgnore]
     public bool WeatherDataAvailable { get; set; }
 
     [JsonIgnore]
@@ -117,4 +124,12 @@ public class ExternalDisasterEventDto
     public double? Latitude { get; set; }
 
     public double? Longitude { get; set; }
+
+    public double? Magnitude { get; set; }
+
+    public double? DepthKm { get; set; }
 }
+
+
+
+

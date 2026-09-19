@@ -35,31 +35,80 @@ public class RiskPredictionAgent
 
             if (weather != null)
             {
-                enriched.Temperature = weather.Temperature;
-                enriched.Humidity = weather.Humidity;
-                enriched.WindSpeed = weather.WindSpeed;
-                enriched.Rainfall1h = weather.Precipitation;
-                enriched.WeatherDataAvailable = true;
-                enriched.WeatherSource = weather.Source;
+                enriched.Temperature =
+                    weather.Temperature;
+
+                enriched.Humidity =
+                    weather.Humidity;
+
+                enriched.WindSpeed =
+                    weather.WindSpeed;
+
+                enriched.Rainfall1h =
+                    weather.Precipitation;
+
+                enriched.Rainfall3h =
+                    weather.Rainfall3h;
+
+                enriched.Rainfall24h =
+                    weather.Rainfall24h;
+
+                enriched.ForecastRainfall =
+                    weather.ForecastRainfall;
+
+                if (weather.SoilMoisture.HasValue)
+                {
+                    enriched.SoilMoisture =
+                        weather.SoilMoisture.Value;
+
+                    enriched.SoilMoistureDataAvailable =
+                        true;
+                }
+
+                enriched.WeatherDataAvailable =
+                    true;
+
+                enriched.WeatherSource =
+                    weather.Source;
             }
         }
 
         var externalEvents =
-            await _disasterDataTool.GetRecentEventsAsync();
+            await _disasterDataTool.GetRecentEventsAsync(
+                request.Latitude,
+                request.Longitude);
 
         enriched.ExternalEvents =
             externalEvents
                 .Select(x => new ExternalDisasterEventDto
                 {
-                    EventType = x.EventType,
-                    EventId = x.EventId,
-                    Name = x.Name,
-                    AlertLevel = x.AlertLevel,
-                    Latitude = x.Latitude,
-                    Longitude = x.Longitude
+                    EventType =
+                        x.EventType,
+
+                    EventId =
+                        x.EventId,
+
+                    Name =
+                        x.Name,
+
+                    AlertLevel =
+                        x.AlertLevel,
+
+                    Latitude =
+                        x.Latitude,
+
+                    Longitude =
+                        x.Longitude,
+
+                    Magnitude =
+                        x.Magnitude,
+
+                    DepthKm =
+                        x.DepthKm
                 })
                 .ToList();
 
-        return _riskEngine.Calculate(enriched);
+        return _riskEngine.Calculate(
+            enriched);
     }
 }

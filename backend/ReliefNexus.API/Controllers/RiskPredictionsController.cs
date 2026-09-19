@@ -179,15 +179,11 @@ public class RiskPredictionsController : ControllerBase
                 {
                     Latitude = latitude,
                     Longitude = longitude,
-
-                    // Open-Meteo current precipitation.
-                    Rainfall1h =
-                        weather?.Precipitation,
-
-                    // Current WeatherTool does not provide
-                    // separate 3h/24h rainfall totals.
-                    rainfall3h = (double?)null,
-                    rainfall24h = (double?)null,
+                    // Open-Meteo weather data
+                    Rainfall1h = weather?.Precipitation,
+                    Rainfall3h = weather?.Rainfall3h,
+                    Rainfall24h = weather?.Rainfall24h,
+                    ForecastRainfall = weather?.ForecastRainfall,
 
                     RiverLevel =
                         river?.RiverLevel,
@@ -393,6 +389,9 @@ public class RiskPredictionsController : ControllerBase
         return Ok(result);
     }
 }
+
+
+
 
 
 
