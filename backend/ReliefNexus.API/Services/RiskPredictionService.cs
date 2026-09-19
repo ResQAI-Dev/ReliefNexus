@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using ReliefNexus.API.AI.Agents;
 using ReliefNexus.API.Data;
 using ReliefNexus.API.DTOs;
@@ -21,10 +21,11 @@ public class RiskPredictionService : IRiskPredictionService
     }
 
     public async Task<RiskPredictionDto> CreateAsync(
-        RiskPredictionDto request)
+        RiskPredictionDto request,
+        Guid executionId)
     {
         var agentResult =
-            await _agent.RunAsync(request);
+            await _agent.RunAsync(request, executionId);
 
         var prediction = new RiskPrediction
         {
@@ -605,3 +606,6 @@ public class RiskPredictionService : IRiskPredictionService
         };
     }
 }
+
+
+

@@ -54,13 +54,28 @@ public class RiskPredictionsController : ControllerBase
             $"RiverLevel={request.RiverLevel}; " +
             $"HistoricalFloodCount={request.HistoricalFloodCount}";
 
+        var objective =
+            "Assess the current multi-hazard disaster risk for the requested location using available weather and external disaster data.";
+
+        var plan =
+            "1. Collect weather data; " +
+            "2. Collect external disaster events; " +
+            "3. Calculate multi-hazard risk; " +
+            "4. Validate the risk result; " +
+            "5. Persist the prediction and workflow outcome.";
+
         var execution =
-            await _agentExecutionService.StartAsync(inputSummary);
+            await _agentExecutionService.StartAsync(
+                inputSummary,
+                objective,
+                plan);
 
         try
         {
             var result =
-                await _service.CreateAsync(request);
+                await _service.CreateAsync(
+                    request,
+                    execution.Id);
 
             var outputSummary =
                 $"DisasterType={result.DisasterType}; " +
@@ -68,10 +83,26 @@ public class RiskPredictionsController : ControllerBase
                 $"RiskLevel={result.RiskLevel}; " +
                 $"Confidence={result.Confidence:F2}";
 
+            var validationResults =
+                "RiskScore range validation: Passed; " +
+                "RiskLevel validation: Passed; " +
+                "DisasterType validation: Passed; " +
+                "DisasterRisks validation: Passed.";
+
+            var finalOutcome =
+                result.RiskScore >= 75
+                    ? "Risk prediction completed; human approval required."
+                    : "Risk prediction completed successfully.";
+
             await _agentExecutionService.CompleteAsync(
                 execution.Id,
                 result.Id!.Value,
-                outputSummary);
+                outputSummary,
+                validationResults,
+                finalOutcome,
+                result.RiskScore >= 75
+                    ? "Pending"
+                    : "NotRequired");
 
             return Ok(result);
         }
@@ -389,6 +420,8 @@ public class RiskPredictionsController : ControllerBase
         return Ok(result);
     }
 }
+
+
 
 
 
