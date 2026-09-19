@@ -70,6 +70,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IWarningService, WarningService>();
 builder.Services.AddScoped<IWarningApprovalService, WarningApprovalService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 // ======================================================
 // JWT AUTHENTICATION
 // ======================================================
