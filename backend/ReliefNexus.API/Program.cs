@@ -12,10 +12,9 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ======================================================
+// ===============================================
 // SERVICES
-// ======================================================
-
+// ===============================================
 // Controllers
 builder.Services.AddControllers();
 builder.Services.AddCors(options =>
@@ -32,10 +31,9 @@ builder.Services.AddCors(options =>
 // API Explorer
 builder.Services.AddEndpointsApiExplorer();
 
-// ======================================================
+// ===============================================
 // SWAGGER + JWT
-// ======================================================
-
+// ===============================================
 builder.Services.AddSwaggerGen(options =>
 {
     // JWT Bearer authentication
@@ -55,20 +53,16 @@ builder.Services.AddSwaggerGen(options =>
         });
 });
 
-// ======================================================
-// DATABASE
-// ======================================================
-
+// ===============================================// DATABASE
+// ===============================================
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection")
     )
 );
 
-// ======================================================
-// DEPENDENCY INJECTION
-// ======================================================
-
+// ===============================================// DEPENDENCY INJECTION
+// ===============================================
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRiskPredictionService, RiskPredictionService>();
 builder.Services.AddScoped<RiskPredictionAgent>();
@@ -78,13 +72,17 @@ builder.Services.AddHttpClient<WeatherTool>();
 builder.Services.AddScoped<IAgentExecutionService, AgentExecutionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
-// Component 2 – Population Vulnerability & Impact Assessment
+// Component 2 Ã¢â‚¬â€œ Population Vulnerability & Impact Assessment
 builder.Services.AddScoped<IVulnerabilityService, VulnerabilityService>();
 
-// ======================================================
+builder.Services.AddScoped<IWarningService, WarningService>();
+builder.Services.AddScoped<IWarningApprovalService, WarningApprovalService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<ICoordinationTaskService, CoordinationTaskService>();
+builder.Services.AddScoped<IWarningAffectedAreaService, WarningAffectedAreaService>();
+// ===============================================
 // JWT AUTHENTICATION
-// ======================================================
-
+// ===============================================
 builder.Services.AddAuthentication(
     JwtBearerDefaults.AuthenticationScheme
 )
@@ -119,30 +117,22 @@ builder.Services.AddAuthentication(
     };
 });
 
-// ======================================================
-// AUTHORIZATION
-// ======================================================
-
+// ===============================================// AUTHORIZATION
+// ===============================================
 builder.Services.AddAuthorization();
 
-// ======================================================
-// BUILD APPLICATION
-// ======================================================
-
+// ===============================================// BUILD APPLICATION
+// ===============================================
 var app = builder.Build();
 
-// ======================================================
-// INITIAL DATA SEEDING
-// ======================================================
-
+// ===============================================// INITIAL DATA SEEDING
+// ===============================================
 await SeedData.InitializeAsync(
     app.Services,
     app.Configuration);
 
-// ======================================================
-// HTTP REQUEST PIPELINE
-// ======================================================
-
+// ===============================================// HTTP REQUEST PIPELINE
+// ===============================================
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -164,10 +154,8 @@ app.UseAuthorization();
 // Controllers
 app.MapControllers();
 
-// ======================================================
-// RUN
-// ======================================================
-
+// ===============================================// RUN
+// ===============================================
 app.Run();
 
 
