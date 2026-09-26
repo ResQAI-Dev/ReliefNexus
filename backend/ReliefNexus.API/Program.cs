@@ -71,6 +71,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IWarningService, WarningService>();
 builder.Services.AddScoped<IWarningApprovalService, WarningApprovalService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<ICoordinationTaskService, CoordinationTaskService>();
+builder.Services.AddScoped<IWarningAffectedAreaService, WarningAffectedAreaService>();
 // ======================================================
 // JWT AUTHENTICATION
 // ======================================================
