@@ -15,6 +15,9 @@ public class AppDbContext : DbContext
     public DbSet<WarningApproval> WarningApprovals { get; set; }
 
     public DbSet<Notification> Notifications { get; set; }
+
+    public DbSet<WarningAffectedArea> WarningAffectedAreas { get; set; }
+    public DbSet<CoordinationTask> CoordinationTasks { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
