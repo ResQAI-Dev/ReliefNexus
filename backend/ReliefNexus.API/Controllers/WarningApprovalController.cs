@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ReliefNexus.API.Interfaces;
 using System.Security.Claims;
-
+using ReliefNexus.API.DTOs;
 namespace ReliefNexus.API.Controllers;
 
 [ApiController]
@@ -127,7 +127,25 @@ public class WarningApprovalsController : ControllerBase
             message = "Warning sent back for revision."
         });
     }
+    [HttpPost("{id:guid}/publish")]
+    [Authorize(Roles = "SystemAdministrator")]
+    public async Task<IActionResult> Publish(Guid id)
+    {
+        var success = await _approvalService.PublishAsync(id);
 
+        if (!success)
+        {
+            return BadRequest(new
+            {
+                message = "Warning cannot be published."
+            });
+        }
+
+        return Ok(new
+        {
+            message = "Warning published successfully."
+        });
+    }
     private Guid? GetCurrentUserId()
     {
         var value = User.FindFirst(
@@ -137,7 +155,80 @@ public class WarningApprovalsController : ControllerBase
             ? id
             : null;
     }
+
+    [HttpPost("{id:guid}/cancel")]
+    [Authorize(Roles = "ReliefCoordinator,SystemAdministrator")]
+    public async Task<IActionResult> Cancel(
+    Guid id,
+    [FromBody] CancelWarningRequest request)
+    {
+        var success = await _approvalService.CancelAsync(
+            id,
+            request.Reason);
+
+        if (!success)
+        {
+            return BadRequest(new
+            {
+                message = "Warning cannot be cancelled."
+            });
+        }
+
+        return Ok(new
+        {
+            message = "Warning cancelled successfully."
+        });
+    }
+
+    [HttpPost("{id:guid}/escalate")]
+    [Authorize(Roles = "ReliefCoordinator,SystemAdministrator")]
+    public async Task<IActionResult> Escalate(
+    Guid id,
+    [FromBody] EscalateWarningRequest request)
+    {
+        var success = await _approvalService.EscalateAsync(
+            id,
+            request.NewSeverity,
+            request.Reason);
+
+        if (!success)
+        {
+            return BadRequest(new
+            {
+                message = "Warning cannot be escalated."
+            });
+        }
+
+        return Ok(new
+        {
+            message = "Warning escalated successfully."
+        });
+    }
+
+    [HttpPost("{id:guid}/expire")]
+[Authorize(Roles = "ReliefCoordinator,SystemAdministrator")]
+public async Task<IActionResult> Expire(Guid id)
+{
+    var success = await _approvalService.ExpireAsync(id);
+
+    if (!success)
+    {
+        return BadRequest(new
+        {
+            message = "Warning cannot be expired."
+        });
+    }
+
+    return Ok(new
+    {
+        message = "Warning expired successfully."
+    });
 }
+}
+
+
+
+
 
 public class ApprovalDecisionRequest
 {
