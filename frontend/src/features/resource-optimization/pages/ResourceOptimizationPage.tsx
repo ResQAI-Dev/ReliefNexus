@@ -1,4 +1,4 @@
-﻿import {
+import {
   Activity,
   AlertTriangle,
   Boxes,
@@ -562,6 +562,31 @@ function KpiCard({
   );
 }
 
+
+
+function IntelligenceMetric({
+  label,
+  value,
+  subtitle,
+}: {
+  label: string;
+  value: string | number;
+  subtitle: string;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white px-3.5 py-3 shadow-sm">
+      <p className="text-[8px] font-black uppercase tracking-wider text-slate-400">
+        {label}
+      </p>
+      <p className="mt-1 text-lg font-black text-slate-900">
+        {value}
+      </p>
+      <p className="mt-0.5 text-[8px] text-slate-400">
+        {subtitle}
+      </p>
+    </div>
+  );
+}
 
 /* =========================================================
    SELECTED ASSESSMENT MINI MAP
@@ -2401,6 +2426,75 @@ export default function ResourceOptimizationPage() {
       .filter((resource) => resource.required > 0);
   }, [demandReport]);
 
+  const resourceIntelligence = useMemo(() => {
+    const required = workflowPlan.reduce(
+      (sum, item) => sum + Math.max(Number(item.required) || 0, 0),
+      0
+    );
+    const available = workflowPlan.reduce(
+      (sum, item) => sum + Math.max(Number(item.available) || 0, 0),
+      0
+    );
+    const recommended = workflowPlan.reduce(
+      (sum, item) => sum + Math.max(Number(item.recommended) || 0, 0),
+      0
+    );
+    const gap = workflowPlan.reduce(
+      (sum, item) => sum + Math.max(Number(item.gap) || 0, 0),
+      0
+    );
+    const allocated = selectedRecentAllocations.reduce(
+      (sum, item) =>
+        sum + Math.max(Number(item.recommendedQuantity) || 0, 0),
+      0
+    );
+
+    const coverage =
+      required > 0 ? Math.min(100, (recommended / required) * 100) : 0;
+
+    const shortageItems = workflowPlan
+      .filter((item) => Number(item.gap) > 0)
+      .sort((a, b) => Number(b.gap) - Number(a.gap));
+
+    const recommendations: string[] = [];
+
+    if (shortageItems.length > 0) {
+      recommendations.push(
+        `${shortageItems.length} resource type(s) have a calculated shortage. Prioritize additional supply before full response coverage.`
+      );
+    }
+
+    if (available < required && required > 0) {
+      recommendations.push(
+        `Live available inventory (${available.toLocaleString()}) is below calculated demand (${required.toLocaleString()}).`
+      );
+    }
+
+    if (allocated > 0) {
+      recommendations.push(
+        `${allocated.toLocaleString()} units are already linked to this Agent 02 assessment in the live allocation records.`
+      );
+    }
+
+    if (recommendations.length === 0) {
+      recommendations.push(
+        "Current calculated demand is covered by the available resource plan."
+      );
+    }
+
+    return {
+      required,
+      available,
+      recommended,
+      allocated,
+      gap,
+      coverage,
+      shortageItems,
+      recommendations,
+      priority: getAgent03Priority(currentAssessment) || "High",
+    };
+  }, [workflowPlan, selectedRecentAllocations, currentAssessment]);
+
   const workflowTotals = useMemo(
     () => ({
       resources: workflowPlan.length,
@@ -3368,6 +3462,262 @@ export default function ResourceOptimizationPage() {
           <KpiCard title="Allocated" value={inventorySummary.allocated.toLocaleString()} subtitle="Currently allocated" icon={<PackageCheck size={18} />} iconClass="bg-red-50 text-red-600" />
           <KpiCard title="Utilization Rate" value={`${inventorySummary.utilization}%`} subtitle="Current allocation rate" icon={<Activity size={18} />} iconClass="bg-emerald-50 text-emerald-600" />
         </div>
+
+        {/* AGENT 03 RESOURCE INTELLIGENCE */}
+        {currentAssessment && demandReport && (
+          <section className="overflow-hidden rounded-2xl border border-indigo-100 bg-white shadow-sm">
+            <div className="border-b border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-blue-50 px-5 py-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm">
+                      <Sparkles size={15} />
+                    </span>
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-[0.16em] text-indigo-600">
+                        Agent 03 · Resource Intelligence
+                      </p>
+                      <h2 className="mt-0.5 text-base font-black text-slate-900">
+                        Demand, Coverage & Optimization Analysis
+                      </h2>
+                    </div>
+                  </div>
+                  <p className="mt-2 text-[10px] leading-5 text-slate-500">
+                    Live Agent 02 assessment context compared against the real Agent 03 demand and inventory data.
+                  </p>
+                </div>
+
+                <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-[9px] font-black text-indigo-700">
+                  <Activity size={12} />
+                  {resourceIntelligence.priority} Priority
+                </span>
+              </div>
+            </div>
+
+            <div className="p-5">
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                <IntelligenceMetric
+                  label="Required"
+                  value={resourceIntelligence.required.toLocaleString()}
+                  subtitle="Calculated demand"
+                />
+                <IntelligenceMetric
+                  label="Allocated"
+                  value={resourceIntelligence.allocated.toLocaleString()}
+                  subtitle="Saved allocations"
+                />
+                <IntelligenceMetric
+                  label="Live Available"
+                  value={resourceIntelligence.available.toLocaleString()}
+                  subtitle="Inventory capacity"
+                />
+                <IntelligenceMetric
+                  label="Coverage"
+                  value={`${resourceIntelligence.coverage.toFixed(1)}%`}
+                  subtitle={
+                    resourceIntelligence.gap > 0
+                      ? `${resourceIntelligence.gap.toLocaleString()} units gap`
+                      : "Fully covered"
+                  }
+                />
+              </div>
+
+              <div className="mt-4 grid gap-4 xl:grid-cols-[1.15fr_.85fr]">
+                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">
+                        Demand vs Supply
+                      </p>
+                      <p className="mt-1 text-xs font-black text-slate-800">
+                        Resource coverage by type
+                      </p>
+                    </div>
+                    <span className="text-[9px] font-bold text-slate-500">
+                      {resourceIntelligence.shortageItems.length} gaps
+                    </span>
+                  </div>
+
+                  <div className="mt-3 space-y-2.5">
+                    {workflowPlan.slice(0, 6).map((item) => {
+                      const itemCoverage =
+                        item.required > 0
+                          ? Math.min(
+                              100,
+                              (item.recommended / item.required) * 100
+                            )
+                          : 100;
+
+                      return (
+                        <div
+                          key={`${item.resourceId}-${item.resourceType}-${item.resourceName}`}
+                          className="rounded-xl border border-white bg-white p-3 shadow-sm"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="truncate text-[10px] font-black text-slate-800">
+                                {item.resourceName}
+                              </p>
+                              <p className="mt-0.5 text-[8px] text-slate-400">
+                                {item.location || "Location not specified"}
+                              </p>
+                            </div>
+
+                            <span
+                              className={`rounded-full px-2 py-1 text-[8px] font-black ${
+                                item.gap > 0
+                                  ? "bg-amber-50 text-amber-700"
+                                  : "bg-emerald-50 text-emerald-700"
+                              }`}
+                            >
+                              {item.gap > 0
+                                ? `Short ${item.gap.toLocaleString()}`
+                                : "Covered"}
+                            </span>
+                          </div>
+
+                          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                            <div
+                              className="h-full rounded-full bg-indigo-500"
+                              style={{ width: `${itemCoverage}%` }}
+                            />
+                          </div>
+
+                          <div className="mt-1.5 flex justify-between text-[8px] text-slate-400">
+                            <span>
+                              Required {item.required.toLocaleString()}
+                            </span>
+                            <span>
+                              Available {item.available.toLocaleString()}
+                            </span>
+                            <span>
+                              Plan {item.recommended.toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+                    <div className="flex items-center gap-2">
+                      <ShieldAlert size={15} className="text-blue-600" />
+                      <p className="text-[9px] font-black uppercase tracking-wider text-blue-600">
+                        Agent 03 Recommendation
+                      </p>
+                    </div>
+
+                    <p className="mt-2 text-[10px] leading-5 text-slate-700">
+                      The recommendation below is derived from the live demand report, available inventory and saved allocation records.
+                    </p>
+
+                    <div className="mt-3 space-y-2">
+                      {resourceIntelligence.recommendations.map(
+                        (recommendation, index) => (
+                          <div
+                            key={recommendation}
+                            className="flex gap-2 rounded-lg border border-white bg-white px-3 py-2.5"
+                          >
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[8px] font-black text-white">
+                              {index + 1}
+                            </span>
+                            <p className="text-[9px] leading-4 text-slate-600">
+                              {recommendation}
+                            </p>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-[9px] font-black uppercase tracking-wider text-amber-700">
+                          Resource Shortage Alerts
+                        </p>
+                        <p className="mt-1 text-[10px] text-slate-500">
+                          Items requiring additional supply or allocation.
+                        </p>
+                      </div>
+
+                      <span className="rounded-full bg-amber-100 px-2 py-1 text-[8px] font-black text-amber-700">
+                        {resourceIntelligence.shortageItems.length}
+                      </span>
+                    </div>
+
+                    {resourceIntelligence.shortageItems.length > 0 ? (
+                      <div className="mt-3 space-y-2">
+                        {resourceIntelligence.shortageItems
+                          .slice(0, 5)
+                          .map((item) => (
+                            <div
+                              key={`${item.resourceId}-${item.resourceName}`}
+                              className="flex items-center justify-between rounded-lg border border-amber-100 bg-white px-3 py-2.5"
+                            >
+                              <div>
+                                <p className="text-[9px] font-black text-slate-800">
+                                  {item.resourceName}
+                                </p>
+                                <p className="text-[8px] text-slate-400">
+                                  {item.location || "Location not specified"}
+                                </p>
+                              </div>
+
+                              <div className="text-right">
+                                <p className="text-[10px] font-black text-amber-700">
+                                  -{item.gap.toLocaleString()}
+                                </p>
+                                <p className="text-[7px] text-slate-400">
+                                  units
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    ) : (
+                      <div className="mt-3 rounded-lg border border-emerald-100 bg-white px-3 py-3 text-[9px] font-bold text-emerald-700">
+                        No calculated resource shortage in the current demand report.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">
+                    Operational decision
+                  </p>
+                  <p className="mt-1 text-[10px] text-slate-600">
+                    {resourceIntelligence.gap > 0
+                      ? "Additional resources should be considered before full response coverage."
+                      : "Current calculated demand is covered by the saved allocation plan."}
+                  </p>
+                </div>
+
+                <span
+                  className={`inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1.5 text-[9px] font-black ${
+                    resourceIntelligence.gap > 0
+                      ? "bg-amber-50 text-amber-700"
+                      : "bg-emerald-50 text-emerald-700"
+                  }`}
+                >
+                  {resourceIntelligence.gap > 0 ? (
+                    <AlertTriangle size={12} />
+                  ) : (
+                    <Check size={12} />
+                  )}
+                  {resourceIntelligence.gap > 0
+                    ? "Action required"
+                    : "Coverage achieved"}
+                </span>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* AGENT 02 ASSESSMENT EXPLORER */}
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_10px_32px_rgba(15,23,42,0.05)]">

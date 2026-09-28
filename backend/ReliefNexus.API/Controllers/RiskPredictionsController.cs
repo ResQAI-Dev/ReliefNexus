@@ -197,7 +197,12 @@ public class RiskPredictionsController : ControllerBase
         if (userId == null)
             return Unauthorized();
         return Ok(
-            await _service.GetPagedAsync(userId.Value, query, (User.IsInRole("SystemAdministrator") || User.IsInRole("System Administrator") || User.IsInRole("Admin"))));
+            await _service.GetPagedAsync(
+                userId.Value,
+                query,
+                (User.IsInRole("SystemAdministrator") ||
+                 User.IsInRole("Admin") ||
+                 User.IsInRole("ReliefCoordinator"))));
     }
 
     // ============================================================
@@ -399,7 +404,10 @@ public class RiskPredictionsController : ControllerBase
 
         return Ok(
             await _service.GetHistoryAsync(
-                userId.Value));
+                userId.Value,
+                User.IsInRole("SystemAdministrator") ||
+                User.IsInRole("Admin") ||
+                User.IsInRole("ReliefCoordinator")));
     }
 
     // ============================================================

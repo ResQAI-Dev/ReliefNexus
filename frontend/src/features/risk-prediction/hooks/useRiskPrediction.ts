@@ -1,11 +1,9 @@
-﻿import { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   createRiskPrediction,
   explainPrediction,
   getExternalEvents,
-  getPredictionById,
-  getRiskPredictions,
-} from "../services/riskPredictionApi";
+  getPredictionHistory,} from "../services/riskPredictionApi";
 
 import type {
   ExternalDisasterEvent,
@@ -57,105 +55,13 @@ export function useRiskPrediction() {
     setLoadingRecent(true);
 
     try {
-      const response = await getRiskPredictions();
+      const response = await getPredictionHistory();
 
       const items = Array.isArray(response)
         ? response
         : response.items ?? [];
 
-      /*
-       * No records.
-       */
-      if (items.length === 0) {
-        setRecentPredictions([]);
-        return;
-      }
-
-      /*
-       * Fetch complete prediction details.
-       *
-       * If a history record already contains disasterRisks,
-       * there is no need to request it again.
-       */
-      const hydratedResults =
-        await Promise.allSettled(
-          items.map(async (item) => {
-            const existingRisks =
-              Array.isArray(item.disasterRisks)
-                ? item.disasterRisks
-                : [];
-
-            /*
-             * If this record already contains actual risk
-             * data, keep it as-is.
-             */
-            const hasUsableRisk =
-              existingRisks.some(
-                (risk) =>
-                  risk.dataAvailable === true &&
-                  risk.riskScore !== null &&
-                  risk.riskScore !== undefined &&
-                  Number.isFinite(
-                    Number(risk.riskScore)
-                  )
-              );
-
-            if (hasUsableRisk) {
-              return item;
-            }
-
-            /*
-             * History record is only a summary.
-             *
-             * Fetch the complete prediction using its ID.
-             */
-            if (!item.id?.trim()) {
-              return item;
-            }
-
-            try {
-              const fullPrediction =
-                await getPredictionById(item.id);
-
-              return fullPrediction;
-            } catch (err) {
-              /*
-               * One failed historical record must not
-               * prevent the other records from appearing.
-               */
-              console.warn(
-                `Failed to load full prediction ${item.id}:`,
-                err
-              );
-
-              return item;
-            }
-          })
-        );
-
-      /*
-       * Keep successfully resolved prediction objects.
-       *
-       * Promise.allSettled guarantees that one failed
-       * prediction does not break the entire history list.
-       */
-      const hydratedPredictions =
-        hydratedResults
-          .filter(
-            (
-              result
-            ): result is PromiseFulfilledResult<RiskPrediction> =>
-              result.status === "fulfilled"
-          )
-          .map((result) => result.value);
-
-      /*
-       * Preserve backend ordering:
-       * newest prediction first.
-       */
-      setRecentPredictions(
-        hydratedPredictions.slice(0, 10)
-      );
+      setRecentPredictions(items);
     } catch (err) {
       setRecentPredictions([]);
 
@@ -165,21 +71,16 @@ export function useRiskPrediction() {
           : "Failed to load recent predictions.";
 
       console.error(
-        "Failed to load recent risk predictions:",
+        "Failed to load recent risk prediction history:",
         err
       );
 
-      /*
-       * History failure should never prevent
-       * the main prediction feature from working.
-       */
       console.warn(message);
     } finally {
       setLoadingRecent(false);
     }
   }, []);
-
-  /*
+/*
    * ---------------------------------------------------------
    * Load External Events
    * ---------------------------------------------------------

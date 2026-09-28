@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using ReliefNexus.API.AI.Agents;
 using ReliefNexus.API.Data;
 using ReliefNexus.API.DTOs;
@@ -439,6 +439,32 @@ public class RiskPredictionService : IRiskPredictionService
             .ToList();
     }
     public async Task<List<RiskPredictionDto>>
+        GetHistoryAsync(
+            Guid userId,
+            bool includeAll)
+    {
+        var query =
+            _context.RiskPredictions
+                .Include(x => x.RiskFactors)
+                .AsQueryable();
+
+        if (!includeAll)
+        {
+            query = query.Where(
+                x => x.UserId == userId);
+        }
+
+        var predictions =
+            await query
+                .OrderByDescending(
+                    x => x.CreatedAt)
+                .ToListAsync();
+
+        return predictions
+            .Select(MapToDto)
+            .ToList();
+    }
+    public async Task<List<RiskPredictionDto>>
         GetPendingApprovalAsync()
     {
         var predictions =
@@ -663,6 +689,7 @@ public class RiskPredictionService : IRiskPredictionService
         };
     }
 }
+
 
 
 

@@ -25,6 +25,10 @@ public interface IRiskPredictionService
 
     Task<List<RiskPredictionDto>> GetHistoryAsync(Guid userId);
 
+    Task<List<RiskPredictionDto>> GetHistoryAsync(
+        Guid userId,
+        bool includeAll);
+
     Task<List<RiskPredictionDto>> GetPendingApprovalAsync();
 
     Task<RiskPredictionDto?> ApproveAsync(Guid id);

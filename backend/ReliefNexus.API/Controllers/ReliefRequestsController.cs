@@ -1,4 +1,4 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +20,7 @@ public class ReliefRequestsController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "SystemAdministrator")]
+    [Authorize(Roles = "SystemAdministrator,ReliefCoordinator")]
     public async Task<ActionResult<List<ReliefRequestDto>>> GetAll()
     {
         return Ok(await _service.GetAllAsync());
@@ -66,7 +66,7 @@ public class ReliefRequestsController : ControllerBase
     }
 
     [HttpPut("{id:guid}/status")]
-    [Authorize(Roles = "SystemAdministrator")]
+    [Authorize(Roles = "SystemAdministrator,ReliefCoordinator")]
     public async Task<ActionResult<ReliefRequestDto>> UpdateStatus(
         Guid id,
         [FromBody] string status)

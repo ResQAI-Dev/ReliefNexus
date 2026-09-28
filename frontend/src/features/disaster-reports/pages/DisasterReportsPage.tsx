@@ -447,7 +447,6 @@ function DisasterReportsMap({
     const lng = Number(report.longitude);
     return Number.isFinite(lat) && Number.isFinite(lng);
   }).length;
-
   const validPredictionCount = predictions.filter((prediction) => {
     const lat = Number(prediction.latitude);
     const lng = Number(prediction.longitude);
@@ -851,7 +850,7 @@ export default function DisasterReportsPage({ users: suppliedUsers }: Props) {
     VulnerabilityAssessmentRef[]
   >([]);
   const [alerts, setAlerts] = useState<EmergencyAlertRef[]>([]);
-  const [users, setUsers] = useState<UserRecord[]>(suppliedUsers || []);
+  const [users] = useState<UserRecord[]>(suppliedUsers || []);
 
   const [loading, setLoading] = useState(true);
   const [intelligenceLoading, setIntelligenceLoading] = useState(true);
@@ -921,7 +920,7 @@ export default function DisasterReportsPage({ users: suppliedUsers }: Props) {
     const [reportsResult, predictionsResult, assessmentsResult, alertsResult] =
       await Promise.allSettled([
         api.get("/disaster-reports"),
-        api.get("/risk-predictions"),
+        api.get("/risk-predictions/history"),
         api.get("/vulnerability-impact"),
         api.get("/emergency-alerts"),
       ]);
@@ -968,25 +967,9 @@ export default function DisasterReportsPage({ users: suppliedUsers }: Props) {
     setLoading(false);
     setIntelligenceLoading(false);
   };
-
-  const loadUsers = async () => {
-    if (suppliedUsers?.length) {
-      setUsers(suppliedUsers);
-      return;
-    }
-
-    try {
-      const response = await api.get("/users");
-      setUsers(unwrapArray<UserRecord>(response.data));
-    } catch (err) {
-      console.error("Users load failed:", err);
-    }
-  };
-
-  useEffect(() => {
+useEffect(() => {
     void loadAll();
-    void loadUsers();
-  }, [suppliedUsers]);
+}, [suppliedUsers]);
 
   const volunteers = useMemo(
     () =>
@@ -1899,10 +1882,9 @@ export default function DisasterReportsPage({ users: suppliedUsers }: Props) {
   };
 
   const getInitialPredictionStep = (
-    prediction: RiskPredictionRecord,
+    _prediction: RiskPredictionRecord,
     linkedReport?: DisasterReport | null,
   ): WorkflowStep => {
-    const id = String(prediction.id || "");
     if (linkedReport) {
       return getInitialStep(linkedReport);
     }

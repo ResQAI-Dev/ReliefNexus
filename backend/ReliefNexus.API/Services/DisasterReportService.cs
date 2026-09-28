@@ -1,4 +1,4 @@
-using ReliefNexus.API.AI.Agents;
+﻿using ReliefNexus.API.AI.Agents;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -261,12 +261,24 @@ public class DisasterReportService : IDisasterReportService
         if (existing != null)
             return await BuildDtoAsync(existing.Id);
 
+
+        var prediction = await _context.RiskPredictions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == predictionId);
+
+        if (prediction == null)
+            return null;
+
+        if (prediction.UserId == Guid.Empty)
+            throw new InvalidOperationException(
+                "The Agent 01 prediction is not linked to its originating affected user.");
+
         var report = new DisasterReport
         {
             // The authenticated coordinator/admin becomes the creator of the
             // operational incident record. The incident is still linked to
             // the original Agent 01 prediction.
-            ReporterUserId = userId,
+            ReporterUserId = prediction.UserId.Value,
 
             DisasterType = string.IsNullOrWhiteSpace(request.DisasterType)
                 ? "Disaster"
@@ -865,6 +877,8 @@ public class DisasterReportService : IDisasterReportService
         ).FirstOrDefaultAsync();
     }
 }
+
+
 
 
 

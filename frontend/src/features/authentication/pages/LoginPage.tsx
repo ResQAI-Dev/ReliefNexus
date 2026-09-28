@@ -114,6 +114,17 @@ const LoginPage = () => {
           transform-origin: center;
         }
 
+        .rn-scroll-hidden {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+
+        .rn-scroll-hidden::-webkit-scrollbar {
+          width: 0;
+          height: 0;
+          display: none;
+        }
+
         .rn-input {
           transition: border-color .2s ease, box-shadow .2s ease,
             background .2s ease, transform .2s ease;
@@ -175,16 +186,17 @@ const LoginPage = () => {
         }
       `}</style>
 
-      <main className="min-h-screen bg-[radial-gradient(circle_at_10%_10%,rgba(56,189,248,.14),transparent_28%),radial-gradient(circle_at_90%_90%,rgba(14,165,233,.10),transparent_30%),#f2fbff] px-3 py-3 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
-        <div className="rn-login-card mx-auto flex min-h-[calc(100vh-24px)] max-w-[1450px] overflow-hidden rounded-[28px] border border-sky-100 bg-white sm:min-h-[calc(100vh-48px)] lg:min-h-[760px]">
+      <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_8%_12%,rgba(56,189,248,.14),transparent_28%),radial-gradient(circle_at_92%_88%,rgba(14,165,233,.10),transparent_30%),#effbff] px-3 py-3 sm:px-5 sm:py-5 lg:px-7 lg:py-6">
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[70vh] w-[70vh] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-100/25 blur-3xl" />
+        <div className="relative z-10 rn-login-card mx-auto flex h-[calc(100vh-28px)] max-h-[820px] min-h-[720px] w-full max-w-[1480px] overflow-hidden rounded-[30px] border border-sky-100 bg-white">
 
           {/* LEFT — AUTHENTICATION */}
-          <section className="relative flex w-full flex-col overflow-hidden bg-white lg:w-[54%]">
+          <section className="rn-scroll-hidden relative flex min-h-0 w-full flex-col overflow-y-auto overflow-x-hidden bg-white lg:w-1/2">
 
             <div className="absolute -left-28 -top-28 h-72 w-72 rounded-full bg-sky-100/60 blur-3xl" />
             <div className="absolute -bottom-32 right-0 h-80 w-80 rounded-full bg-cyan-100/40 blur-3xl" />
 
-            <div className="relative z-10 flex items-center justify-between px-7 py-7 sm:px-10 lg:px-12">
+            <div className="relative z-10 flex items-center justify-between px-6 py-5 sm:px-8 lg:px-10">
               <Link to="/" className="group flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-gradient-to-br from-blue-600 to-cyan-400 text-white shadow-lg shadow-blue-500/20 transition group-hover:scale-105">
                   <LogoIcon />
@@ -210,18 +222,18 @@ const LoginPage = () => {
               </button>
             </div>
 
-            <div className="relative z-10 flex flex-1 items-center px-7 pb-10 sm:px-10 lg:px-12 xl:px-[9%]">
-              <div className="mx-auto w-full max-w-[540px]">
+            <div className="relative z-10 flex flex-1 items-center justify-center px-6 py-6 sm:px-8 sm:py-7 lg:px-10 xl:px-[8%]">
+              <div className="mx-auto flex w-full max-w-[540px] flex-col justify-center">
 
-                <div className="mb-8">
-                  <div className="mb-4 flex items-center gap-3">
+                <div className="mb-5">
+                  <div className="mb-3 flex items-center gap-3">
                     <span className="h-px w-11 bg-gradient-to-r from-blue-600 to-cyan-400" />
                     <span className="text-[10px] font-extrabold uppercase tracking-[.25em] text-sky-600">
                       Welcome back
                     </span>
                   </div>
 
-                  <h1 className="max-w-[620px] text-[48px] font-black leading-[.98] tracking-[-2.5px] text-[#062f4d] sm:text-[60px] lg:text-[64px]">
+                  <h1 className="max-w-[620px] text-[48px] font-black leading-[.98] tracking-[-2.5px] text-[#062f4d] sm:text-[56px] lg:text-[60px]">
                     Sign in to
                     <br />
                     <span className="bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-400 bg-clip-text text-transparent">
@@ -229,7 +241,7 @@ const LoginPage = () => {
                     </span>
                   </h1>
 
-                  <p className="mt-5 max-w-[560px] text-[15px] leading-7 text-slate-500">
+                  <p className="mt-3 max-w-[560px] text-[14px] leading-6 text-slate-500">
                     Securely access your ReliefNexus disaster response workspace
                     and continue coordinating smarter, faster action.
                   </p>
@@ -244,14 +256,14 @@ const LoginPage = () => {
                   </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form onSubmit={handleSubmit} className="space-y-4">
 
                   <div>
                     <label className="mb-2.5 block text-[11px] font-bold text-[#163b56]">
                       Email address
                     </label>
 
-                    <div className="rn-input flex min-h-[64px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/70">
+                    <div className="rn-input flex min-h-[58px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/70">
                       <div className="flex w-16 shrink-0 items-center justify-center text-slate-400">
                         <MailIcon />
                       </div>
@@ -284,7 +296,7 @@ const LoginPage = () => {
                       </button>
                     </div>
 
-                    <div className="rn-input flex min-h-[64px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/70">
+                    <div className="rn-input flex min-h-[58px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/70">
                       <div className="flex w-16 shrink-0 items-center justify-center text-slate-400">
                         <LockIcon />
                       </div>
@@ -345,7 +357,7 @@ const LoginPage = () => {
                   </button>
                 </form>
 
-                <div className="my-7 flex items-center gap-4">
+                <div className="my-5 flex items-center gap-4">
                   <div className="h-px flex-1 bg-slate-200" />
                   <span className="text-[10px] font-semibold text-slate-400">
                     Or continue with
@@ -371,7 +383,7 @@ const LoginPage = () => {
                   </button>
                 </div>
 
-                <p className="mt-7 text-center text-xs text-slate-400">
+                <p className="mt-5 pb-2 text-center text-xs text-slate-400">
                   Don't have an account?{" "}
                   <button
                     type="button"
@@ -386,12 +398,12 @@ const LoginPage = () => {
           </section>
 
           {/* RIGHT — DISASTER RESILIENCE VISUAL */}
-          <section className="relative hidden overflow-hidden bg-[#06243a] lg:block lg:w-[46%]">
+          <section className="relative hidden min-h-0 overflow-hidden bg-[#06243a] lg:block lg:w-1/2">
 
             <img
               src="/images/reliefnexus-hero-cinematic.png"
               alt="ReliefNexus disaster response"
-              className="absolute inset-0 h-full w-full object-cover object-center"
+              className="absolute inset-0 h-full w-full object-cover object-[58%_center]"
             />
 
             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,31,50,.08)_0%,rgba(3,31,50,.28)_35%,rgba(2,18,32,.92)_100%)]" />
@@ -438,7 +450,7 @@ const LoginPage = () => {
               </div>
             </div>
 
-            <div className="absolute bottom-7 left-7 right-7 sm:left-9 sm:right-9">
+            <div className="absolute bottom-6 left-7 right-7 sm:left-8 sm:right-8">
               <div className="mb-4 flex items-center gap-3">
                 <span className="h-px w-10 bg-cyan-300" />
                 <span className="text-[9px] font-extrabold uppercase tracking-[.25em] text-cyan-200">

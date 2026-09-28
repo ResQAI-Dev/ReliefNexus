@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";
 import api from "../../../lib/api/apiClient";
-import DisasterReportForm from "../components/DisasterReportForm";
+import DisasterReportsPage from "../../disaster-reports/pages/DisasterReportsPage";
 import { LoadingState } from "../components/LoadingState";
 import FieldVolunteerDisasterReports from "../components/FieldVolunteerDisasterReports";
 import { EmptyState } from "../components/EmptyState";
-import { ResourceRow } from "../../relief-resources/components/ResourceRow";
 import ReliefRequestsPanel from "../components/ReliefRequestsPanel";
 import { DashboardCard } from "../components/DashboardCard";
 import { DisasterRiskMap } from "../components/DisasterRiskMap";
-import { getRiskPredictions, getUserProfile, updateUserProfile, getDisasterReports } from "../services/userDashboardApi";
+import { getUserProfile, updateUserProfile, getDisasterReports } from "../services/userDashboardApi";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import DashboardLayout from "../../../components/layout/DashboardLayout";
 import RiskPredictionPage from "../../risk-prediction/pages/RiskPredictionPage";
+import ResourceOptimizationPage from "../../resource-optimization/pages/ResourceOptimizationPage";
 
 import {
   MapContainer,
@@ -273,13 +273,12 @@ const UserDashboard = () => {
 
     const loadLiveData = async () => {
       setLoading(true);
-      setApiErrors([]);
 
       const results = await Promise.allSettled([
-        getRiskPredictions(),
-        api.get("/requests"),
+        api.get("/risk-predictions/history"),
+        api.get("/relief-requests"),
         api.get("/emergency-alerts"),
-        api.get("/relief-resources"),
+        api.get("/resource-optimization/resources"),
       ]);
 
       if (!alive) return;
@@ -382,7 +381,6 @@ const UserDashboard = () => {
         errors.push("Relief resource service is unavailable.");
       }
 
-      setApiErrors(errors);
       setLoading(false);
     };
 
@@ -598,7 +596,7 @@ const UserDashboard = () => {
                         <div>
                           <p className="text-3xl font-extrabold">
                             {latestRisk?.temperature != null
-                              ? `${latestRisk.temperature}Ãƒâ€šÃ‚Â°C`
+                              ? `${latestRisk.temperature} C`
                               : "N/A"}
                           </p>
 
@@ -1201,7 +1199,7 @@ const UserDashboard = () => {
             role === "FieldVolunteer" ? (
               <FieldVolunteerDisasterReports />
             ) : (
-              <DisasterReportForm />
+              <DisasterReportsPage />
             )
           )}
 {currentSection === "requests" && (
@@ -1243,19 +1241,8 @@ const UserDashboard = () => {
             )}
 
             {currentSection === "resources" && (
-            <PageShell
-              icon={<LayersIcon />}
-              title="Relief Resources"
-              subtitle="Relief resources returned by the system."
-            >
-              <DashboardCard title="Available Resources">
-                <ResourcesContent
-                  resources={resources}
-                  loading={loading}
-                />
-              </DashboardCard>
-            </PageShell>
-          )}
+              <ResourceOptimizationPage />
+            )}
 
           {currentSection === "location" && (
             <PageShell
@@ -1435,7 +1422,7 @@ const AlertsContent = ({
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900"
                 aria-label="Close alert details"
               >
-                ÃƒÆ’Ã¢â‚¬â€
+                ×
               </button>
             </div>
 
@@ -1538,43 +1525,6 @@ const getSeverityBadgeClass = (severity: string) => {
   }
 };
 
-const ResourcesContent = ({
-  resources,
-  loading,
-  limit,
-}: {
-  resources: ReliefResource[];
-  loading: boolean;
-  limit?: number;
-}) => {
-  if (loading) return <LoadingState />;
-
-  if (!resources.length) {
-    return (
-      <EmptyState text="No relief resources have been returned by the API." />
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      {resources.slice(0, limit).map((resource, index) => (
-        <ResourceRow
-          key={resource.id ?? index}
-          icon={<LayersIcon />}
-          title={resource.name || resource.title || "Relief resource"}
-          meta={
-            resource.distanceKm != null
-              ? `${resource.distanceKm} km away`
-              : resource.distance != null
-                ? `${resource.distance} km away`
-                : resource.location || "Location unavailable"
-          }
-          status={resource.status || "Status unavailable"}
-        />
-      ))}
-    </div>
-  );
-};
 
 const ProfilePage = ({
   user,
@@ -2507,7 +2457,7 @@ const ProfilePage = ({
                   className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-white/80 transition hover:bg-white/20 disabled:opacity-50"
                   aria-label="Close edit profile"
                 >
-                  ÃƒÆ’Ã¢â‚¬â€
+                  ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â
                 </button>
               </div>
             </div>
@@ -2591,7 +2541,7 @@ const ProfilePage = ({
                   <div className="min-w-0">
                     <p className="text-sm font-black text-slate-800">Profile Photo</p>
                     <p className="mt-1 text-[10px] leading-4 text-slate-500">
-                      JPG, PNG, WEBP or GIF Ãƒâ€šÃ‚Â· maximum 5 MB Ãƒâ€šÃ‚Â· stored on this device.
+                      JPG, PNG, WEBP or GIF ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· maximum 5 MB ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· stored on this device.
                     </p>
                   </div>
                 </div>

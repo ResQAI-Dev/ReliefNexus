@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+﻿import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Activity,
   AlertTriangle,
@@ -2091,6 +2091,67 @@ function RunModal({
     },
   ];
 
+  const [approvalState, setApprovalState] = useState<"pending" | "approved" | "rejected">(
+    alert ? "pending" : "pending",
+  );
+  const [acknowledgedTasks, setAcknowledgedTasks] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    setApprovalState(alert ? "pending" : "pending");
+    setAcknowledgedTasks({});
+  }, [alert?.id]);
+
+  const resourceTotalUnits = allocations.reduce(
+    (sum, resource) => sum + numberValue(resource.recommendedQuantity),
+    0,
+  );
+  const resourceLocations = Array.from(
+    new Set(allocations.map((resource) => resource.location).filter(Boolean)),
+  );
+  const highPriorityResources = allocations.filter(
+    (resource) => String(resource.priority || "").toLowerCase() === "high",
+  ).length;
+
+  const escalationReasons = [
+    risk >= 75 ? `Risk score is ${risk.toFixed(1)}.` : "",
+    vulnerability >= 75 ? `Vulnerability score is ${vulnerability.toFixed(1)}.` : "",
+    impact >= 75 ? `Impact score is ${impact.toFixed(1)}.` : "",
+    warningLevel.toLowerCase() === "critical" ? "The generated warning is Critical." : "",
+    pressureCount >= 2 ? `${pressureCount}/3 indicators are at or above 60.` : "",
+  ].filter(Boolean);
+
+  const coordinationTasks = [
+    ...(actionItems.length
+      ? actionItems.slice(0, 5).map((item, index) => ({
+          id: `action-${index}`,
+          title: item,
+          priority: warningLevel,
+        }))
+      : [
+          {
+            id: "verify-warning",
+            title: `Verify the ${warningLevel.toLowerCase()} early warning with the responsible emergency coordination authority.`,
+            priority: warningLevel,
+          },
+        ]),
+    ...(allocations.length
+      ? [
+          {
+            id: "resource-coordination",
+            title: `Coordinate ${allocations.length} Agent 03 resource allocation record(s) at the selected response locations.`,
+            priority: highPriorityResources > 0 ? "High" : "Medium",
+          },
+        ]
+      : []),
+  ];
+
+  const notificationPlan =
+    warningLevel.toLowerCase() === "critical"
+      ? ["Emergency coordination authority", "Response teams", "Affected-area notification channel"]
+      : warningLevel.toLowerCase() === "high"
+        ? ["Emergency coordination authority", "Response teams", "Affected-area information channel"]
+        : ["Responsible coordination team", "Monitoring team"];
+
   const planningWindows = [
     {
       label: "NOW",
@@ -2810,6 +2871,234 @@ function RunModal({
                       </div>
                     ))}
                   </div>
+                </section>
+
+                {/* AI DECISION EXPLANATION */}
+                <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-[0.18em] text-blue-600">
+                        AI decision explanation
+                      </p>
+                      <h3 className="mt-1 text-sm font-black text-slate-900">
+                        Why Agent 04 selected this response posture
+                      </h3>
+                    </div>
+                    <span className="rounded-full bg-blue-50 px-3 py-1.5 text-[9px] font-black text-blue-700">
+                      {coordinationLevel} response stage
+                    </span>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <DecisionKpi label="Risk signal" value={risk.toFixed(1)} detail={assessment.riskLevel || "Unknown"} tone="red" />
+                    <DecisionKpi label="Vulnerability" value={vulnerability.toFixed(1)} detail={assessment.vulnerabilityLevel || "Unknown"} tone="amber" />
+                    <DecisionKpi label="Impact" value={impact.toFixed(1)} detail={assessment.impactLevel || "Unknown"} tone="amber" />
+                    <DecisionKpi label="Coordination" value={coordinationScore.toFixed(1)} detail={operationalPosture} tone="blue" />
+                  </div>
+
+                  <div className="mt-3 rounded-xl bg-slate-50 p-3">
+                    <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">
+                      Decision basis
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-slate-700">
+                      Agent 04 combines the validated risk, vulnerability, impact and population-exposure signals with the linked Agent 03 resource state.
+                      {pressureCount >= 2
+                        ? ` ${pressureCount} of 3 core indicators are at or above 60, so coordinated monitoring is required.`
+                        : " The available indicators do not show a broad multi-factor pressure pattern."}
+                    </p>
+                  </div>
+                </section>
+
+                {/* ESCALATION GATE */}
+                <section className={`rounded-2xl border p-4 ${escalationRequired ? "border-red-200 bg-red-50/70" : "border-emerald-200 bg-emerald-50/70"}`}>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className={`text-[9px] font-black uppercase tracking-[0.18em] ${escalationRequired ? "text-red-700" : "text-emerald-700"}`}>
+                        Escalation decision
+                      </p>
+                      <h3 className="mt-1 text-sm font-black text-slate-900">
+                        {escalationRequired ? "Escalation conditions detected" : "No escalation condition triggered"}
+                      </h3>
+                    </div>
+                    <span className={`rounded-full px-3 py-1.5 text-[9px] font-black ${escalationRequired ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}`}>
+                      {escalationRequired ? "Escalation required" : "Monitor"}
+                    </span>
+                  </div>
+
+                  {escalationReasons.length > 0 ? (
+                    <div className="mt-3 space-y-2">
+                      {escalationReasons.map((reason, index) => (
+                        <div key={reason} className="flex items-start gap-2 rounded-xl border border-red-100 bg-white p-3">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-100 text-[9px] font-black text-red-700">
+                            {index + 1}
+                          </span>
+                          <p className="text-[10px] leading-4 text-slate-700">{reason}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 rounded-xl border border-emerald-100 bg-white p-3 text-[10px] leading-4 text-slate-600">
+                      Continue routine or targeted monitoring and reassess when validated indicators change materially.
+                    </p>
+                  )}
+                </section>
+
+                {/* COORDINATION TASKS */}
+                <section className="rounded-2xl border border-violet-200 bg-violet-50/60 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-[0.18em] text-violet-600">
+                        Coordination task plan
+                      </p>
+                      <h3 className="mt-1 text-sm font-black text-slate-900">
+                        Agent 04 operational task recommendations
+                      </h3>
+                    </div>
+                    <span className="rounded-full bg-white px-3 py-1.5 text-[9px] font-black text-violet-700">
+                      {coordinationTasks.length} tasks
+                    </span>
+                  </div>
+
+                  <div className="mt-3 space-y-2">
+                    {coordinationTasks.map((task, index) => {
+                      const acknowledged = Boolean(acknowledgedTasks[task.id]);
+                      return (
+                        <div key={task.id} className="flex items-center gap-3 rounded-xl border border-violet-100 bg-white p-3">
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-950 text-[9px] font-black text-white">
+                            {String(index + 1).padStart(2, "0")}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold leading-5 text-slate-800">{task.title}</p>
+                            <p className="mt-0.5 text-[9px] font-black uppercase text-slate-400">Priority: {task.priority}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setAcknowledgedTasks((current) => ({ ...current, [task.id]: !current[task.id] }))}
+                            className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[9px] font-black ${acknowledged ? "bg-emerald-100 text-emerald-700" : "bg-violet-100 text-violet-700 hover:bg-violet-200"}`}
+                          >
+                            {acknowledged ? "Acknowledged" : "Acknowledge"}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-3 text-[9px] leading-4 text-slate-500">
+                    These tasks are derived from the validated assessment and Agent 03 allocation records. They are coordination recommendations; task persistence requires the dedicated coordination-task API.
+                  </p>
+                </section>
+
+                {/* RESOURCE COVERAGE */}
+                <section className="rounded-2xl border border-indigo-200 bg-indigo-50/50 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-[0.18em] text-indigo-600">
+                        Resource coverage intelligence
+                      </p>
+                      <h3 className="mt-1 text-sm font-black text-slate-900">
+                        Agent 03 allocation coverage for Agent 04
+                      </h3>
+                    </div>
+                    <span className="rounded-full bg-white px-3 py-1.5 text-[9px] font-black text-indigo-700">
+                      {allocations.length} linked
+                    </span>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <InfoBox label="Allocation records" value={String(allocations.length)} />
+                    <InfoBox label="Total recommended units" value={resourceTotalUnits.toLocaleString()} />
+                    <InfoBox label="High-priority records" value={String(highPriorityResources)} />
+                    <InfoBox label="Deployment locations" value={String(resourceLocations.length)} />
+                  </div>
+
+                  <div className="mt-3 rounded-xl border border-indigo-100 bg-white p-3">
+                    <p className="text-[9px] font-black uppercase tracking-wider text-indigo-500">
+                      Coverage interpretation
+                    </p>
+                    <p className="mt-1 text-[10px] leading-4 text-slate-600">
+                      {allocations.length
+                        ? `Agent 03 returned ${allocations.length} live allocation record(s) covering ${resourceTotalUnits.toLocaleString()} recommended units across ${resourceLocations.length || 1} recorded location(s). A demand-baseline gap cannot be claimed from the available API data alone.`
+                        : "No Agent 03 allocation records are available, so resource coverage cannot be confirmed."}
+                    </p>
+                  </div>
+                </section>
+
+                {/* HUMAN APPROVAL GATE */}
+                <section className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-[0.18em] text-amber-700">
+                        Human approval gate
+                      </p>
+                      <h3 className="mt-1 text-sm font-black text-slate-900">
+                        Review before operational dissemination
+                      </h3>
+                      <p className="mt-1 text-[10px] leading-4 text-slate-600">
+                        Agent 04 output should be reviewed by the responsible emergency authority before public dissemination or high-impact action.
+                      </p>
+                    </div>
+
+                    <span className={`rounded-full px-3 py-1.5 text-[9px] font-black ${approvalState === "approved" ? "bg-emerald-100 text-emerald-700" : approvalState === "rejected" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}`}>
+                      {approvalState === "approved" ? "Approved" : approvalState === "rejected" ? "Rejected" : "Pending approval"}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setApprovalState("approved")}
+                      className="rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-black text-white hover:bg-emerald-700"
+                    >
+                      Approve warning
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setApprovalState("rejected")}
+                      className="rounded-xl bg-red-600 px-4 py-2.5 text-xs font-black text-white hover:bg-red-700"
+                    >
+                      Reject
+                    </button>
+                    <span className="inline-flex items-center rounded-xl bg-white px-3 py-2.5 text-[9px] font-bold text-slate-500">
+                      UI approval gate · backend approval persistence endpoint not identified in the supplied source.
+                    </span>
+                  </div>
+                </section>
+
+                {/* NOTIFICATION & REASSESSMENT PLAN */}
+                <section className="rounded-2xl border border-cyan-200 bg-cyan-50/60 p-4">
+                  <div className="flex items-center gap-2">
+                    <Bell className="h-4 w-4 text-cyan-700" />
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-[0.18em] text-cyan-700">
+                        Notification & reassessment plan
+                      </p>
+                      <h3 className="mt-1 text-sm font-black text-slate-900">
+                        Who should be coordinated and when to reassess
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <div className="rounded-xl border border-cyan-100 bg-white p-3">
+                      <p className="text-[9px] font-black uppercase tracking-wider text-cyan-600">Recommended recipients</p>
+                      <div className="mt-2 space-y-1.5">
+                        {notificationPlan.map((recipient) => (
+                          <div key={recipient} className="rounded-lg bg-slate-50 px-3 py-2 text-[10px] font-semibold text-slate-700">
+                            {recipient}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-cyan-100 bg-white p-3">
+                      <p className="text-[9px] font-black uppercase tracking-wider text-cyan-600">Reassessment trigger</p>
+                      <p className="mt-2 text-xs font-black text-slate-900">{monitoringCadence}</p>
+                      <p className="mt-1 text-[10px] leading-4 text-slate-600">
+                        Re-run the validated assessment when risk, vulnerability, impact or population exposure changes materially.
+                      </p>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-[9px] leading-4 text-slate-500">
+                    Notification recipients and reassessment guidance are operational recommendations; this screen does not claim that external SMS, email or push notifications have been sent.
+                  </p>
                 </section>
 
                 {/* FINAL COMMAND SUMMARY */}

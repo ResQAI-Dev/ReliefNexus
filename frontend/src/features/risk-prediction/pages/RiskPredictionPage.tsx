@@ -1,9 +1,10 @@
 ﻿import type { FormEvent } from "react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Activity,
   BarChart3,
   CloudRain,
+  Clock3,
   Gauge,
   Globe2,
   Leaf,
@@ -110,6 +111,25 @@ function disasterPhoto(type?: string): string {
 function safeNumber(value: unknown): number {
   const n = Number(value);
   return Number.isFinite(n) ? n : 0;
+}
+
+function progress(value: unknown): number {
+  return Math.max(0, Math.min(100, safeNumber(value)));
+}
+
+function scoreTone(value: unknown): string {
+  const n = safeNumber(value);
+  if (n >= 80) return "text-red-600";
+  if (n >= 60) return "text-orange-600";
+  if (n >= 40) return "text-amber-600";
+  return "text-emerald-600";
+}
+
+function shortDate(value?: string): string {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString([], { month: "short", day: "2-digit" });
 }
 
 function predictionMatchesForm(
@@ -536,6 +556,338 @@ export default function RiskPredictionPage() {
     ? disasterPhoto(primaryDisasterType)
     : "";
 
+  const availableHazards = useMemo(() => {
+    return (displayPrediction?.disasterRisks ?? [])
+      .filter(
+        (risk: any) =>
+          risk?.dataAvailable === true &&
+          risk?.riskScore !== null &&
+          risk?.riskScore !== undefined &&
+          Number.isFinite(Number(risk.riskScore))
+      )
+      .map((risk: any) => ({
+        disasterType: String(risk.disasterType ?? "Unknown").trim() || "Unknown",
+        score: Number(risk.riskScore),
+        level: String(risk.riskLevel ?? "").trim() || "Assessed",
+      }))
+      .sort((a, b) => b.score - a.score);
+  }, [displayPrediction]);
+
+  const secondHazard = availableHazards[1];
+  const totalHazardScore = availableHazards.reduce((sum, item) => sum + item.score, 0);
+  const multiHazardElevatedCount = availableHazards.filter((item) => item.score >= 60).length;
+  const primaryDominance =
+    totalHazardScore > 0
+      ? (safeNumber((displayPrediction as any)?.riskScore) / totalHazardScore) * 100
+      : 0;
+
+  const sameLocationHistory = useMemo(() => {
+    const currentId = String(candidatePrediction?.id ?? "");
+    const location = String(form.location ?? "").trim().toLowerCase();
+
+    return recentPredictions
+      .filter((item) => {
+        if (!item) return false;
+        if (currentId && String(item.id ?? "") === currentId) return false;
+
+        const itemLocation = String(item.location ?? "").trim().toLowerCase();
+        return (
+          location &&
+          itemLocation &&
+          (location === itemLocation ||
+            location.includes(itemLocation) ||
+            itemLocation.includes(location))
+        );
+      })
+      .map((item) => getPrimaryRiskDisplay(item) ?? item)
+      .filter(
+        (item) =>
+          item &&
+          Number.isFinite(Number(item.riskScore)) &&
+          String(item.disasterType ?? "").trim().toLowerCase() !== "dataunavailable"
+      )
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt ?? 0).getTime() -
+          new Date(a.createdAt ?? 0).getTime()
+      )
+      .slice(0, 4);
+  }, [recentPredictions, candidatePrediction?.id, form.location]);
+
+  const previousLocationPrediction = sameLocationHistory[0];
+  const previousRiskScore = Number(previousLocationPrediction?.riskScore);
+  const currentRiskScore = safeNumber((displayPrediction as any)?.riskScore);
+  const riskDelta = Number.isFinite(previousRiskScore)
+    ? currentRiskScore - previousRiskScore
+    : 0;
+
+  const riskTrend =
+    !Number.isFinite(previousRiskScore)
+      ? "No baseline"
+      : riskDelta >= 5
+        ? "Increasing"
+        : riskDelta <= -5
+          ? "Decreasing"
+          : "Stable";
+
+  const riskTrendClass =
+    riskTrend === "Increasing"
+      ? "border-orange-200 bg-orange-50 text-orange-700"
+      : riskTrend === "Decreasing"
+        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+        : riskTrend === "Stable"
+          ? "border-slate-200 bg-slate-50 text-slate-600"
+          : "border-blue-200 bg-blue-50 text-blue-700";
+
+  const numericInputEntries = Object.entries(form).filter(
+    ([key]) => key !== "location" && key !== "latitude" && key !== "longitude"
+  );
+  const validNumericInputs = numericInputEntries.filter(
+    ([, value]) => Number.isFinite(Number(value))
+  ).length;
+  const validationChecks = [
+    {
+      label: "Location coordinates",
+      ok: isValidLatitude(form.latitude) && isValidLongitude(form.longitude),
+      detail: "Valid geographic coordinates",
+    },
+    {
+      label: "Environmental inputs",
+      ok: validNumericInputs === numericInputEntries.length,
+      detail: `${validNumericInputs}/${numericInputEntries.length} numeric inputs validated`,
+    },
+    {
+      label: "Primary risk result",
+      ok: hasRealPrimaryRisk,
+      detail: hasRealPrimaryRisk ? "Validated primary hazard available" : "Awaiting a valid primary hazard",
+    },
+    {
+      label: "Confidence signal",
+      ok:
+        hasRealPrimaryRisk &&
+        Number.isFinite(Number((displayPrediction as any)?.confidence)) &&
+        Number((displayPrediction as any)?.confidence) >= 0 &&
+        Number((displayPrediction as any)?.confidence) <= 100,
+      detail:
+        hasRealPrimaryRisk && Number.isFinite(Number((displayPrediction as any)?.confidence))
+          ? `${safeNumber((displayPrediction as any)?.confidence).toFixed(1)}% confidence`
+          : "Confidence unavailable",
+    },
+  ];
+
+  const validationPassCount = validationChecks.filter((item) => item.ok).length;
+  const validationReady = validationPassCount === validationChecks.length;
+
+  const scenarioWatch = useMemo(() => {
+    const type = primaryDisasterType.toLowerCase();
+    const common = [
+      {
+        label: "External events",
+        value: `${externalEvents.length} event${externalEvents.length === 1 ? "" : "s"}`,
+        direction: externalEvents.length > 0 ? "Review current event evidence" : "No external event signal loaded",
+      },
+    ];
+
+    if (type.includes("drought")) {
+      return [
+        {
+          label: "Rainfall",
+          value: `${safeNumber(form.rainfall24h).toFixed(1)} mm / 24h`,
+          direction: "Lower rainfall can increase drought pressure",
+        },
+        {
+          label: "Forecast rainfall",
+          value: `${safeNumber(form.forecastRainfall).toFixed(1)} mm`,
+          direction: "Lower forecast rainfall can increase pressure",
+        },
+        {
+          label: "Soil moisture",
+          value: safeNumber(form.soilMoisture).toFixed(2),
+          direction: "Lower soil moisture can increase pressure",
+        },
+        {
+          label: "Temperature / humidity",
+          value: `${safeNumber(form.temperature).toFixed(1)} °C / ${safeNumber(form.humidity).toFixed(0)}%`,
+          direction: "Higher heat or lower humidity can increase dryness",
+        },
+        ...common,
+      ];
+    }
+
+    if (type.includes("flood")) {
+      return [
+        {
+          label: "Rainfall",
+          value: `${safeNumber(form.rainfall24h).toFixed(1)} mm / 24h`,
+          direction: "Higher rainfall can increase flood pressure",
+        },
+        {
+          label: "River level",
+          value: `${safeNumber(form.riverLevel).toFixed(1)} m`,
+          direction: "Higher river level can increase pressure",
+        },
+        {
+          label: "River flow",
+          value: `${safeNumber(form.riverFlow).toFixed(1)} m³/s`,
+          direction: "Higher river flow can increase pressure",
+        },
+        {
+          label: "Forecast rainfall",
+          value: `${safeNumber(form.forecastRainfall).toFixed(1)} mm`,
+          direction: "Higher forecast rainfall can increase pressure",
+        },
+        ...common,
+      ];
+    }
+
+    if (type.includes("landslide")) {
+      return [
+        {
+          label: "Rainfall",
+          value: `${safeNumber(form.rainfall24h).toFixed(1)} mm / 24h`,
+          direction: "Higher rainfall can increase slope pressure",
+        },
+        {
+          label: "Soil moisture",
+          value: safeNumber(form.soilMoisture).toFixed(2),
+          direction: "Higher saturation can increase slope pressure",
+        },
+        {
+          label: "Elevation",
+          value: `${safeNumber(form.elevation).toFixed(0)} m`,
+          direction: "Terrain context for slope assessment",
+        },
+        ...common,
+      ];
+    }
+
+    if (type.includes("wildfire") || type.includes("forest fire") || type.includes("fire")) {
+      return [
+        {
+          label: "Temperature",
+          value: `${safeNumber(form.temperature).toFixed(1)} °C`,
+          direction: "Higher temperature can increase fire pressure",
+        },
+        {
+          label: "Humidity",
+          value: `${safeNumber(form.humidity).toFixed(0)}%`,
+          direction: "Lower humidity can increase dryness",
+        },
+        {
+          label: "Wind",
+          value: `${safeNumber(form.windSpeed).toFixed(1)} km/h`,
+          direction: "Higher wind can increase spread pressure",
+        },
+        {
+          label: "Rainfall",
+          value: `${safeNumber(form.rainfall24h).toFixed(1)} mm / 24h`,
+          direction: "Lower rainfall can increase dryness",
+        },
+        ...common,
+      ];
+    }
+
+    if (type.includes("storm") || type.includes("cyclone")) {
+      return [
+        {
+          label: "Wind",
+          value: `${safeNumber(form.windSpeed).toFixed(1)} km/h`,
+          direction: "Higher wind can increase storm pressure",
+        },
+        {
+          label: "Rainfall",
+          value: `${safeNumber(form.rainfall24h).toFixed(1)} mm / 24h`,
+          direction: "Higher rainfall can increase impact pressure",
+        },
+        {
+          label: "Forecast rainfall",
+          value: `${safeNumber(form.forecastRainfall).toFixed(1)} mm`,
+          direction: "Higher forecast rainfall can increase pressure",
+        },
+        ...common,
+      ];
+    }
+
+    return [
+      {
+        label: "Environmental context",
+        value: `${safeNumber(form.temperature).toFixed(1)} °C / ${safeNumber(form.humidity).toFixed(0)}%`,
+        direction: "Continue monitoring the available environmental signals",
+      },
+      {
+        label: "Historical context",
+        value: `${safeNumber(form.historicalFloodCount).toFixed(0)} events`,
+        direction: "Use historical evidence alongside the current prediction",
+      },
+      {
+        label: "Drainage context",
+        value: `${safeNumber(form.drainageCapacity).toFixed(1)}`,
+        direction: "Infrastructure context available to the risk engine",
+      },
+      ...common,
+    ];
+  }, [
+    primaryDisasterType,
+    form.rainfall24h,
+    form.forecastRainfall,
+    form.soilMoisture,
+    form.temperature,
+    form.humidity,
+    form.riverLevel,
+    form.riverFlow,
+    form.elevation,
+    form.windSpeed,
+    form.historicalFloodCount,
+    form.drainageCapacity,
+    externalEvents.length,
+  ]);
+
+  const decisionTrace = [
+    {
+      step: "01",
+      title: "Capture context",
+      detail: form.location
+        ? `${form.location} + environmental inputs captured`
+        : "Waiting for a location",
+      done: Boolean(form.location),
+    },
+    {
+      step: "02",
+      title: "Evaluate hazards",
+      detail: `${availableHazards.length} validated hazard result${availableHazards.length === 1 ? "" : "s"} available`,
+      done: availableHazards.length > 0,
+    },
+    {
+      step: "03",
+      title: "Resolve primary risk",
+      detail: hasRealPrimaryRisk
+        ? `${primaryDisasterType} selected at ${currentRiskScore.toFixed(1)}`
+        : "Primary risk not yet available",
+      done: hasRealPrimaryRisk,
+    },
+    {
+      step: "04",
+      title: "Validate output",
+      detail: validationReady
+        ? "Prediction validation checks passed"
+        : `${validationPassCount}/${validationChecks.length} validation checks passed`,
+      done: validationReady,
+    },
+    {
+      step: "05",
+      title: "Prepare Agent 02 handoff",
+      detail: hasRealPrimaryRisk
+        ? "Primary risk, confidence and location context are ready"
+        : "Waiting for a validated prediction",
+      done: hasRealPrimaryRisk && validationReady,
+    },
+  ];
+
+  const primaryRiskGap =
+    secondHazard && hasRealPrimaryRisk
+      ? currentRiskScore - secondHazard.score
+      : null;
+
   return (
     <div className="min-h-screen bg-[#edf3f9] text-slate-900">
       <main className="mx-auto max-w-[1880px] px-3 pb-10 sm:px-5 lg:px-6">
@@ -933,6 +1285,346 @@ export default function RiskPredictionPage() {
           </div>
         </section>
 
+        {/* ADVANCED AGENT 01 INTELLIGENCE */}
+        {hasRealPrimaryRisk && (
+          <>
+            <section className="mt-3 overflow-hidden rounded-[24px] border border-indigo-100 bg-white shadow-sm">
+              <div className="border-b border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-blue-50 px-5 py-4">
+                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm">
+                        <Sparkles className="h-4 w-4" />
+                      </span>
+                      <div>
+                        <p className="text-[8px] font-black uppercase tracking-[0.18em] text-indigo-600">
+                          Agent 01 Intelligence Layer
+                        </p>
+                        <h2 className="mt-0.5 text-[13px] font-black text-slate-900">
+                          Explainable Multi-Hazard Decision Engine
+                        </h2>
+                      </div>
+                    </div>
+                    <p className="mt-2 max-w-4xl text-[8px] font-semibold leading-4 text-slate-500">
+                      A transparent operational view of the validated hazard set, decision path, prediction persistence and downstream handoff context.
+                    </p>
+                  </div>
+
+                  <span className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1.5 text-[8px] font-black ${validationReady ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}>
+                    <ShieldCheck className="h-3 w-3" />
+                    {validationReady ? "Validation Ready" : "Validation Review"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid gap-3 p-4 xl:grid-cols-[1.15fr_.85fr]">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[8px] font-black uppercase tracking-wider text-slate-400">
+                        Multi-Hazard Situation
+                      </p>
+                      <p className="mt-1 text-[10px] font-black text-slate-800">
+                        {availableHazards.length} validated hazard results
+                      </p>
+                    </div>
+
+                    <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-[7px] font-black text-indigo-700">
+                      {multiHazardElevatedCount} elevated
+                    </span>
+                  </div>
+
+                  <div className="mt-3 space-y-2">
+                    {availableHazards.slice(0, 8).map((hazard, index) => (
+                      <div
+                        key={`${hazard.disasterType}-${index}`}
+                        className="rounded-xl border border-white bg-white px-3 py-2.5 shadow-sm"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-2.5">
+                            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[8px] font-black ${
+                              index === 0 ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-500"
+                            }`}>
+                              {String(index + 1).padStart(2, "0")}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="truncate text-[9px] font-black text-slate-800">
+                                {hazard.disasterType}
+                              </p>
+                              <p className="text-[7px] font-semibold text-slate-400">
+                                {hazard.level}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <div className="h-1.5 w-20 overflow-hidden rounded-full bg-slate-100">
+                              <div
+                                className="h-full rounded-full bg-blue-500"
+                                style={{ width: `${progress(hazard.score)}%` }}
+                              />
+                            </div>
+                            <span className={`w-10 text-right text-[9px] font-black ${scoreTone(hazard.score)}`}>
+                              {hazard.score.toFixed(1)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <div className="rounded-xl border border-blue-100 bg-blue-50/70 px-3 py-2.5">
+                      <p className="text-[7px] font-black uppercase tracking-wider text-blue-500">
+                        Primary dominance
+                      </p>
+                      <p className="mt-1 text-[13px] font-black text-blue-900">
+                        {primaryDominance.toFixed(1)}%
+                      </p>
+                      <p className="mt-0.5 text-[7px] font-semibold text-blue-700/70">
+                        Share of validated hazard score
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+                      <p className="text-[7px] font-black uppercase tracking-wider text-slate-400">
+                        Primary vs next
+                      </p>
+                      <p className="mt-1 text-[13px] font-black text-slate-900">
+                        {primaryRiskGap !== null ? `+${primaryRiskGap.toFixed(1)}` : "—"}
+                      </p>
+                      <p className="mt-0.5 text-[7px] font-semibold text-slate-400">
+                        Score separation
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
+                    <div className="flex items-center gap-2">
+                      <Activity className="h-4 w-4 text-blue-600" />
+                      <p className="text-[8px] font-black uppercase tracking-wider text-blue-700">
+                        AI Decision Trace
+                      </p>
+                    </div>
+
+                    <div className="mt-3 space-y-2">
+                      {decisionTrace.map((item) => (
+                        <DecisionTraceStep
+                          key={item.step}
+                          step={item.step}
+                          title={item.title}
+                          detail={item.detail}
+                          done={item.done}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                      <div>
+                        <p className="text-[8px] font-black uppercase tracking-wider text-slate-500">
+                          Output Validation
+                        </p>
+                        <p className="mt-0.5 text-[7px] font-semibold text-slate-400">
+                          Deterministic checks before downstream use
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 space-y-2">
+                      {validationChecks.map((item) => (
+                        <ValidationCheckRow
+                          key={item.label}
+                          label={item.label}
+                          detail={item.detail}
+                          ok={item.ok}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-200">
+                      <div
+                        className={`h-full rounded-full ${validationReady ? "bg-emerald-500" : "bg-amber-500"}`}
+                        style={{
+                          width: `${(validationPassCount / validationChecks.length) * 100}%`,
+                        }}
+                      />
+                    </div>
+                    <p className="mt-1.5 text-right text-[7px] font-black text-slate-400">
+                      {validationPassCount}/{validationChecks.length} checks passed
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="mt-3 grid gap-3 xl:grid-cols-[1fr_1fr_1fr]">
+              <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-[10px] font-black">Prediction Persistence</h2>
+                    <p className="mt-1 text-[7px] font-semibold text-slate-400">
+                      Same-location comparison from saved prediction history
+                    </p>
+                  </div>
+                  <span className={`rounded-full border px-2 py-1 text-[7px] font-black ${riskTrendClass}`}>
+                    {riskTrend}
+                  </span>
+                </div>
+
+                <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+                  <div className="flex items-end justify-between gap-2">
+                    {sameLocationHistory.slice().reverse().map((item, index) => {
+                      const value = safeNumber(item.riskScore);
+                      const max = Math.max(
+                        100,
+                        ...sameLocationHistory.map((historyItem) =>
+                          safeNumber(historyItem.riskScore)
+                        )
+                      );
+
+                      return (
+                        <div key={`${item.id ?? index}`} className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
+                          <div className="flex h-20 w-full items-end justify-center">
+                            <div
+                              className="w-5 rounded-t-lg bg-blue-500/80 transition-all"
+                              style={{ height: `${Math.max(8, (value / max) * 100)}%` }}
+                            />
+                          </div>
+                          <span className="text-[8px] font-black text-slate-700">
+                            {value.toFixed(1)}
+                          </span>
+                          <span className="max-w-full truncate text-[6px] font-semibold text-slate-400">
+                            {shortDate(item.createdAt)}
+                          </span>
+                        </div>
+                      );
+                    })}
+
+                    {sameLocationHistory.length === 0 && (
+                      <div className="flex min-h-[110px] w-full items-center justify-center text-center">
+                        <div>
+                          <Clock3 className="mx-auto h-5 w-5 text-slate-300" />
+                          <p className="mt-2 text-[8px] font-black text-slate-500">
+                            No historical baseline
+                          </p>
+                          <p className="mt-1 text-[7px] text-slate-400">
+                            Additional saved predictions for this location will appear here.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  <AnalysisMetric title="Current" value={currentRiskScore.toFixed(1)} />
+                  <AnalysisMetric
+                    title="Previous"
+                    value={Number.isFinite(previousRiskScore) ? previousRiskScore.toFixed(1) : "—"}
+                  />
+                  <AnalysisMetric
+                    title="Change"
+                    value={
+                      Number.isFinite(previousRiskScore)
+                        ? `${riskDelta >= 0 ? "+" : ""}${riskDelta.toFixed(1)}`
+                        : "—"
+                    }
+                  />
+                </div>
+              </section>
+
+              <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+                <div>
+                  <h2 className="text-[10px] font-black">Signal Watchlist</h2>
+                  <p className="mt-1 text-[7px] font-semibold text-slate-400">
+                    Environmental signals that should be watched for the selected primary hazard
+                  </p>
+                </div>
+
+                <div className="mt-3 space-y-2">
+                  {scenarioWatch.slice(0, 5).map((item) => (
+                    <div
+                      key={`${item.label}-${item.value}`}
+                      className="rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-[8px] font-black text-slate-800">
+                          {item.label}
+                        </p>
+                        <span className="text-[8px] font-black text-blue-700">
+                          {item.value}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-[7px] font-semibold leading-4 text-slate-400">
+                        {item.direction}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-3 rounded-xl border border-indigo-100 bg-indigo-50/50 px-3 py-3">
+                  <div className="flex items-center gap-2">
+                    <Radar className="h-3.5 w-3.5 text-indigo-600" />
+                    <p className="text-[8px] font-black text-indigo-800">
+                      Planning note
+                    </p>
+                  </div>
+                  <p className="mt-1 text-[7px] font-semibold leading-4 text-indigo-700/75">
+                    These are monitoring sensitivities derived from the selected hazard context. They are not a replacement for a new validated prediction.
+                  </p>
+                </div>
+              </section>
+
+              <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-[10px] font-black">Agent 02 Handoff Package</h2>
+                    <p className="mt-1 text-[7px] font-semibold text-slate-400">
+                      Structured context prepared for downstream vulnerability analysis
+                    </p>
+                  </div>
+
+                  <span className="rounded-full bg-emerald-50 px-2 py-1 text-[7px] font-black text-emerald-700">
+                    READY
+                  </span>
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <AnalysisMetric title="Primary Hazard" value={primaryDisasterType || "—"} />
+                  <AnalysisMetric title="Risk Score" value={currentRiskScore.toFixed(1)} />
+                  <AnalysisMetric
+                    title="Confidence"
+                    value={`${safeNumber((displayPrediction as any)?.confidence).toFixed(1)}%`}
+                  />
+                  <AnalysisMetric title="Location" value={form.location || "—"} />
+                  <AnalysisMetric
+                    title="Population Density"
+                    value={`${safeNumber(form.populationDensity).toLocaleString()} /km²`}
+                  />
+                  <AnalysisMetric
+                    title="External Events"
+                    value={String(externalEvents.length)}
+                  />
+                </div>
+
+                <div className="mt-3 rounded-xl border border-blue-100 bg-blue-50/60 px-3 py-3">
+                  <p className="text-[8px] font-black text-blue-900">
+                    Downstream focus
+                  </p>
+                  <p className="mt-1 text-[7px] font-semibold leading-4 text-blue-700/75">
+                    Evaluate population exposure, vulnerability dimensions and impact implications using the validated Agent 01 result.
+                  </p>
+                </div>
+              </section>
+            </section>
+          </>
+        )}
+
         {/* PREDICTION ANALYSIS */}
         {hasRealPrimaryRisk && (
           <>
@@ -1314,6 +2006,62 @@ export default function RiskPredictionPage() {
 }
 
 
+
+function DecisionTraceStep({
+  step,
+  title,
+  detail,
+  done,
+}: {
+  step: string;
+  title: string;
+  detail: string;
+  done: boolean;
+}) {
+  return (
+    <div className="flex items-start gap-2.5 rounded-xl border border-white bg-white px-3 py-2.5 shadow-sm">
+      <span
+        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[8px] font-black ${
+          done ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-500"
+        }`}
+      >
+        {done ? "✓" : step}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[8px] font-black text-slate-800">{title}</p>
+        <p className="mt-0.5 text-[7px] font-semibold leading-4 text-slate-400">
+          {detail}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function ValidationCheckRow({
+  label,
+  detail,
+  ok,
+}: {
+  label: string;
+  detail: string;
+  ok: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-2.5 rounded-xl border border-white bg-white px-3 py-2.5">
+      <span
+        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
+          ok ? "bg-emerald-100 text-emerald-600" : "bg-amber-100 text-amber-700"
+        }`}
+      >
+        {ok ? "✓" : "!"}
+      </span>
+      <div className="min-w-0">
+        <p className="text-[8px] font-black text-slate-800">{label}</p>
+        <p className="mt-0.5 text-[7px] font-semibold text-slate-400">{detail}</p>
+      </div>
+    </div>
+  );
+}
 
 function PhotoInsightCard({
   photo,
