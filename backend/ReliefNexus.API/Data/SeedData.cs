@@ -15,8 +15,11 @@ public static class SeedData
         var context = scope.ServiceProvider
             .GetRequiredService<AppDbContext>();
 
-        var adminEmail = configuration["InitialAdmin:Email"];
-        var adminPassword = configuration["InitialAdmin:Password"];
+        var adminEmail =
+            configuration["InitialAdmin:Email"];
+
+        var adminPassword =
+            configuration["InitialAdmin:Password"];
 
         if (string.IsNullOrWhiteSpace(adminEmail) ||
             string.IsNullOrWhiteSpace(adminPassword))
@@ -24,10 +27,17 @@ public static class SeedData
             return;
         }
 
-        adminEmail = adminEmail.Trim().ToLower();
+        adminEmail =
+            adminEmail.Trim().ToLower();
 
-        var admin = await context.Users
-            .FirstOrDefaultAsync(u => u.Email.ToLower() == adminEmail);
+        /* =====================================================
+           SYSTEM ADMINISTRATOR
+        ===================================================== */
+
+        var admin =
+            await context.Users
+                .FirstOrDefaultAsync(
+                    u => u.Email.ToLower() == adminEmail);
 
         if (admin == null)
         {
@@ -36,8 +46,11 @@ public static class SeedData
                 Id = Guid.NewGuid(),
                 FullName = "System Administrator",
                 Email = adminEmail,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword),
-                Role = RoleConstants.SystemAdministrator,
+                PasswordHash =
+                    BCrypt.Net.BCrypt.HashPassword(
+                        adminPassword),
+                Role =
+                    RoleConstants.SystemAdministrator,
                 RoleRequestStatus = "Approved",
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
@@ -47,13 +60,156 @@ public static class SeedData
         }
         else
         {
-            admin.FullName = "System Administrator";
-            admin.PasswordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword);
-            admin.Role = RoleConstants.SystemAdministrator;
-            admin.RoleRequestStatus = "Approved";
+            admin.FullName =
+                "System Administrator";
+
+            admin.PasswordHash =
+                BCrypt.Net.BCrypt.HashPassword(
+                    adminPassword);
+
+            admin.Role =
+                RoleConstants.SystemAdministrator;
+
+            admin.RoleRequestStatus =
+                "Approved";
+
             admin.IsActive = true;
         }
 
         await context.SaveChangesAsync();
+
+        /* =====================================================
+           RESOURCE INVENTORY
+           
+           Only create the sample resources if the table
+           is currently empty.
+        ===================================================== */
+
+        var resourceCount =
+            await context.ReliefResources.CountAsync();
+
+        if (resourceCount == 0)
+        {
+            var resources =
+                new List<ReliefResource>
+                {
+                    new ReliefResource
+                    {
+                        Id = Guid.NewGuid(),
+                        ResourceType = "Water",
+                        ResourceName =
+                            "Emergency Drinking Water",
+                        AvailableQuantity = 50,
+                        AllocatedQuantity = 0,
+                        Location = "Trincomalee",
+                        Status = "Available",
+                        CreatedAt =
+                            DateTime.UtcNow
+                    },
+
+                    new ReliefResource
+                    {
+                        Id = Guid.NewGuid(),
+                        ResourceType = "Food",
+                        ResourceName =
+                            "Emergency Food Packages",
+                        AvailableQuantity = 80,
+                        AllocatedQuantity = 0,
+                        Location = "Kinniya",
+                        Status = "Available",
+                        CreatedAt =
+                            DateTime.UtcNow
+                    },
+
+                    new ReliefResource
+                    {
+                        Id = Guid.NewGuid(),
+                        ResourceType = "Medical",
+                        ResourceName =
+                            "Emergency Medical Kits",
+                        AvailableQuantity = 40,
+                        AllocatedQuantity = 0,
+                        Location = "Mutur",
+                        Status = "Available",
+                        CreatedAt =
+                            DateTime.UtcNow
+                    },
+
+                    new ReliefResource
+                    {
+                        Id = Guid.NewGuid(),
+                        ResourceType = "Shelter",
+                        ResourceName =
+                            "Emergency Shelter Tents",
+                        AvailableQuantity = 30,
+                        AllocatedQuantity = 0,
+                        Location = "Kantale",
+                        Status = "Available",
+                        CreatedAt =
+                            DateTime.UtcNow
+                    },
+
+                    new ReliefResource
+                    {
+                        Id = Guid.NewGuid(),
+                        ResourceType = "Fuel",
+                        ResourceName =
+                            "Emergency Fuel Supplies",
+                        AvailableQuantity = 25,
+                        AllocatedQuantity = 0,
+                        Location = "Trincomalee",
+                        Status = "Available",
+                        CreatedAt =
+                            DateTime.UtcNow
+                    },
+
+                    new ReliefResource
+                    {
+                        Id = Guid.NewGuid(),
+                        ResourceType = "Water",
+                        ResourceName =
+                            "Community Water Supplies",
+                        AvailableQuantity = 60,
+                        AllocatedQuantity = 0,
+                        Location = "Batticaloa",
+                        Status = "Available",
+                        CreatedAt =
+                            DateTime.UtcNow
+                    },
+
+                    new ReliefResource
+                    {
+                        Id = Guid.NewGuid(),
+                        ResourceType = "Food",
+                        ResourceName =
+                            "Community Food Packs",
+                        AvailableQuantity = 70,
+                        AllocatedQuantity = 0,
+                        Location = "Polonnaruwa",
+                        Status = "Available",
+                        CreatedAt =
+                            DateTime.UtcNow
+                    },
+
+                    new ReliefResource
+                    {
+                        Id = Guid.NewGuid(),
+                        ResourceType = "Medical",
+                        ResourceName =
+                            "First Aid Kits",
+                        AvailableQuantity = 35,
+                        AllocatedQuantity = 0,
+                        Location = "Anuradhapura",
+                        Status = "Available",
+                        CreatedAt =
+                            DateTime.UtcNow
+                    }
+                };
+
+            await context.ReliefResources
+                .AddRangeAsync(resources);
+
+            await context.SaveChangesAsync();
+        }
     }
 }

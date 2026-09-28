@@ -13,9 +13,17 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<User> Users { get; set; }
+    public DbSet<DisasterReport> DisasterReports { get; set; }
+    public DbSet<ReliefRequest> ReliefRequests { get; set; }
+    public DbSet<LocationShare> LocationShares { get; set; }
+    public DbSet<AuditLog> AuditLogs { get; set; }
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<RiskPrediction> RiskPredictions { get; set; }
     public DbSet<RiskAgentExecution> RiskAgentExecutions { get; set; }
+    public DbSet<VulnerabilityAssessment> VulnerabilityAssessments { get; set; }
+    public DbSet<ReliefResource> ReliefResources { get; set; }
+    public DbSet<ResourceAllocation> ResourceAllocations { get; set; }
+    public DbSet<EmergencyAlert> EmergencyAlerts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -53,5 +61,17 @@ public class AppDbContext : DbContext
             .ToTable("RiskFactors");
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
