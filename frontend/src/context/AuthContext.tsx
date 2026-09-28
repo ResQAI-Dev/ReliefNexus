@@ -1,4 +1,4 @@
-import {
+﻿import {
   createContext,
   useContext,
   useEffect,
@@ -6,30 +6,15 @@ import {
   type ReactNode,
 } from "react";
 
-import api from "../services/api";
+import {
+  loginUser,
+  registerUser,
+} from "../features/authentication/services/authService";
 
-export interface AuthUser {
-  id: string;
-  fullName: string;
-  email: string;
-  role: string;
-  isActive: boolean;
-  createdAt: string;
-}
-
-interface LoginResponse {
-  accessToken: string;
-  user: AuthUser;
-}
-
-interface RegisterResponse {
-  id: string;
-  fullName: string;
-  email: string;
-  role: string;
-  isActive: boolean;
-  createdAt: string;
-}
+import type {
+  AuthUser,
+  RegisterResponse,
+} from "../features/authentication/types/auth.types";
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -59,7 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (savedToken && savedUser) {
       try {
         setToken(savedToken);
-        setUser(JSON.parse(savedUser));
+        setUser(JSON.parse(savedUser) as AuthUser);
       } catch {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("user");
@@ -69,18 +54,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(false);
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const response = await api.post<LoginResponse>("/auth/login", {
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<AuthUser> => {
+    const response = await loginUser({
       email,
       password,
     });
 
-    const loggedInUser = response.data.user;
+    const loggedInUser = response.user;
 
-    localStorage.setItem("accessToken", response.data.accessToken);
+    localStorage.setItem("accessToken", response.accessToken);
     localStorage.setItem("user", JSON.stringify(loggedInUser));
 
-    setToken(response.data.accessToken);
+    setToken(response.accessToken);
     setUser(loggedInUser);
 
     return loggedInUser;
@@ -91,15 +79,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     email: string,
     password: string,
     role: string
-  ) => {
-    const response = await api.post<RegisterResponse>("/auth/register", {
+  ): Promise<RegisterResponse> => {
+    return registerUser({
       fullName,
       email,
       password,
       role,
     });
-
-    return response.data;
   };
 
   const logout = () => {

@@ -78,6 +78,9 @@ builder.Services.AddHttpClient<WeatherTool>();
 builder.Services.AddScoped<IAgentExecutionService, AgentExecutionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+// Component 2 – Population Vulnerability & Impact Assessment
+builder.Services.AddScoped<IVulnerabilityService, VulnerabilityService>();
+
 // ======================================================
 // JWT AUTHENTICATION
 // ======================================================
