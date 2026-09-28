@@ -1,4 +1,4 @@
-﻿export type UserRole =
+export type UserRole =
   | "AffectedUser"
   | "FieldVolunteer"
   | "ReliefCoordinator"
@@ -31,6 +31,7 @@ export interface RegisterRequest {
   role: UserRole | string;
   phoneNumber: string;
   dateOfBirth: string;
+  gender: string;
   address: string;
   district: string;
   emergencyContactName: string;
@@ -46,4 +47,6 @@ export interface RegisterResponse {
   permissions: string[];
   createdAt: string;
 }
+
+
 
