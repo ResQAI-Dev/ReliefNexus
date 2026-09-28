@@ -7,7 +7,8 @@ public interface IAgentExecutionService
     Task<RiskAgentExecution> StartAsync(
         string inputSummary,
         string objective,
-        string plan);
+        string plan,
+        string agentName = "Risk Prediction Agent");
 
     Task<RiskAgentExecution?> UpdateStepAsync(
         Guid executionId,
