@@ -1,15 +1,15 @@
-﻿using System.Globalization;
-using System.Text.Json;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ReliefNexus.API.AI.Tools;
 
 public sealed class PopulationTool
 {
-    private const string Endpoint =
-        "https://api.worldpop.org/v1/services/stats";
+    private const string WorldPopApi =
+        "https://api.worldpop.org/v2";
 
-    private const string TaskEndpoint =
-        "https://api.worldpop.org/v1/tasks/";
+    private const int DataYear = 2020;
+    private const string Resolution = "100m";
 
     private readonly HttpClient _httpClient;
     private readonly ILogger<PopulationTool> _logger;
@@ -19,19 +19,15 @@ public sealed class PopulationTool
         ILogger<PopulationTool> logger)
     {
         _httpClient = httpClient;
-
         _logger = logger;
 
-        _httpClient.Timeout =
-            TimeSpan.FromSeconds(90);
+        _httpClient.Timeout = TimeSpan.FromSeconds(90);
 
-        if (!_httpClient.DefaultRequestHeaders.Contains(
-                "User-Agent"))
+        if (!_httpClient.DefaultRequestHeaders.Contains("User-Agent"))
         {
-            _httpClient.DefaultRequestHeaders
-                .TryAddWithoutValidation(
-                    "User-Agent",
-                    "ReliefNexus/1.0");
+            _httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
+                "User-Agent",
+                "ReliefNexus/1.0");
         }
     }
 
@@ -39,182 +35,186 @@ public sealed class PopulationTool
         double latitude,
         double longitude)
     {
-        try
+        if (!IsValidCoordinate(latitude, longitude))
         {
-            const double halfSizeDegrees =
-                0.005;
-
-            var west =
-                longitude - halfSizeDegrees;
-
-            var east =
-                longitude + halfSizeDegrees;
-
-            var south =
-                latitude - halfSizeDegrees;
-
-            var north =
-                latitude + halfSizeDegrees;
-
-            var polygon =
-                new[]
-                {
-                    new[]
-                    {
-                        west,
-                        south
-                    },
-                    new[]
-                    {
-                        east,
-                        south
-                    },
-                    new[]
-                    {
-                        east,
-                        north
-                    },
-                    new[]
-                    {
-                        west,
-                        north
-                    },
-                    new[]
-                    {
-                        west,
-                        south
-                    }
-                };
-
-            var geoJson =
-                JsonSerializer.Serialize(
-                    new
-                    {
-                        type = "FeatureCollection",
-                        features = new[]
-                        {
-                            new
-                            {
-                                type = "Feature",
-                                properties = new { },
-                                geometry = new
-                                {
-                                    type = "Polygon",
-                                    coordinates =
-                                        new[] { polygon }
-                                }
-                            }
-                        }
-                    });
-
-            var url =
-                Endpoint +
-                "?dataset=wpgppop" +
-                "&year=2020" +
-                "&runasync=false" +
-                "&geojson=" +
-                Uri.EscapeDataString(
-                    geoJson);
-
-            _logger.LogInformation(
-                "[POPULATION] WorldPop request started: {Latitude}, {Longitude}",
+            _logger.LogWarning(
+                "[WORLDPOP] Invalid coordinates {Latitude}, {Longitude}",
                 latitude,
                 longitude);
 
-            using var response =
-                await _httpClient.GetAsync(url);
+            return null;
+        }
 
-            var body =
-                await response.Content
-                    .ReadAsStringAsync();
+        /*
+         * Agent 02 needs population density for the selected disaster
+         * exposure area.
+         *
+         * WorldPop v2 returns:
+         * - total_population
+         * - area_km2
+         * - population_density
+         *
+         * We query a 1 km x 1 km area first. If no usable value is
+         * returned, progressively larger areas are requested.
+         */
+        double[] halfSizeKm =
+        {
+            0.5,
+            1.5,
+            3.0
+        };
 
-            if (!response.IsSuccessStatusCode)
+        foreach (var halfSizeKmValue in halfSizeKm)
+        {
+            try
             {
-                _logger.LogWarning(
-                    "[POPULATION] HTTP {StatusCode}: {Body}",
-                    (int)response.StatusCode,
-                    body);
-
-                return null;
-            }
-
-            using var document =
-                JsonDocument.Parse(body);
-
-            var root =
-                document.RootElement;
-
-            // ----------------------------------------------------
-            // DIRECT RESULT
-            // ----------------------------------------------------
-
-            if (TryGetTotalPopulation(
-                    root,
-                    out var directPopulation))
-            {
-                return ConvertToDensity(
-                    directPopulation,
+                var result = await QueryWorldPopAsync(
                     latitude,
-                    west,
-                    east,
-                    south,
-                    north);
-            }
+                    longitude,
+                    halfSizeKmValue);
 
-            // ----------------------------------------------------
-            // ASYNC RESULT
-            // ----------------------------------------------------
-
-            if (root.TryGetProperty(
-                    "taskid",
-                    out var taskElement))
-            {
-                var taskId =
-                    taskElement.GetString();
-
-                if (!string.IsNullOrWhiteSpace(
-                        taskId))
+                if (result != null &&
+                    result.Density > 0)
                 {
                     _logger.LogInformation(
-                        "[POPULATION] WorldPop task: {TaskId}",
-                        taskId);
+                        "[WORLDPOP] SUCCESS Density={Density:F2}/km2 Total={Total:F2} Area={Area:F2}km2 Window={Window}km",
+                        result.Density,
+                        result.TotalPopulation,
+                        result.AreaKm2,
+                        halfSizeKmValue * 2);
 
-                    var result =
-                        await PollTaskAsync(
-                            taskId);
-
-                    if (result.HasValue)
-                    {
-                        return ConvertToDensity(
-                            result.Value,
-                            latitude,
-                            west,
-                            east,
-                            south,
-                            north);
-                    }
+                    return Math.Round(
+                        result.Density,
+                        2);
                 }
             }
-
-            _logger.LogWarning(
-                "[POPULATION] WorldPop returned no population.");
-
-            return null;
+            catch (Exception ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "[WORLDPOP] Query failed for window {Window}km.",
+                    halfSizeKmValue * 2);
+            }
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(
-                ex,
-                "[POPULATION] WorldPop failed.");
 
-            return null;
-        }
+        _logger.LogWarning(
+            "[WORLDPOP] No usable population density returned for {Latitude}, {Longitude}.",
+            latitude,
+            longitude);
+
+        return null;
     }
 
-    private async Task<double?> PollTaskAsync(
+    private async Task<PopulationResult?> QueryWorldPopAsync(
+        double latitude,
+        double longitude,
+        double halfSizeKm)
+    {
+        var latDelta =
+            halfSizeKm / 111.32;
+
+        var cosLatitude =
+            Math.Max(
+                0.1,
+                Math.Cos(
+                    latitude *
+                    Math.PI /
+                    180.0));
+
+        var lonDelta =
+            halfSizeKm /
+            (111.32 * cosLatitude);
+
+        var west = longitude - lonDelta;
+        var east = longitude + lonDelta;
+        var south = latitude - latDelta;
+        var north = latitude + latDelta;
+
+        var polygon = new
+        {
+            type = "Polygon",
+            coordinates = new[]
+            {
+                new[]
+                {
+                    new[] { west, south },
+                    new[] { east, south },
+                    new[] { east, north },
+                    new[] { west, north },
+                    new[] { west, south }
+                }
+            }
+        };
+
+        var request = new
+        {
+            geojson = polygon,
+            year = DataYear,
+            resolution = Resolution
+        };
+
+        var json =
+            JsonSerializer.Serialize(request);
+
+        using var content =
+            new StringContent(
+                json,
+                System.Text.Encoding.UTF8,
+                "application/json");
+
+        _logger.LogInformation(
+            "[WORLDPOP] POST population query for {Latitude}, {Longitude}, window={Window}km",
+            latitude,
+            longitude,
+            halfSizeKm * 2);
+
+        using var response =
+            await _httpClient.PostAsync(
+                $"{WorldPopApi}/population",
+                content);
+
+        var responseBody =
+            await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogWarning(
+                "[WORLDPOP] HTTP {Status}: {Body}",
+                (int)response.StatusCode,
+                Shorten(responseBody));
+
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(responseBody))
+        {
+            return null;
+        }
+
+        var submit =
+            JsonSerializer.Deserialize<WorldPopSubmitResponse>(
+                responseBody,
+                JsonOptions);
+
+        if (submit == null ||
+            string.IsNullOrWhiteSpace(
+                submit.TaskId))
+        {
+            _logger.LogWarning(
+                "[WORLDPOP] No task_id returned: {Body}",
+                Shorten(responseBody));
+
+            return null;
+        }
+
+        return await PollTaskAsync(
+            submit.TaskId);
+    }
+
+    private async Task<PopulationResult?> PollTaskAsync(
         string taskId)
     {
-        const int maxAttempts = 20;
+        const int maxAttempts = 30;
 
         for (var attempt = 1;
              attempt <= maxAttempts;
@@ -225,17 +225,12 @@ public sealed class PopulationTool
 
             try
             {
-                var url =
-                    TaskEndpoint +
-                    Uri.EscapeDataString(
-                        taskId);
-
                 using var response =
-                    await _httpClient.GetAsync(url);
+                    await _httpClient.GetAsync(
+                        $"{WorldPopApi}/tasks/{Uri.EscapeDataString(taskId)}");
 
                 var body =
-                    await response.Content
-                        .ReadAsStringAsync();
+                    await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode ||
                     string.IsNullOrWhiteSpace(body))
@@ -243,172 +238,170 @@ public sealed class PopulationTool
                     continue;
                 }
 
-                using var document =
-                    JsonDocument.Parse(body);
+                var result =
+                    JsonSerializer.Deserialize<WorldPopTaskResponse>(
+                        body,
+                        JsonOptions);
 
-                var root =
-                    document.RootElement;
-
-                if (TryGetTotalPopulation(
-                        root,
-                        out var population))
+                if (result == null)
                 {
-                    _logger.LogInformation(
-                        "[POPULATION] Task completed on attempt {Attempt}.",
-                        attempt);
-
-                    return population;
+                    continue;
                 }
 
-                if (root.TryGetProperty(
-                        "status",
-                        out var statusElement))
+                _logger.LogInformation(
+                    "[WORLDPOP] Task {TaskId} attempt {Attempt}/{Max}: status={Status}, progress={Progress}",
+                    taskId,
+                    attempt,
+                    maxAttempts,
+                    result.Status,
+                    result.Progress);
+
+                if (string.Equals(
+                        result.Status,
+                        "success",
+                        StringComparison.OrdinalIgnoreCase))
                 {
-                    var status =
-                        statusElement.ToString();
-
-                    _logger.LogInformation(
-                        "[POPULATION] Attempt {Attempt}/{Max}: {Status}",
-                        attempt,
-                        maxAttempts,
-                        status);
-
-                    if (status.Equals(
-                            "failed",
-                            StringComparison.OrdinalIgnoreCase))
+                    if (result.Result == null)
                     {
                         return null;
                     }
+
+                    var density =
+                        result.Result.PopulationDensity;
+
+                    var total =
+                        result.Result.TotalPopulation;
+
+                    var area =
+                        result.Result.AreaKm2;
+
+                    /*
+                     * Prefer WorldPop's own population_density.
+                     * If absent, calculate it from total / area.
+                     */
+                    if (density <= 0 &&
+                        total > 0 &&
+                        area > 0)
+                    {
+                        density =
+                            total / area;
+                    }
+
+                    if (density <= 0)
+                    {
+                        return null;
+                    }
+
+                    return new PopulationResult(
+                        density,
+                        total,
+                        area);
+                }
+
+                if (string.Equals(
+                        result.Status,
+                        "failure",
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogWarning(
+                        "[WORLDPOP] Task failed: {Error}",
+                        result.Error);
+
+                    return null;
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Continue polling.
+                _logger.LogWarning(
+                    ex,
+                    "[WORLDPOP] Polling attempt {Attempt} failed.",
+                    attempt);
             }
         }
 
         _logger.LogWarning(
-            "[POPULATION] Polling limit reached.");
+            "[WORLDPOP] Task {TaskId} did not finish within polling limit.",
+            taskId);
 
         return null;
     }
 
-    private static bool TryGetTotalPopulation(
-        JsonElement root,
-        out double totalPopulation)
-    {
-        totalPopulation = 0;
-
-        if (!root.TryGetProperty(
-                "data",
-                out var data) ||
-            data.ValueKind !=
-                JsonValueKind.Object)
-        {
-            return false;
-        }
-
-        if (!data.TryGetProperty(
-                "total_population",
-                out var element))
-        {
-            return false;
-        }
-
-        if (element.ValueKind ==
-                JsonValueKind.Number &&
-            element.TryGetDouble(
-                out totalPopulation))
-        {
-            return totalPopulation >= 0;
-        }
-
-        if (element.ValueKind ==
-                JsonValueKind.String &&
-            double.TryParse(
-                element.GetString(),
-                NumberStyles.Any,
-                CultureInfo.InvariantCulture,
-                out totalPopulation))
-        {
-            return totalPopulation >= 0;
-        }
-
-        return false;
-    }
-
-    private static double CalculateDistanceKm(
-        double lat1,
-        double lon1,
-        double lat2,
-        double lon2)
-    {
-        const double earthRadiusKm =
-            6371.0;
-
-        var dLat =
-            (lat2 - lat1) *
-            Math.PI /
-            180.0;
-
-        var dLon =
-            (lon2 - lon1) *
-            Math.PI /
-            180.0;
-
-        var a =
-            Math.Sin(dLat / 2) *
-            Math.Sin(dLat / 2) +
-            Math.Cos(
-                lat1 * Math.PI / 180.0) *
-            Math.Cos(
-                lat2 * Math.PI / 180.0) *
-            Math.Sin(dLon / 2) *
-            Math.Sin(dLon / 2);
-
-        return earthRadiusKm *
-               2 *
-               Math.Atan2(
-                   Math.Sqrt(a),
-                   Math.Sqrt(1 - a));
-    }
-
-    private static double? ConvertToDensity(
-        double totalPopulation,
+    private static bool IsValidCoordinate(
         double latitude,
-        double west,
-        double east,
-        double south,
-        double north)
+        double longitude)
     {
-        var widthKm =
-            CalculateDistanceKm(
-                latitude,
-                west,
-                latitude,
-                east);
+        return latitude >= -90 &&
+               latitude <= 90 &&
+               longitude >= -180 &&
+               longitude <= 180;
+    }
 
-        var heightKm =
-            CalculateDistanceKm(
-                south,
-                (west + east) / 2.0,
-                north,
-                (west + east) / 2.0);
+    private static string Shorten(
+        string value)
+    {
+        const int max = 500;
 
-        var areaKm2 =
-            widthKm * heightKm;
-
-        if (areaKm2 <= 0)
+        if (string.IsNullOrEmpty(value))
         {
-            return null;
+            return string.Empty;
         }
 
-        var density =
-            totalPopulation /
-            areaKm2;
+        return value.Length <= max
+            ? value
+            : value[..max];
+    }
 
-        return Math.Round(
-            density,
-            2);
+    private static readonly JsonSerializerOptions JsonOptions =
+        new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
+    private sealed record PopulationResult(
+        double Density,
+        double TotalPopulation,
+        double AreaKm2);
+
+    private sealed class WorldPopSubmitResponse
+    {
+        [JsonPropertyName("task_id")]
+        public string? TaskId { get; set; }
+    }
+
+    private sealed class WorldPopTaskResponse
+    {
+        [JsonPropertyName("status")]
+        public string? Status { get; set; }
+
+        [JsonPropertyName("progress")]
+        public double Progress { get; set; }
+
+        [JsonPropertyName("result")]
+        public WorldPopResult? Result { get; set; }
+
+        [JsonPropertyName("error")]
+        public JsonElement? ErrorElement { get; set; }
+
+        [JsonIgnore]
+        public string Error =>
+            ErrorElement?.ToString() ?? string.Empty;
+    }
+
+    private sealed class WorldPopResult
+    {
+        [JsonPropertyName("total_population")]
+        public double TotalPopulation { get; set; }
+
+        [JsonPropertyName("area_km2")]
+        public double AreaKm2 { get; set; }
+
+        [JsonPropertyName("population_density")]
+        public double PopulationDensity { get; set; }
+
+        [JsonPropertyName("data_year")]
+        public int DataYear { get; set; }
+
+        [JsonPropertyName("data_source")]
+        public string? DataSource { get; set; }
     }
 }
