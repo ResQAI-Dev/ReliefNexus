@@ -1,0 +1,333 @@
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace ReliefNexus.API.Migrations
+{
+    /// <inheritdoc />
+    public partial class AddAuditLogMetadata : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AlterColumn<string>(
+                name: "PhoneNumber",
+                table: "Users",
+                type: "text",
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "text");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "EmergencyContactPhone",
+                table: "Users",
+                type: "text",
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "text");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "EmergencyContactName",
+                table: "Users",
+                type: "text",
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "text");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "District",
+                table: "Users",
+                type: "text",
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "text");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "Address",
+                table: "Users",
+                type: "text",
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "text");
+
+            migrationBuilder.AddColumn<string>(
+                name: "Gender",
+                table: "Users",
+                type: "text",
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "ProfileImageUrl",
+                table: "Users",
+                type: "text",
+                nullable: true);
+
+            migrationBuilder.AddColumn<Guid>(
+                name: "UserId",
+                table: "RiskPredictions",
+                type: "uuid",
+                nullable: true);
+
+            migrationBuilder.CreateTable(
+                name: "AuditLogs",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Action = table.Column<string>(type: "text", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    UserEmail = table.Column<string>(type: "text", nullable: true),
+                    Role = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<string>(type: "text", nullable: false),
+                    Severity = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AuditLogs", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DisasterReports",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ReporterUserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DisasterType = table.Column<string>(type: "text", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    Location = table.Column<string>(type: "text", nullable: false),
+                    Latitude = table.Column<double>(type: "double precision", nullable: true),
+                    Longitude = table.Column<double>(type: "double precision", nullable: true),
+                    Severity = table.Column<string>(type: "text", nullable: false),
+                    Status = table.Column<string>(type: "text", nullable: false),
+                    RiskPredictionId = table.Column<Guid>(type: "uuid", nullable: true),
+                    AssignedVolunteerUserId = table.Column<Guid>(type: "uuid", nullable: true),
+                    AssignedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    FieldUpdateNotes = table.Column<string>(type: "text", nullable: true),
+                    FieldSituation = table.Column<string>(type: "text", nullable: true),
+                    FieldUpdateLatitude = table.Column<double>(type: "double precision", nullable: true),
+                    FieldUpdateLongitude = table.Column<double>(type: "double precision", nullable: true),
+                    FieldUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DisasterReports", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "EmergencyAlerts",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    RiskPredictionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    VulnerabilityAssessmentId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Title = table.Column<string>(type: "text", nullable: false),
+                    Message = table.Column<string>(type: "text", nullable: false),
+                    Location = table.Column<string>(type: "text", nullable: false),
+                    DisasterType = table.Column<string>(type: "text", nullable: false),
+                    Severity = table.Column<string>(type: "text", nullable: false),
+                    Status = table.Column<string>(type: "text", nullable: false),
+                    RecommendedActions = table.Column<string>(type: "text", nullable: false),
+                    ResourceSummary = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EmergencyAlerts", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "LocationShares",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    LocationName = table.Column<string>(type: "text", nullable: false),
+                    Latitude = table.Column<double>(type: "double precision", nullable: true),
+                    Longitude = table.Column<double>(type: "double precision", nullable: true),
+                    Status = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LocationShares", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ReliefRequests",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    RequesterUserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    RequestType = table.Column<string>(type: "text", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    Location = table.Column<string>(type: "text", nullable: false),
+                    RequestedQuantity = table.Column<int>(type: "integer", nullable: false),
+                    Priority = table.Column<string>(type: "text", nullable: false),
+                    Status = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ReliefRequests", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ReliefResources",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ResourceType = table.Column<string>(type: "text", nullable: false),
+                    ResourceName = table.Column<string>(type: "text", nullable: false),
+                    AvailableQuantity = table.Column<int>(type: "integer", nullable: false),
+                    AllocatedQuantity = table.Column<int>(type: "integer", nullable: false),
+                    Location = table.Column<string>(type: "text", nullable: false),
+                    Status = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ReliefResources", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ResourceAllocations",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    VulnerabilityAssessmentId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ResourceId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ResourceType = table.Column<string>(type: "text", nullable: false),
+                    ResourceName = table.Column<string>(type: "text", nullable: false),
+                    RecommendedQuantity = table.Column<int>(type: "integer", nullable: false),
+                    Priority = table.Column<string>(type: "text", nullable: false),
+                    Location = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ResourceAllocations", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "VulnerabilityAssessments",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    RiskPredictionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Location = table.Column<string>(type: "text", nullable: false),
+                    DisasterType = table.Column<string>(type: "text", nullable: false),
+                    RiskScore = table.Column<double>(type: "double precision", nullable: false),
+                    RiskLevel = table.Column<string>(type: "text", nullable: false),
+                    AffectedPopulation = table.Column<int>(type: "integer", nullable: false),
+                    VulnerabilityScore = table.Column<double>(type: "double precision", nullable: false),
+                    VulnerabilityLevel = table.Column<string>(type: "text", nullable: false),
+                    ImpactScore = table.Column<double>(type: "double precision", nullable: false),
+                    ImpactLevel = table.Column<string>(type: "text", nullable: false),
+                    MainVulnerabilities = table.Column<string>(type: "text", nullable: false),
+                    RecommendedActions = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_VulnerabilityAssessments", x => x.Id);
+                });
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropTable(
+                name: "AuditLogs");
+
+            migrationBuilder.DropTable(
+                name: "DisasterReports");
+
+            migrationBuilder.DropTable(
+                name: "EmergencyAlerts");
+
+            migrationBuilder.DropTable(
+                name: "LocationShares");
+
+            migrationBuilder.DropTable(
+                name: "ReliefRequests");
+
+            migrationBuilder.DropTable(
+                name: "ReliefResources");
+
+            migrationBuilder.DropTable(
+                name: "ResourceAllocations");
+
+            migrationBuilder.DropTable(
+                name: "VulnerabilityAssessments");
+
+            migrationBuilder.DropColumn(
+                name: "Gender",
+                table: "Users");
+
+            migrationBuilder.DropColumn(
+                name: "ProfileImageUrl",
+                table: "Users");
+
+            migrationBuilder.DropColumn(
+                name: "UserId",
+                table: "RiskPredictions");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "PhoneNumber",
+                table: "Users",
+                type: "text",
+                nullable: false,
+                defaultValue: "",
+                oldClrType: typeof(string),
+                oldType: "text",
+                oldNullable: true);
+
+            migrationBuilder.AlterColumn<string>(
+                name: "EmergencyContactPhone",
+                table: "Users",
+                type: "text",
+                nullable: false,
+                defaultValue: "",
+                oldClrType: typeof(string),
+                oldType: "text",
+                oldNullable: true);
+
+            migrationBuilder.AlterColumn<string>(
+                name: "EmergencyContactName",
+                table: "Users",
+                type: "text",
+                nullable: false,
+                defaultValue: "",
+                oldClrType: typeof(string),
+                oldType: "text",
+                oldNullable: true);
+
+            migrationBuilder.AlterColumn<string>(
+                name: "District",
+                table: "Users",
+                type: "text",
+                nullable: false,
+                defaultValue: "",
+                oldClrType: typeof(string),
+                oldType: "text",
+                oldNullable: true);
+
+            migrationBuilder.AlterColumn<string>(
+                name: "Address",
+                table: "Users",
+                type: "text",
+                nullable: false,
+                defaultValue: "",
+                oldClrType: typeof(string),
+                oldType: "text",
+                oldNullable: true);
+        }
+    }
+}
