@@ -17,11 +17,12 @@ public class AgentExecutionService : IAgentExecutionService
     public async Task<RiskAgentExecution> StartAsync(
         string inputSummary,
         string objective,
-        string plan)
+        string plan,
+        string agentName = "Risk Prediction Agent")
     {
         var execution = new RiskAgentExecution
         {
-            AgentName = "Risk Prediction Agent",
+            AgentName = agentName,
             Status = "Started",
             InputSummary = inputSummary,
             WorkflowId = Guid.NewGuid().ToString(),
@@ -154,3 +155,4 @@ public class AgentExecutionService : IAgentExecutionService
             .ToListAsync();
     }
 }
+
