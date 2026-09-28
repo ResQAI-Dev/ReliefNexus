@@ -1,4 +1,4 @@
-﻿import {
+import {
   createContext,
   useContext,
   useEffect,
@@ -27,6 +27,7 @@ interface AuthContextType {
     role: string,
     phoneNumber: string,
     dateOfBirth: string,
+    gender: string,
     address: string,
     district: string,
     emergencyContactName: string,
@@ -87,6 +88,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     role: string,
     phoneNumber: string,
     dateOfBirth: string,
+    gender: string,
     address: string,
     district: string,
     emergencyContactName: string,
@@ -99,6 +101,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       role,
       phoneNumber,
       dateOfBirth,
+      gender,
       address,
       district,
       emergencyContactName,
@@ -139,3 +142,5 @@ export const useAuth = () => {
 
   return context;
 };
+
+
