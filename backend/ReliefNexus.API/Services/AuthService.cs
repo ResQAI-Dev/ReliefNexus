@@ -1,4 +1,4 @@
-﻿using ReliefNexus.API.Data;
+using ReliefNexus.API.Data;
 using ReliefNexus.API.DTOs;
 using ReliefNexus.API.Helpers;
 using ReliefNexus.API.Interfaces;
@@ -109,7 +109,15 @@ public class AuthService : IAuthService
             Role = requestedRole,
             RoleRequestStatus = "Pending",
             IsActive = false,
-            Permissions = new List<string>()
+            Permissions = new List<string>(),
+
+            PhoneNumber = dto.PhoneNumber?.Trim(),
+            DateOfBirth = dto.DateOfBirth.HasValue ? DateTime.SpecifyKind(dto.DateOfBirth.Value, DateTimeKind.Utc) : null,
+            Gender = dto.Gender?.Trim(),
+            Address = dto.Address?.Trim(),
+            District = dto.District?.Trim(),
+            EmergencyContactName = dto.EmergencyContactName?.Trim(),
+            EmergencyContactPhone = dto.EmergencyContactPhone?.Trim()
         };
 
         _context.Users.Add(user);
@@ -188,4 +196,6 @@ public class AuthService : IAuthService
             .WriteToken(token);
     }
 }
+
+
 
