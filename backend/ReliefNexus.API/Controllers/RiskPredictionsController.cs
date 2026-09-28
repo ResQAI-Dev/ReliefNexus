@@ -1,6 +1,12 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
 using ReliefNexus.API.AI.Tools;
+using ReliefNexus.API.AI.Agents;
+using ReliefNexus.API.Data;
 using ReliefNexus.API.DTOs;
 using ReliefNexus.API.Interfaces;
 using ReliefNexus.API.Models;
@@ -14,12 +20,24 @@ public class RiskPredictionsController : ControllerBase
 {
     private readonly IRiskPredictionService _service;
     private readonly IAgentExecutionService _agentExecutionService;
+
     private readonly DisasterDataTool _disasterDataTool;
     private readonly WeatherTool _weatherTool;
     private readonly RiverGaugeTool _riverGaugeTool;
     private readonly HistoricalDisasterTool _historicalDisasterTool;
     private readonly PopulationTool _populationTool;
     private readonly DrainageDataTool _drainageDataTool;
+
+    private readonly IVulnerabilityImpactService _vulnerabilityImpactService;
+    private readonly IResourceService _resourceService;
+
+    private readonly EarlyWarningCoordinationAgent
+        _earlyWarningCoordinationAgent;
+
+    private readonly IVolunteerAssignmentService
+        _volunteerAssignmentService;
+
+    private readonly AppDbContext _context;
 
     public RiskPredictionsController(
         IRiskPredictionService service,
@@ -29,23 +47,65 @@ public class RiskPredictionsController : ControllerBase
         RiverGaugeTool riverGaugeTool,
         HistoricalDisasterTool historicalDisasterTool,
         PopulationTool populationTool,
-        DrainageDataTool drainageDataTool)
+        DrainageDataTool drainageDataTool,
+        IVulnerabilityImpactService vulnerabilityImpactService,
+        IResourceService resourceService,
+        EarlyWarningCoordinationAgent earlyWarningCoordinationAgent,
+        IVolunteerAssignmentService volunteerAssignmentService,
+        AppDbContext context)
     {
         _service = service;
         _agentExecutionService = agentExecutionService;
+
         _disasterDataTool = disasterDataTool;
         _weatherTool = weatherTool;
         _riverGaugeTool = riverGaugeTool;
         _historicalDisasterTool = historicalDisasterTool;
         _populationTool = populationTool;
         _drainageDataTool = drainageDataTool;
+
+        _vulnerabilityImpactService =
+            vulnerabilityImpactService;
+
+        _resourceService =
+            resourceService;
+
+        _earlyWarningCoordinationAgent =
+            earlyWarningCoordinationAgent;
+
+        _volunteerAssignmentService =
+            volunteerAssignmentService;
+
+        _context = context;
     }
 
+    // ============================================================
+    // CREATE RISK PREDICTION
+    // ============================================================
+
+
+    private Guid? GetCurrentUserId()
+    {
+        var value =
+            User.FindFirstValue("sub")
+            ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub)
+            ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        return Guid.TryParse(
+            value,
+            out var id)
+            ? id
+            : null;
+    }
     [HttpPost]
     [Authorize(Policy = "Permission:Report Disaster")]
     public async Task<ActionResult<RiskPredictionDto>> Create(
         RiskPredictionDto request)
     {
+        var userId = GetCurrentUserId();
+
+        if (userId == null)
+            return Unauthorized();
         var inputSummary =
             $"Location={request.Location}; " +
             $"Latitude={request.Latitude}; " +
@@ -74,8 +134,15 @@ public class RiskPredictionsController : ControllerBase
         {
             var result =
                 await _service.CreateAsync(
+                    userId.Value,
                     request,
                     execution.Id);
+
+            if (!result.Id.HasValue)
+            {
+                throw new InvalidOperationException(
+                    "Risk prediction was created without a valid ID.");
+            }
 
             var outputSummary =
                 $"DisasterType={result.DisasterType}; " +
@@ -96,7 +163,7 @@ public class RiskPredictionsController : ControllerBase
 
             await _agentExecutionService.CompleteAsync(
                 execution.Id,
-                result.Id!.Value,
+                result.Id.Value,
                 outputSummary,
                 validationResults,
                 finalOutcome,
@@ -108,18 +175,34 @@ public class RiskPredictionsController : ControllerBase
         }
         catch
         {
+            await _agentExecutionService.FailAsync(
+                execution.Id,
+                "Risk prediction creation failed.");
+
             throw;
         }
     }
+
+    // ============================================================
+    // GET ALL
+    // ============================================================
 
     [HttpGet]
     [Authorize(Policy = "Permission:View Risk Information")]
     public async Task<ActionResult<PaginatedRiskPredictionDto>> GetAll(
         [FromQuery] RiskPredictionQueryDto query)
     {
+        var userId = GetCurrentUserId();
+
+        if (userId == null)
+            return Unauthorized();
         return Ok(
-            await _service.GetPagedAsync(query));
+            await _service.GetPagedAsync(userId.Value, query, (User.IsInRole("SystemAdministrator") || User.IsInRole("System Administrator") || User.IsInRole("Admin"))));
     }
+
+    // ============================================================
+    // EXTERNAL EVENTS
+    // ============================================================
 
     [HttpGet("external-events")]
     public async Task<IActionResult> GetExternalEvents()
@@ -131,16 +214,15 @@ public class RiskPredictionsController : ControllerBase
     }
 
     // ============================================================
-    // LIVE ENVIRONMENT DATA
+    // LIVE ENVIRONMENT
     // ============================================================
 
     [HttpGet("environment-live")]
     [Authorize(Policy = "Permission:View Risk Information")]
-    public async Task<IActionResult>
-        GetEnvironmentLive(
-            [FromQuery] double latitude,
-            [FromQuery] double longitude,
-            [FromQuery] string? location = null)
+    public async Task<IActionResult> GetEnvironmentLive(
+        [FromQuery] double latitude,
+        [FromQuery] double longitude,
+        [FromQuery] string? location = null)
     {
         if (latitude < -90 ||
             latitude > 90 ||
@@ -155,7 +237,6 @@ public class RiskPredictionsController : ControllerBase
 
         try
         {
-            // Run external data sources in parallel.
             var weatherTask =
                 _weatherTool.GetCurrentWeatherAsync(
                     latitude,
@@ -207,51 +288,61 @@ public class RiskPredictionsController : ControllerBase
                 await drainageTask;
 
             var result = new
-                {
-                    Latitude = latitude,
-                    Longitude = longitude,
-                    // Open-Meteo weather data
-                    Rainfall1h = weather?.Precipitation,
-                    Rainfall3h = weather?.Rainfall3h,
-                    Rainfall24h = weather?.Rainfall24h,
-                    ForecastRainfall = weather?.ForecastRainfall,
+            {
+                Latitude = latitude,
+                Longitude = longitude,
 
-                    RiverLevel =
-                        river?.RiverLevel,
+                Rainfall1h =
+                    weather?.Precipitation,
 
-                    RiverFlow =
-                        river?.RiverFlow,
+                Rainfall3h =
+                    weather?.Rainfall3h,
 
-                    Temperature =
-                        weather?.Temperature,
+                Rainfall24h =
+                    weather?.Rainfall24h,
 
-                    Humidity =
-                        weather?.Humidity,
+                ForecastRainfall =
+                    weather?.ForecastRainfall,
 
-                    WindSpeed =
-                        weather?.WindSpeed,
+                RiverLevel =
+                    river?.RiverLevel,
 
-                    PopulationDensity =
-                        population,
+                RiverFlow =
+                    river?.RiverFlow,
 
-                    HistoricalFloodCount =
-                        historical?.FloodCount,
+                Temperature =
+                    weather?.Temperature,
 
-                    HistoricalSeverity =
-                        historical?.Severity,
+                Humidity =
+                    weather?.Humidity,
 
-                    DrainageCapacity =
-                        drainage,
+                WindSpeed =
+                    weather?.WindSpeed,
 
-                    WeatherSource =
-                        weather?.Source ?? "",
+                SoilMoisture =
+                    weather?.SoilMoisture,
 
-                    RiverSource =
-                        river?.Source ?? "",
+                PopulationDensity =
+                    population,
 
-                    HistoricalSource =
-                        historical?.Source ?? ""
-                };
+                HistoricalFloodCount =
+                    historical?.FloodCount,
+
+                HistoricalSeverity =
+                    historical?.Severity,
+
+                DrainageCapacity =
+                    drainage,
+
+                WeatherSource =
+                    weather?.Source ?? "",
+
+                RiverSource =
+                    river?.Source ?? "",
+
+                HistoricalSource =
+                    historical?.Source ?? ""
+            };
 
             return Ok(result);
         }
@@ -263,10 +354,15 @@ public class RiskPredictionsController : ControllerBase
                 {
                     message =
                         "Failed to retrieve live environment data.",
+
                     detail = ex.Message
                 });
         }
     }
+
+    // ============================================================
+    // GET BY LOCATION
+    // ============================================================
 
     [HttpGet("location/{location}")]
     public async Task<ActionResult<List<RiskPredictionDto>>>
@@ -276,6 +372,10 @@ public class RiskPredictionsController : ControllerBase
             await _service.GetByLocationAsync(location));
     }
 
+    // ============================================================
+    // GET HIGH RISK
+    // ============================================================
+
     [HttpGet("high-risk")]
     public async Task<ActionResult<List<RiskPredictionDto>>>
         GetHighRisk()
@@ -284,13 +384,27 @@ public class RiskPredictionsController : ControllerBase
             await _service.GetHighRiskAsync());
     }
 
+    // ============================================================
+    // HISTORY
+    // ============================================================
+
     [HttpGet("history")]
     public async Task<ActionResult<List<RiskPredictionDto>>>
         GetHistory()
     {
+        var userId = GetCurrentUserId();
+
+        if (userId == null)
+            return Unauthorized();
+
         return Ok(
-            await _service.GetHistoryAsync());
+            await _service.GetHistoryAsync(
+                userId.Value));
     }
+
+    // ============================================================
+    // PENDING APPROVAL
+    // ============================================================
 
     [HttpGet("pending-approval")]
     public async Task<ActionResult<List<RiskPredictionDto>>>
@@ -300,6 +414,10 @@ public class RiskPredictionsController : ControllerBase
             await _service.GetPendingApprovalAsync());
     }
 
+    // ============================================================
+    // AGENT EXECUTIONS
+    // ============================================================
+
     [HttpGet("agent-executions")]
     public async Task<ActionResult<List<RiskAgentExecution>>>
         GetAgentExecutions()
@@ -307,6 +425,10 @@ public class RiskPredictionsController : ControllerBase
         return Ok(
             await _agentExecutionService.GetAllAsync());
     }
+
+    // ============================================================
+    // AGENT EXECUTIONS BY PREDICTION
+    // ============================================================
 
     [HttpGet("{id:guid}/agent-executions")]
     public async Task<ActionResult<List<RiskAgentExecution>>>
@@ -316,6 +438,10 @@ public class RiskPredictionsController : ControllerBase
             await _agentExecutionService
                 .GetByPredictionIdAsync(id));
     }
+
+    // ============================================================
+    // EXPLAIN
+    // ============================================================
 
     [HttpGet("{id:guid}/explain")]
     public async Task<IActionResult> Explain(Guid id)
@@ -328,7 +454,8 @@ public class RiskPredictionsController : ControllerBase
 
         var topFactors =
             prediction.RiskFactors
-                .OrderByDescending(x => x.Contribution)
+                .OrderByDescending(
+                    x => x.Contribution)
                 .Take(3)
                 .Select(x => x.Factor)
                 .ToList();
@@ -381,31 +508,195 @@ public class RiskPredictionsController : ControllerBase
         });
     }
 
+    // ============================================================
+    // APPROVE
+    // ============================================================
+
     [HttpPut("{id:guid}/approve")]
     public async Task<ActionResult<RiskPredictionDto>>
         Approve(Guid id)
     {
+        // --------------------------------------------------------
+        // STEP 1 - APPROVE RISK PREDICTION
+        // --------------------------------------------------------
+
         var result =
             await _service.ApproveAsync(id);
 
         if (result == null)
             return NotFound();
 
+        // --------------------------------------------------------
+        // STEP 2 - RECORD HUMAN APPROVAL
+        // --------------------------------------------------------
+
+        var executions =
+            await _agentExecutionService
+                .GetByPredictionIdAsync(id);
+
+        var execution =
+            executions.FirstOrDefault();
+
+        if (execution != null)
+        {
+            var approvalUser =
+                User.Identity?.Name
+                ?? "Authenticated User";
+
+            await _agentExecutionService.RecordApprovalAsync(
+                execution.Id,
+                "Approved",
+                approvalUser);
+        }
+
+        // --------------------------------------------------------
+        // STEP 3 - AGENT 02
+        // VULNERABILITY & IMPACT ASSESSMENT
+        // --------------------------------------------------------
+
+        var vulnerabilityAssessment =
+            await _vulnerabilityImpactService
+                .AssessAsync(id);
+
+        if (vulnerabilityAssessment != null)
+        {
+            // ----------------------------------------------------
+            // STEP 4 - AGENT 03
+            // RESOURCE OPTIMIZATION
+            // ----------------------------------------------------
+
+            await _resourceService.OptimizeAsync(
+                vulnerabilityAssessment.Id);
+
+            // ----------------------------------------------------
+            // STEP 5 - AGENT 04
+            // EARLY WARNING & COORDINATION
+            // ----------------------------------------------------
+
+            await _earlyWarningCoordinationAgent
+                .CreateAlertAsync(
+                    vulnerabilityAssessment.Id);
+        }
+
+        // --------------------------------------------------------
+        // STEP 6 - FIND DISASTER REPORT
+        // CONNECTED TO THIS RISK PREDICTION
+        // --------------------------------------------------------
+
+        var report =
+            await _context.DisasterReports
+                .FirstOrDefaultAsync(
+                    x => x.RiskPredictionId == id);
+
+        if (report != null)
+        {
+            // ----------------------------------------------------
+            // STEP 7 - VOLUNTEER ASSIGNMENT AGENT
+            // ----------------------------------------------------
+
+            var volunteerRecommendation =
+                await _volunteerAssignmentService
+                    .RecommendAsync(report.Id);
+
+            if (volunteerRecommendation
+                    ?.RecommendedVolunteer != null)
+            {
+                // ----------------------------------------------
+                // STEP 8 - SAVE ASSIGNED VOLUNTEER
+                // ----------------------------------------------
+
+                report.AssignedVolunteerUserId =
+                    volunteerRecommendation
+                        .RecommendedVolunteer
+                        .VolunteerUserId;
+
+                report.AssignedAt =
+                    DateTime.UtcNow;
+
+                report.Status =
+                    "Assigned";
+
+                report.UpdatedAt =
+                    DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                // No eligible volunteer.
+                // Keep report available for coordinator assignment.
+
+                report.Status =
+                    "VolunteerQueue";
+
+                report.UpdatedAt =
+                    DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        // --------------------------------------------------------
+        // STEP 9 - RETURN APPROVED PREDICTION
+        // --------------------------------------------------------
+
         return Ok(result);
     }
+
+    // ============================================================
+    // REJECT
+    // ============================================================
 
     [HttpPut("{id:guid}/reject")]
     public async Task<ActionResult<RiskPredictionDto>>
         Reject(Guid id)
     {
+        // --------------------------------------------------------
+        // STEP 1 - REJECT PREDICTION
+        // --------------------------------------------------------
+
         var result =
             await _service.RejectAsync(id);
 
         if (result == null)
             return NotFound();
 
+        // --------------------------------------------------------
+        // STEP 2 - RECORD HUMAN REJECTION
+        // --------------------------------------------------------
+
+        var executions =
+            await _agentExecutionService
+                .GetByPredictionIdAsync(id);
+
+        var execution =
+            executions.FirstOrDefault();
+
+        if (execution != null)
+        {
+            var approvalUser =
+                User.Identity?.Name
+                ?? "Authenticated User";
+
+            await _agentExecutionService.RecordApprovalAsync(
+                execution.Id,
+                "Rejected",
+                approvalUser);
+        }
+
+        // --------------------------------------------------------
+        // IMPORTANT:
+        // Rejected prediction DOES NOT continue to Agent 02,
+        // Resource Optimization, Early Warning or Volunteer
+        // Assignment.
+        // --------------------------------------------------------
+
         return Ok(result);
     }
+
+    // ============================================================
+    // GET BY ID
+    // ============================================================
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<RiskPredictionDto>>
@@ -420,8 +711,6 @@ public class RiskPredictionsController : ControllerBase
         return Ok(result);
     }
 }
-
-
 
 
 
