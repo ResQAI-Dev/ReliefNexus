@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ReliefNexus.API.AI.Agents;
 using ReliefNexus.API.Data;
 using ReliefNexus.API.DTOs;
@@ -21,6 +21,7 @@ public class RiskPredictionService : IRiskPredictionService
     }
 
     public async Task<RiskPredictionDto> CreateAsync(
+        Guid userId,
         RiskPredictionDto request,
         Guid executionId)
     {
@@ -29,6 +30,8 @@ public class RiskPredictionService : IRiskPredictionService
 
         var prediction = new RiskPrediction
         {
+            UserId = userId,
+
             Location = agentResult.Location,
             Latitude = agentResult.Latitude,
             Longitude = agentResult.Longitude,
@@ -96,15 +99,11 @@ public class RiskPredictionService : IRiskPredictionService
             ModelVersion =
                 agentResult.ModelVersion,
 
-            RequiresHumanApproval =
-                agentResult.RequiresHumanApproval,
+            RequiresHumanApproval = agentResult.RiskScore >= 75,
 
             IsApproved = false,
 
-            ApprovalStatus =
-                agentResult.RequiresHumanApproval
-                    ? "Pending"
-                    : "NotRequired",
+            ApprovalStatus = agentResult.RiskScore >= 75 ? "Pending" : "NotRequired",
 
             CreatedAt =
                 DateTime.UtcNow,
@@ -126,6 +125,21 @@ public class RiskPredictionService : IRiskPredictionService
             prediction);
 
         await _context.SaveChangesAsync();
+
+        // Keep only the latest 10 prediction records in the database.
+        // Whenever a new prediction is added, older records are removed.
+        var oldPredictions =
+            await _context.RiskPredictions
+                .Include(x => x.RiskFactors)
+                .OrderByDescending(x => x.CreatedAt)
+                .Skip(10)
+                .ToListAsync();
+
+        if (oldPredictions.Count > 0)
+        {
+            _context.RiskPredictions.RemoveRange(oldPredictions);
+            await _context.SaveChangesAsync();
+        }
 
         var response =
             MapToDto(prediction);
@@ -212,7 +226,9 @@ public class RiskPredictionService : IRiskPredictionService
 
     public async Task<PaginatedRiskPredictionDto>
         GetPagedAsync(
-            RiskPredictionQueryDto query)
+            Guid userId,
+            RiskPredictionQueryDto query,
+            bool isAdministrator)
     {
         query.Page =
             Math.Max(
@@ -229,6 +245,12 @@ public class RiskPredictionService : IRiskPredictionService
             _context.RiskPredictions
                 .Include(x => x.RiskFactors)
                 .AsQueryable();
+
+        if (!isAdministrator)
+        {
+            predictions =
+                predictions.Where(x => x.UserId == userId);
+        }
 
         if (!string.IsNullOrWhiteSpace(
                 query.Search))
@@ -399,12 +421,23 @@ public class RiskPredictionService : IRiskPredictionService
         };
     }
 
-    public async Task<List<RiskPredictionDto>>
-        GetHistoryAsync()
-    {
-        return await GetAllAsync();
-    }
 
+    public async Task<List<RiskPredictionDto>>
+        GetHistoryAsync(
+            Guid userId)
+    {
+        var predictions =
+            await _context.RiskPredictions
+                .Include(x => x.RiskFactors)
+                .Where(x => x.UserId == userId)
+                .OrderByDescending(
+                    x => x.CreatedAt)
+                .ToListAsync();
+
+        return predictions
+            .Select(MapToDto)
+            .ToList();
+    }
     public async Task<List<RiskPredictionDto>>
         GetPendingApprovalAsync()
     {
@@ -441,11 +474,35 @@ public class RiskPredictionService : IRiskPredictionService
         prediction.ApprovalStatus =
             "Approved";
 
+        var volunteers =
+            await _context.Users
+                .Where(u =>
+                    u.Role == "FieldVolunteer" &&
+                    u.IsActive)
+                .ToListAsync();
+
+        foreach (var volunteer in volunteers)
+        {
+            _context.Notifications.Add(
+                new Notification
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = volunteer.Id,
+                    Title = "Approved Disaster Risk",
+                    Message =
+                        $"{prediction.RiskLevel} risk identified at {prediction.Location}. " +
+                        $"Disaster type: {prediction.DisasterType}. " +
+                        "Please review the situation and respond if required.",
+                    Type = "ApprovedRisk",
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow
+                });
+        }
+
         await _context.SaveChangesAsync();
 
         return MapToDto(prediction);
     }
-
     public async Task<RiskPredictionDto?>
         RejectAsync(Guid id)
     {
@@ -606,6 +663,21 @@ public class RiskPredictionService : IRiskPredictionService
         };
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
