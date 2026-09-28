@@ -66,7 +66,9 @@ async function request<T>(
           message;
 
         if (errorBody.errors) {
-          const validationMessages = Object.values(errorBody.errors)
+          const validationMessages = Object.values(
+            errorBody.errors
+          )
             .flat()
             .filter(Boolean);
 
@@ -93,6 +95,26 @@ async function request<T>(
   return response.json() as Promise<T>;
 }
 
+/**
+ * Returns true when a prediction already contains
+ * usable disaster-risk records.
+ */
+function hasUsableDisasterRisks(
+  prediction: RiskPrediction
+): boolean {
+  if (!Array.isArray(prediction.disasterRisks)) {
+    return false;
+  }
+
+  return prediction.disasterRisks.some(
+    (risk) =>
+      risk.dataAvailable === true &&
+      risk.riskScore !== null &&
+      risk.riskScore !== undefined &&
+      Number.isFinite(Number(risk.riskScore))
+  );
+}
+
 export async function createRiskPrediction(
   payload: RiskPredictionRequest
 ): Promise<RiskPrediction> {
@@ -102,12 +124,68 @@ export async function createRiskPrediction(
   });
 }
 
+/**
+ * Load recent prediction records.
+ *
+ * The list endpoint may return summary records without the
+ * complete disasterRisks array. When that happens, fetch the
+ * full prediction by ID so Recent Predictions can display
+ * the actual disaster risk and corresponding image.
+ */
 export async function getRiskPredictions(): Promise<
   PaginatedRiskPredictions | RiskPrediction[]
 > {
-  return request<PaginatedRiskPredictions | RiskPrediction[]>(
+  const response = await request<
+    PaginatedRiskPredictions | RiskPrediction[]
+  >(
     "/risk-predictions?page=1&pageSize=10&sortBy=createdAt&sortOrder=desc"
   );
+
+  const items = Array.isArray(response)
+    ? response
+    : response.items ?? [];
+
+  /*
+   * Hydrate records that do not already contain usable
+   * disaster risk information.
+   *
+   * If an individual detail request fails, keep the original
+   * record instead of making the whole Recent Predictions
+   * section fail.
+   */
+  const hydratedItems = await Promise.all(
+    items.map(async (item) => {
+      if (
+        !item.id ||
+        hasUsableDisasterRisks(item)
+      ) {
+        return item;
+      }
+
+      try {
+        const fullPrediction =
+          await getPredictionById(item.id);
+
+        return fullPrediction ?? item;
+      } catch (error) {
+        console.warn(
+          `Failed to load full prediction ${item.id}:`,
+          error
+        );
+
+        return item;
+      }
+    })
+  );
+
+  if (Array.isArray(response)) {
+    return hydratedItems;
+  }
+
+  return {
+    ...response,
+    items: hydratedItems,
+  };
 }
 
 export async function getPredictionHistory(): Promise<
@@ -149,6 +227,7 @@ export async function explainPrediction(
     `/risk-predictions/${encodeURIComponent(id)}/explain`
   );
 }
+
 export async function getRiskPredictionEnvironment(
   latitude: number,
   longitude: number,
@@ -168,5 +247,32 @@ export async function getRiskPredictionEnvironment(
   );
 }
 
+export async function approveRiskPrediction(
+  id: string
+): Promise<RiskPrediction> {
+  if (!id.trim()) {
+    throw new Error("Prediction ID is required.");
+  }
 
+  return request<RiskPrediction>(
+    `/risk-predictions/${encodeURIComponent(id)}/approve`,
+    {
+      method: "PUT",
+    }
+  );
+}
 
+export async function rejectRiskPrediction(
+  id: string
+): Promise<RiskPrediction> {
+  if (!id.trim()) {
+    throw new Error("Prediction ID is required.");
+  }
+
+  return request<RiskPrediction>(
+    `/risk-predictions/${encodeURIComponent(id)}/reject`,
+    {
+      method: "PUT",
+    }
+  );
+}
