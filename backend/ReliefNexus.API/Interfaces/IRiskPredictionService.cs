@@ -1,10 +1,11 @@
-﻿using ReliefNexus.API.DTOs;
+using ReliefNexus.API.DTOs;
 
 namespace ReliefNexus.API.Interfaces;
 
 public interface IRiskPredictionService
 {
     Task<RiskPredictionDto> CreateAsync(
+        Guid userId,
         RiskPredictionDto request,
         Guid executionId);
 
@@ -18,9 +19,11 @@ public interface IRiskPredictionService
     Task<List<RiskPredictionDto>> GetHighRiskAsync();
 
     Task<PaginatedRiskPredictionDto> GetPagedAsync(
-        RiskPredictionQueryDto query);
+        Guid userId,
+        RiskPredictionQueryDto query,
+        bool isAdministrator);
 
-    Task<List<RiskPredictionDto>> GetHistoryAsync();
+    Task<List<RiskPredictionDto>> GetHistoryAsync(Guid userId);
 
     Task<List<RiskPredictionDto>> GetPendingApprovalAsync();
 
@@ -28,3 +31,8 @@ public interface IRiskPredictionService
 
     Task<RiskPredictionDto?> RejectAsync(Guid id);
 }
+
+
+
+
+
