@@ -94,7 +94,7 @@ const Icon = ({
 const solutions = [
   {
     title: "Risk Prediction",
-    subtitle: "Agent 01 Â· Risk intelligence",
+    subtitle: "Agent 01  Risk intelligence",
     description:
       "Detect and score supported disaster hazards using AI-assisted analysis and real-time environmental signals.",
     detail: "Combines hazard signals, environmental conditions and risk factors into one operational prediction.",
@@ -104,7 +104,7 @@ const solutions = [
   },
   {
     title: "Vulnerability & Impact",
-    subtitle: "Agent 02 Â· Community exposure",
+    subtitle: "Agent 02  Community exposure",
     description:
       "Assess exposed populations, vulnerability and likely impact so response teams can understand where support is needed.",
     detail: "Turns population exposure and vulnerability information into a clearer picture of expected community impact.",
@@ -114,7 +114,7 @@ const solutions = [
   },
   {
     title: "Resource Optimization",
-    subtitle: "Agent 03 Â· Relief capacity",
+    subtitle: "Agent 03  Relief capacity",
     description:
       "Connect relief inventory with operational needs and support smarter resource allocation during emergencies.",
     detail: "Helps response teams understand available capacity and align relief resources with changing needs.",
@@ -124,7 +124,7 @@ const solutions = [
   },
   {
     title: "Early Warning & Coordination",
-    subtitle: "Agent 04 Â· Warning operations",
+    subtitle: "Agent 04  Warning operations",
     description:
       "Turn risk intelligence into actionable alerts and coordinated response workflows for faster decisions.",
     detail: "Connects warning information with coordinated operational workflows so important actions are easier to organize.",
@@ -1074,7 +1074,7 @@ const LandingPage = () => {
           </div>
 
           <p className="text-[10px] font-medium text-slate-500">
-            Â© {new Date().getFullYear()} ReliefNexus. Built for safer communities.
+             {new Date().getFullYear()} ReliefNexus. Built for safer communities.
           </p>
         </div>
       </footer>
@@ -1086,3 +1086,5 @@ const LandingPage = () => {
 /* Light premium surface refinements */
 
 export default LandingPage;
+
+

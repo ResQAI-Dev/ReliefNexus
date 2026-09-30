@@ -103,7 +103,7 @@ export const RiskPredictionContent = ({ risk, loading, factors, LoadingState, Em
             </p>
             <ul className="mt-2 space-y-1 text-xs text-slate-600">
               {factors.map((factor, index) => (
-                <li key={`${factor}-${index}`}>Â¬{factor}</li>
+                <li key={`${factor}-${index}`}>{factor}</li>
               ))}
             </ul>
           </div>
@@ -112,3 +112,5 @@ export const RiskPredictionContent = ({ risk, loading, factors, LoadingState, Em
     </div>
   );
 };
+
+

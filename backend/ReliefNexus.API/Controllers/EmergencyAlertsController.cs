@@ -164,6 +164,26 @@ public class EmergencyAlertsController : ControllerBase
     // ------------------------------------------------------------
     // UPDATE STATUS
     // ------------------------------------------------------------
+
+    [HttpPost("{id:guid}/send-report")]
+    [Authorize(Roles = "ReliefCoordinator,SystemAdministrator")]
+    public async Task<ActionResult<object>> SendMessageAndReport(Guid id)
+    {
+        var result =
+            await _service.SendMessageAndReportAsync(id);
+
+        if (result == null)
+        {
+            return NotFound(
+                new
+                {
+                    message =
+                        "Emergency alert or affected user was not found."
+                });
+        }
+
+        return Ok(result);
+    }
     [HttpPut("{id:guid}/status")]
     [Authorize(Roles = "ReliefCoordinator,SystemAdministrator")]
     public async Task<ActionResult<EmergencyAlert>> UpdateStatus(
@@ -235,3 +255,4 @@ public class EmergencyAlertsController : ControllerBase
 }
 
 public sealed record UpdateEmergencyAlertStatusRequest(string Status);
+

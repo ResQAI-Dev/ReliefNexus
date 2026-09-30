@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using ReliefNexus.API.AI.Services;
+using Microsoft.EntityFrameworkCore;
 using ReliefNexus.API.Data;
 using ReliefNexus.API.Interfaces;
 using ReliefNexus.API.Models;
@@ -10,12 +11,15 @@ public class EarlyWarningCoordinationAgent
     private readonly AppDbContext _context;
     private readonly IAgentExecutionService _agentExecutionService;
 
+    private readonly IPythonEarlyWarningService _pythonEarlyWarningService;
     public EarlyWarningCoordinationAgent(
         AppDbContext context,
-        IAgentExecutionService agentExecutionService)
+        IAgentExecutionService agentExecutionService,
+        IPythonEarlyWarningService pythonEarlyWarningService)
     {
         _context = context;
         _agentExecutionService = agentExecutionService;
+        _pythonEarlyWarningService = pythonEarlyWarningService;
     }
 
     public async Task<EmergencyAlert?> CreateAlertAsync(
@@ -225,6 +229,26 @@ public class EarlyWarningCoordinationAgent
                 "Warning message and coordination actions prepared"
             );
 
+            var pythonEarlyWarningAnalysis =
+                await _pythonEarlyWarningService.CoordinateAsync(
+                    new
+                    {
+                        location = assessment.Location,
+                        disaster_type = assessment.DisasterType,
+                        severity_score = severityScore,
+                        vulnerability_score = assessment.VulnerabilityScore,
+                        impact_score = assessment.ImpactScore,
+                        allocations = allocations.Select(x => new
+                        {
+                            resource_id = x.ResourceId,
+                            resource_type = x.ResourceType,
+                            resource_name = x.ResourceName,
+                            recommended_quantity = x.RecommendedQuantity,
+                            priority = x.Priority,
+                            location = x.Location,
+                            created_at = x.CreatedAt
+                        }).ToList()
+                    });
             // =========================================================
             // STEP 6 - PERSIST EMERGENCY ALERT
             // =========================================================
@@ -749,5 +773,8 @@ public class EarlyWarningCoordinationAgent
         return errors;
     }
 }
+
+
+
 
 

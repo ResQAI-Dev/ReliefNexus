@@ -22,7 +22,19 @@ public interface IAgentExecutionService
         string outputSummary,
         string validationResults,
         string finalOutcome,
-        string approvalStatus);
+        string approvalStatus,
+        int inputTokens = 0,
+        int outputTokens = 0,
+        int totalTokens = 0,
+        string modelName = "",
+        decimal? estimatedCost = null);
+
+    Task<RiskAgentExecution?> RecordUsageAsync(
+        Guid executionId,
+        int inputTokens,
+        int outputTokens,
+        int totalTokens,
+        string modelName);
 
     Task<RiskAgentExecution?> FailAsync(
         Guid executionId,
@@ -38,3 +50,5 @@ public interface IAgentExecutionService
     Task<List<RiskAgentExecution>> GetByPredictionIdAsync(
         Guid predictionId);
 }
+
+

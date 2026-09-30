@@ -84,7 +84,7 @@ export default function DataSources({
       {/* Empty state */}
       {sources.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center">
-          <div className="text-2xl">🔗</div>
+          <div className="text-2xl"></div>
 
           <div className="mt-2 text-sm font-semibold text-slate-700">
             No data sources reported
@@ -105,7 +105,7 @@ export default function DataSources({
               <div className="flex items-start gap-3">
                 {/* Source icon */}
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-base shadow-sm">
-                  🔗
+                  
                 </div>
 
                 {/* Source information */}

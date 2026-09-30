@@ -456,12 +456,13 @@ Numeric baseline
           </div>
 
           <span className="text-[6.5px] font-black uppercase tracking-[0.13em] text-slate-300">
-            Backend risk portfolio · 12 numeric scores
+            Backend risk portfolio  12 numeric scores
           </span>
         </div>
       </div>
     </section>
   );
 }
+
 
 

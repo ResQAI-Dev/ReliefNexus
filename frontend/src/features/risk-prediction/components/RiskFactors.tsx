@@ -118,7 +118,7 @@ export default function RiskFactors({
       {/* Empty state */}
       {sortedFactors.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center">
-          <div className="text-2xl">📊</div>
+          <div className="text-2xl"></div>
 
           <div className="mt-2 text-sm font-semibold text-slate-700">
             No risk factors available
@@ -208,7 +208,7 @@ export default function RiskFactors({
       {sortedFactors.length > 0 && (
         <div className="mt-5 rounded-xl border border-blue-100 bg-blue-50 p-3.5">
           <div className="flex items-start gap-2.5">
-            <span className="text-sm">ℹ️</span>
+            <span className="text-sm"></span>
 
             <p className="text-xs leading-5 text-blue-700">
               Contribution values are provided by the
@@ -221,3 +221,4 @@ export default function RiskFactors({
     </section>
   );
 }
+

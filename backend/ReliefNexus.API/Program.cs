@@ -1,3 +1,4 @@
+﻿using ReliefNexus.API.AI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.FileProviders;
 using ReliefNexus.API.AI.Tools;
@@ -102,6 +103,8 @@ builder.Services.AddScoped<
     IDisasterReportService,
     DisasterReportService>();
 
+builder.Services.AddScoped<IEmailService, EmailService>();
+
 builder.Services.AddScoped<
     IReliefRequestService,
     ReliefRequestService>();
@@ -195,7 +198,6 @@ builder.Services.AddHttpClient<
 
 builder.Services.AddHttpClient<
     DrainageDataTool>();
-
 // ======================================================
 // JWT AUTHENTICATION
 // ======================================================
@@ -282,6 +284,41 @@ builder.Services.AddAuthorization(options =>
 // BUILD APPLICATION
 // ======================================================
 
+builder.Services.AddHttpClient<IPythonAIService, PythonAIService>(client =>
+{
+    client.BaseAddress = new Uri(
+        builder.Configuration["AIService:BaseUrl"]
+        ?? "http://127.0.0.1:8000");
+
+    client.Timeout = TimeSpan.FromSeconds(60);
+});
+
+builder.Services.AddHttpClient<IPythonVulnerabilityService, PythonVulnerabilityService>(client =>
+{
+    client.BaseAddress = new Uri(
+        builder.Configuration["AIService:BaseUrl"]
+        ?? "http://127.0.0.1:8000");
+
+    client.Timeout = TimeSpan.FromSeconds(60);
+});
+
+builder.Services.AddHttpClient<IPythonResourceService, PythonResourceService>(client =>
+{
+    client.BaseAddress = new Uri(
+        builder.Configuration["AIService:BaseUrl"]
+        ?? "http://127.0.0.1:8000");
+
+    client.Timeout = TimeSpan.FromSeconds(60);
+});
+
+builder.Services.AddHttpClient<IPythonEarlyWarningService, PythonEarlyWarningService>(client =>
+{
+    client.BaseAddress = new Uri(
+        builder.Configuration["AIService:BaseUrl"]
+        ?? "http://127.0.0.1:8000");
+
+    client.Timeout = TimeSpan.FromSeconds(60);
+});
 var app = builder.Build();
 
 // ======================================================
@@ -409,3 +446,9 @@ app.MapControllers();
 // ======================================================
 
 app.Run();
+
+
+
+
+
+

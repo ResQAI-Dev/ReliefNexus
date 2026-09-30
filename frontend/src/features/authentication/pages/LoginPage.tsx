@@ -190,7 +190,7 @@ const LoginPage = () => {
         <div className="pointer-events-none absolute left-1/2 top-1/2 h-[70vh] w-[70vh] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-100/25 blur-3xl" />
         <div className="relative z-10 rn-login-card mx-auto flex h-[calc(100vh-28px)] max-h-[820px] min-h-[720px] w-full max-w-[1480px] overflow-hidden rounded-[30px] border border-sky-100 bg-white">
 
-          {/* LEFT — AUTHENTICATION */}
+          {/* LEFT  AUTHENTICATION */}
           <section className="rn-scroll-hidden relative flex min-h-0 w-full flex-col overflow-y-auto overflow-x-hidden bg-white lg:w-1/2">
 
             <div className="absolute -left-28 -top-28 h-72 w-72 rounded-full bg-sky-100/60 blur-3xl" />
@@ -217,7 +217,7 @@ const LoginPage = () => {
                 onClick={() => navigate("/")}
                 className="hidden items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-500 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-600 sm:flex"
               >
-                <span>←</span>
+                <span></span>
                 Back to Home
               </button>
             </div>
@@ -397,7 +397,7 @@ const LoginPage = () => {
             </div>
           </section>
 
-          {/* RIGHT — DISASTER RESILIENCE VISUAL */}
+          {/* RIGHT  DISASTER RESILIENCE VISUAL */}
           <section className="relative hidden min-h-0 overflow-hidden bg-[#06243a] lg:block lg:w-1/2">
 
             <img
@@ -472,9 +472,9 @@ const LoginPage = () => {
 
               <div className="mt-5 max-w-[500px] border-l-2 border-cyan-300 pl-4">
                 <p className="text-sm font-semibold leading-5 text-white">
-                  “Prepared today.
+                  Prepared today.
                   <br />
-                  Safer tomorrow.”
+                  Safer tomorrow.
                 </p>
               </div>
 
@@ -621,3 +621,5 @@ const ChartIcon = () => (
 );
 
 export default LoginPage;
+
+

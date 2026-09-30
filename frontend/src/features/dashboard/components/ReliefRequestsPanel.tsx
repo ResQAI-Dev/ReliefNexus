@@ -358,7 +358,7 @@ const ReliefRequestsPanel = ({
       ) : !requests.length ? (
         <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-2xl text-blue-600">
-            📋
+            
           </div>
 
           <h3 className="mt-4 font-bold text-slate-800">
@@ -381,7 +381,7 @@ const ReliefRequestsPanel = ({
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div className="flex gap-4">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                    📋
+                    
                   </div>
 
                   <div>

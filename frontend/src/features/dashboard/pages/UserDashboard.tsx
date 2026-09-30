@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";
-import api from "../../../lib/api/apiClient";
+import DisasterReportForm from "../components/DisasterReportForm";
 import DisasterReportsPage from "../../disaster-reports/pages/DisasterReportsPage";
+import api from "../../../lib/api/apiClient";
 import { LoadingState } from "../components/LoadingState";
-import FieldVolunteerDisasterReports from "../components/FieldVolunteerDisasterReports";
 import { EmptyState } from "../components/EmptyState";
 import ReliefRequestsPanel from "../components/ReliefRequestsPanel";
 import { DashboardCard } from "../components/DashboardCard";
@@ -1196,13 +1196,14 @@ const UserDashboard = () => {
             </>
           )}
                     {currentSection === "reports" && (
-            role === "FieldVolunteer" ? (
-              <FieldVolunteerDisasterReports />
+            role === "AffectedUser" ? (
+              <DisasterReportForm />
             ) : (
               <DisasterReportsPage />
             )
           )}
-{currentSection === "requests" && (
+
+          {currentSection === "requests" && (
             <PageShell
               icon={<ClipboardIcon />}
               title={
@@ -1422,7 +1423,7 @@ const AlertsContent = ({
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900"
                 aria-label="Close alert details"
               >
-                ×
+                
               </button>
             </div>
 
@@ -2457,7 +2458,7 @@ const ProfilePage = ({
                   className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-white/80 transition hover:bg-white/20 disabled:opacity-50"
                   aria-label="Close edit profile"
                 >
-                  ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â
+                  
                 </button>
               </div>
             </div>
@@ -2541,7 +2542,7 @@ const ProfilePage = ({
                   <div className="min-w-0">
                     <p className="text-sm font-black text-slate-800">Profile Photo</p>
                     <p className="mt-1 text-[10px] leading-4 text-slate-500">
-                      JPG, PNG, WEBP or GIF ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· maximum 5 MB ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· stored on this device.
+                      JPG, PNG, WEBP or GIF  maximum 5 MB  stored on this device.
                     </p>
                   </div>
                 </div>
@@ -3079,6 +3080,8 @@ const ShieldCheckIcon = () => (
 
 
 export default UserDashboard;
+
+
 
 
 

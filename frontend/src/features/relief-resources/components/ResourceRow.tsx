@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+﻿import type { ReactNode } from "react";
 
 export const ResourceRow = ({
   icon,
@@ -19,11 +19,13 @@ export const ResourceRow = ({
     <div className="min-w-0 flex-1">
       <p className="truncate text-sm font-semibold text-slate-800">{title}</p>
       <p className="mt-1 text-xs text-slate-400">
-        {meta} ¬{status}
+        {meta} {status}
       </p>
     </div>
   </div>
 );
+
+
 
 
 

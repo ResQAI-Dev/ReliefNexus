@@ -482,3 +482,27 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Local Flutter debug logs
+mobile/flutter_error_log.txt
+
+ai-service/.venv/
+ai-service/.env
+
+
+# Flutter generated files
+mobile/.dart_tool/
+mobile/build/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.pub-cache/
+mobile/.pub/
+mobile/coverage/
+mobile/android/.gradle/
+mobile/android/app/build/
+mobile/ios/Pods/
+mobile/macos/Pods/
+
+# Local backup files
+*.backup
+*.profile-backup

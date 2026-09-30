@@ -1,4 +1,5 @@
-﻿using ReliefNexus.API.AI.Agents;
+﻿using Microsoft.AspNetCore.Http;
+using ReliefNexus.API.AI.Agents;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -12,6 +13,7 @@ namespace ReliefNexus.API.Services;
 public class DisasterReportService : IDisasterReportService
 {
     private readonly AppDbContext _context;
+    private readonly IEmailService _emailService;
     private readonly IRiskPredictionService _riskPredictionService;
     private readonly IAgentExecutionService _agentExecutionService;
     private readonly IVulnerabilityImpactService _vulnerabilityImpactService;
@@ -26,6 +28,7 @@ public class DisasterReportService : IDisasterReportService
         IVulnerabilityImpactService vulnerabilityImpactService,
         IResourceService resourceService,
         EarlyWarningCoordinationAgent earlyWarningCoordinationAgent,
+        IEmailService emailService,
         IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
@@ -34,6 +37,7 @@ public class DisasterReportService : IDisasterReportService
         _vulnerabilityImpactService = vulnerabilityImpactService;
         _resourceService = resourceService;
         _earlyWarningCoordinationAgent = earlyWarningCoordinationAgent;
+        _emailService = emailService;
         _httpContextAccessor = httpContextAccessor;
     }
 
@@ -605,9 +609,85 @@ public class DisasterReportService : IDisasterReportService
     public async Task<DisasterReportDto?> VerifyAsync(
         Guid id)
     {
-        return await SetStatusAsync(
-            id,
-            "Verified");
+        var report =
+            await _context.DisasterReports
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (report == null)
+            return null;
+
+        var alreadyVerified =
+            string.Equals(
+                report.Status,
+                "Verified",
+                StringComparison.OrdinalIgnoreCase);
+
+        report.Status = "Verified";
+        report.UpdatedAt = DateTime.UtcNow;
+
+        if (!alreadyVerified)
+        {
+            var reporter =
+                await _context.Users
+                    .FirstOrDefaultAsync(
+                        x => x.Id == report.ReporterUserId);
+
+            if (reporter != null)
+            {
+                var message =
+                    $"Your disaster report has been verified. " +
+                    $"Disaster: {report.DisasterType}. " +
+                    $"Location: {report.Location}. " +
+                    $"Severity: {report.Severity}. " +
+                    "The ReliefNexus response team will continue the response workflow.";
+
+                _context.Notifications.Add(
+                    new Notification
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = reporter.Id,
+                        Title = "Disaster Report Verified",
+                        Message = message,
+                        Type = "DisasterReportVerified",
+                        IsRead = false,
+                        CreatedAt = DateTime.UtcNow
+                    });
+
+                await _context.SaveChangesAsync();
+
+                if (!string.IsNullOrWhiteSpace(reporter.Email))
+                {
+                    var emailBody =
+                        $"Hello {reporter.FullName},`r`n`r`n" +
+                        "Your disaster report has been verified by the ReliefNexus response team.`r`n`r`n" +
+                        "REPORT DETAILS`r`n" +
+                        "--------------------------------`r`n" +
+                        $"Disaster Type: {report.DisasterType}`r`n" +
+                        $"Location: {report.Location}`r`n" +
+                        $"Severity: {report.Severity}`r`n" +
+                        "Status: Verified`r`n" +
+                        $"Report ID: {report.Id}`r`n" +
+                        $"Submitted: {report.CreatedAt:u}`r`n`r`n" +
+                        "Your report is now part of the verified disaster-response workflow.`r`n`r`n" +
+                        "ReliefNexus";
+
+                    await _emailService.SendAsync(
+                        reporter.Email,
+                        "ReliefNexus - Disaster Report Verified",
+                        emailBody);
+                }
+            }
+            else
+            {
+                await _context.SaveChangesAsync();
+            }
+        }
+        else
+        {
+            await _context.SaveChangesAsync();
+        }
+
+        return await BuildDtoAsync(report.Id);
     }
 
     public async Task<DisasterReportDto?> AssignVolunteerAsync(
@@ -877,6 +957,8 @@ public class DisasterReportService : IDisasterReportService
         ).FirstOrDefaultAsync();
     }
 }
+
+
 
 
 

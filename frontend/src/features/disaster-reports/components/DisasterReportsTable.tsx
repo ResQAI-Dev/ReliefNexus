@@ -1,4 +1,4 @@
-﻿import {
+import {
   CheckCircle2,
   Eye,
   MapPin,
@@ -212,7 +212,7 @@ export default function DisasterReportsTable({
                   <p className="text-sm font-black text-slate-800">
                     {typeof report.riskScore === "number"
                       ? `${Math.round(report.riskScore)}%`
-                      : "—"}
+                      : ""}
                   </p>
 
                   {report.riskLevel && (

@@ -104,7 +104,7 @@ export default function ResourceAllocationDetails({
 
             <p className="text-sm font-semibold text-slate-700">
               {allocation.location ||
-                "—"}
+                ""}
             </p>
           </div>
         </div>

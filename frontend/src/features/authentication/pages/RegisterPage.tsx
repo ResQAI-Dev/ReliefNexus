@@ -368,7 +368,7 @@ const RegisterPage = () => {
                       </span>
                     </div>
                     <span className="text-[7px] font-bold uppercase tracking-[.16em] text-slate-400">
-                      Step 1 · Profile
+                      Step 1  Profile
                     </span>
                   </div>
 
@@ -780,7 +780,7 @@ const RegisterPage = () => {
                       Sign in
                     </span>
                     <span className="text-sky-500 transition group-hover:translate-x-0.5">
-                      →
+                      
                     </span>
                   </Link>
                 </div>
@@ -788,7 +788,7 @@ const RegisterPage = () => {
             </div>
           </section>
 
-          {/* RIGHT — PREMIUM DISASTER VISUAL */}
+          {/* RIGHT  PREMIUM DISASTER VISUAL */}
           <section className="relative hidden overflow-hidden bg-[#06243a] lg:block lg:w-[46%]">
             <img
               src="/images/reliefnexus-register-hero-clean.png"
@@ -888,15 +888,15 @@ const RegisterPage = () => {
 
               <div className="mt-5 border-l-2 border-cyan-300 pl-3">
                 <p className="text-[9px] font-semibold leading-[15px] text-white">
-                  “People Prepared.
+                  People Prepared.
                   <br />
-                  Communities Protected.”
+                  Communities Protected.
                 </p>
               </div>
 
               <div className="mb-3 flex items-center gap-2 text-[7px] font-semibold text-white/65">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
-                Real-time coordination • AI-assisted decisions • Community-first response
+                Real-time coordination  AI-assisted decisions  Community-first response
               </div>
 
               <div className="mt-5 grid grid-cols-3 gap-2">
@@ -957,7 +957,7 @@ const PasswordRule = ({ ok, label }: { ok: boolean; label: string }) => (
     <span className={`flex h-2.5 w-2.5 items-center justify-center rounded-full ${
       ok ? "bg-emerald-100" : "bg-slate-100"
     }`}>
-      {ok ? "✓" : "•"}
+      {ok ? "" : ""}
     </span>
     {label}
   </span>
@@ -1060,3 +1060,5 @@ const ChartIcon = () => (
 );
 
 export default RegisterPage;
+
+

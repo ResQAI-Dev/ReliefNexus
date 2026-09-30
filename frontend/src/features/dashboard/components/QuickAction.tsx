@@ -1,4 +1,4 @@
-﻿import type { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 type QuickActionProps = {
   icon: ReactNode;
@@ -36,7 +36,7 @@ export const QuickAction = ({
       </div>
 
       <span className="absolute bottom-4 right-4 text-[15px] font-medium text-blue-500 transition-transform group-hover:translate-x-1">
-        →
+        
       </span>
     </button>
   );

@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 const Navbar = () => {
@@ -347,7 +347,7 @@ const Navbar = () => {
                   text-center text-sm font-extrabold text-white
                 "
               >
-                Get Started →
+                Get Started 
               </Link>
             </div>
           </div>

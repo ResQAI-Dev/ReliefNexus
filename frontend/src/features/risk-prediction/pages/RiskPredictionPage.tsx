@@ -1,4 +1,4 @@
-﻿import type { FormEvent } from "react";
+import type { FormEvent } from "react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Activity,
@@ -126,9 +126,9 @@ function scoreTone(value: unknown): string {
 }
 
 function shortDate(value?: string): string {
-  if (!value) return "—";
+  if (!value) return "";
   const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "";
   return d.toLocaleDateString([], { month: "short", day: "2-digit" });
 }
 
@@ -217,6 +217,7 @@ export default function RiskPredictionPage() {
     eventsError,
     predict,
     loadRecentPredictions,
+    loadPredictionById,
     loadExternalEvents,
     updatePrediction,
   } = useRiskPrediction();
@@ -230,6 +231,7 @@ export default function RiskPredictionPage() {
   // before a new prediction is generated in this session.
   const [selectedRecentPrediction, setSelectedRecentPrediction] =
     useState<RiskPrediction | null>(null);
+  const [loadingRecentDetails, setLoadingRecentDetails] = useState(false);
 
   // Dedicated selection for the Recent Predictions details window.
   // This is intentionally separate from the main result-panel state so
@@ -707,7 +709,7 @@ export default function RiskPredictionPage() {
         },
         {
           label: "Temperature / humidity",
-          value: `${safeNumber(form.temperature).toFixed(1)} °C / ${safeNumber(form.humidity).toFixed(0)}%`,
+          value: `${safeNumber(form.temperature).toFixed(1)} C / ${safeNumber(form.humidity).toFixed(0)}%`,
           direction: "Higher heat or lower humidity can increase dryness",
         },
         ...common,
@@ -728,7 +730,7 @@ export default function RiskPredictionPage() {
         },
         {
           label: "River flow",
-          value: `${safeNumber(form.riverFlow).toFixed(1)} m³/s`,
+          value: `${safeNumber(form.riverFlow).toFixed(1)} m/s`,
           direction: "Higher river flow can increase pressure",
         },
         {
@@ -765,7 +767,7 @@ export default function RiskPredictionPage() {
       return [
         {
           label: "Temperature",
-          value: `${safeNumber(form.temperature).toFixed(1)} °C`,
+          value: `${safeNumber(form.temperature).toFixed(1)} C`,
           direction: "Higher temperature can increase fire pressure",
         },
         {
@@ -811,7 +813,7 @@ export default function RiskPredictionPage() {
     return [
       {
         label: "Environmental context",
-        value: `${safeNumber(form.temperature).toFixed(1)} °C / ${safeNumber(form.humidity).toFixed(0)}%`,
+        value: `${safeNumber(form.temperature).toFixed(1)} C / ${safeNumber(form.humidity).toFixed(0)}%`,
         direction: "Continue monitoring the available environmental signals",
       },
       {
@@ -934,7 +936,7 @@ export default function RiskPredictionPage() {
                       <p className="mt-2 text-lg font-black">{form.location || "Sri Lanka"}</p>
                       <p className="mt-1 text-[9px] font-semibold text-white/55">
                         {isValidLatitude(form.latitude) && isValidLongitude(form.longitude)
-                          ? `${form.latitude.toFixed(4)}°, ${form.longitude.toFixed(4)}°`
+                          ? `${form.latitude.toFixed(4)}, ${form.longitude.toFixed(4)}`
                           : "Select a location"}
                       </p>
                     </div>
@@ -960,7 +962,7 @@ export default function RiskPredictionPage() {
             value={form.location || "Not selected"}
             detail={
               isValidLatitude(form.latitude) && isValidLongitude(form.longitude)
-                ? `${form.latitude.toFixed(4)}°, ${form.longitude.toFixed(4)}°`
+                ? `${form.latitude.toFixed(4)}, ${form.longitude.toFixed(4)}`
                 : "Map selectable"
             }
           />
@@ -973,13 +975,13 @@ export default function RiskPredictionPage() {
           <ContextCard
             icon={<Thermometer className="h-4 w-4" />}
             label="Temperature"
-            value={`${safeNumber(form.temperature).toFixed(1)} °C`}
+            value={`${safeNumber(form.temperature).toFixed(1)} C`}
             detail={`${safeNumber(form.humidity).toFixed(0)}% humidity`}
           />
           <ContextCard
             icon={<Users className="h-4 w-4" />}
             label="Population Density"
-            value={`${safeNumber(form.populationDensity).toLocaleString()} / km²`}
+            value={`${safeNumber(form.populationDensity).toLocaleString()} / km`}
             detail="Local population context"
           />
           <ContextCard
@@ -1183,7 +1185,7 @@ export default function RiskPredictionPage() {
                       <MetricCard
                         icon={<Thermometer className="h-4 w-4" />}
                         label="Temperature"
-                        value={`${safeNumber(form.temperature).toFixed(1)} °C`}
+                        value={`${safeNumber(form.temperature).toFixed(1)} C`}
                       />
                       <MetricCard
                         icon={<CloudRain className="h-4 w-4" />}
@@ -1262,7 +1264,7 @@ export default function RiskPredictionPage() {
               photo="/assets/disasters/heatstorm.jpg"
               icon={<Thermometer className="h-4 w-4" />}
               title="Atmospheric Conditions"
-              value={`${safeNumber(form.temperature).toFixed(1)} °C`}
+              value={`${safeNumber(form.temperature).toFixed(1)} C`}
               detail={`${safeNumber(form.humidity).toFixed(0)}% humidity`}
               tag="Weather context"
             />
@@ -1278,7 +1280,7 @@ export default function RiskPredictionPage() {
               photo="/assets/disasters/tsunami.jpg"
               icon={<Users className="h-4 w-4" />}
               title="Population Context"
-              value={`${safeNumber(form.populationDensity).toLocaleString()} /km²`}
+              value={`${safeNumber(form.populationDensity).toLocaleString()} /km`}
               detail={`${safeNumber(form.historicalFloodCount).toFixed(0)} historical events`}
               tag="Exposure context"
             />
@@ -1391,7 +1393,7 @@ export default function RiskPredictionPage() {
                         Primary vs next
                       </p>
                       <p className="mt-1 text-[13px] font-black text-slate-900">
-                        {primaryRiskGap !== null ? `+${primaryRiskGap.toFixed(1)}` : "—"}
+                        {primaryRiskGap !== null ? `+${primaryRiskGap.toFixed(1)}` : ""}
                       </p>
                       <p className="mt-0.5 text-[7px] font-semibold text-slate-400">
                         Score separation
@@ -1525,14 +1527,14 @@ export default function RiskPredictionPage() {
                   <AnalysisMetric title="Current" value={currentRiskScore.toFixed(1)} />
                   <AnalysisMetric
                     title="Previous"
-                    value={Number.isFinite(previousRiskScore) ? previousRiskScore.toFixed(1) : "—"}
+                    value={Number.isFinite(previousRiskScore) ? previousRiskScore.toFixed(1) : ""}
                   />
                   <AnalysisMetric
                     title="Change"
                     value={
                       Number.isFinite(previousRiskScore)
                         ? `${riskDelta >= 0 ? "+" : ""}${riskDelta.toFixed(1)}`
-                        : "—"
+                        : ""
                     }
                   />
                 </div>
@@ -1595,16 +1597,16 @@ export default function RiskPredictionPage() {
                 </div>
 
                 <div className="mt-3 grid grid-cols-2 gap-2">
-                  <AnalysisMetric title="Primary Hazard" value={primaryDisasterType || "—"} />
+                  <AnalysisMetric title="Primary Hazard" value={primaryDisasterType || ""} />
                   <AnalysisMetric title="Risk Score" value={currentRiskScore.toFixed(1)} />
                   <AnalysisMetric
                     title="Confidence"
                     value={`${safeNumber((displayPrediction as any)?.confidence).toFixed(1)}%`}
                   />
-                  <AnalysisMetric title="Location" value={form.location || "—"} />
+                  <AnalysisMetric title="Location" value={form.location || ""} />
                   <AnalysisMetric
                     title="Population Density"
-                    value={`${safeNumber(form.populationDensity).toLocaleString()} /km²`}
+                    value={`${safeNumber(form.populationDensity).toLocaleString()} /km`}
                   />
                   <AnalysisMetric
                     title="External Events"
@@ -1858,9 +1860,19 @@ export default function RiskPredictionPage() {
                               item.id ??
                               `${item.location}-${item.createdAt}-${index}`
                             }
-                            onClick={() => {
+                            onClick={async () => {
                               setSelectedRecentPrediction(item);
                               setSelectedRecentDetails(item);
+                              setLoadingRecentDetails(true);
+
+                              const fullPrediction =
+                                await loadPredictionById(item.id);
+
+                              if (fullPrediction) {
+                                setSelectedRecentDetails(fullPrediction);
+                              }
+
+                              setLoadingRecentDetails(false);
                             }}
                             aria-label={`View full prediction details for ${
                               displayItem?.location || "selected area"
@@ -1909,7 +1921,7 @@ export default function RiskPredictionPage() {
                                   </p>
                                   <p className="text-[12px] font-black text-white">
                                     {unavailable
-                                      ? "—"
+                                      ? ""
                                       : scoreValue.toFixed(1)}
                                   </p>
                                 </div>
@@ -1926,7 +1938,7 @@ export default function RiskPredictionPage() {
                                     ? new Date(
                                         displayItem.createdAt
                                       ).toLocaleDateString()
-                                    : "—"}
+                                    : ""}
                                 </p>
                               </div>
 
@@ -1936,7 +1948,7 @@ export default function RiskPredictionPage() {
                                 </p>
                                 <p className="mt-1 text-[8px] font-black text-blue-700">
                                   {unavailable
-                                    ? "—"
+                                    ? ""
                                     : `${safeNumber(
                                         displayItem?.confidence
                                       ).toFixed(1)}%`}
@@ -1988,6 +2000,7 @@ export default function RiskPredictionPage() {
               getPrimaryRiskDisplay(selectedRecentDetails) ??
               selectedRecentDetails
             }
+            loading={loadingRecentDetails}
             onClose={() => setSelectedRecentDetails(null)}
             onApprovalComplete={(updatedPrediction: RiskPrediction, action: string) => {
               updatePrediction(updatedPrediction);
@@ -2025,7 +2038,7 @@ function DecisionTraceStep({
           done ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-500"
         }`}
       >
-        {done ? "✓" : step}
+        {done ? "?" : step}
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-[8px] font-black text-slate-800">{title}</p>
@@ -2053,7 +2066,7 @@ function ValidationCheckRow({
           ok ? "bg-emerald-100 text-emerald-600" : "bg-amber-100 text-amber-700"
         }`}
       >
-        {ok ? "✓" : "!"}
+        {ok ? "?" : "!"}
       </span>
       <div className="min-w-0">
         <p className="text-[8px] font-black text-slate-800">{label}</p>
@@ -2202,6 +2215,9 @@ function AnalysisMetric({ title, value }: { title: string; value: string }) {
     </div>
   );
 }
+
+
+
 
 
 

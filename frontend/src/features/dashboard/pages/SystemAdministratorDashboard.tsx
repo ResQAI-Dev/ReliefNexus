@@ -1,9 +1,6 @@
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import NotificationBell from "../../../components/notifications/NotificationBell";
-import RiskPredictionPage from "../../risk-prediction/pages/RiskPredictionPage";
-import VulnerabilityImpactPage from "../../vulnerability-impact/pages/VulnerabilityImpactPage";
-import ResourceOptimizationPage from "../../resource-optimization/pages/ResourceOptimizationPage";
 import {
   SystemMonitoringModule,
   AuditLogsModule,
@@ -17,6 +14,9 @@ import {
   type AdminProfile,
 } from "../components/SystemAdminSupportModules";
 import EmergencyAlertsPage from "../../emergency-alerts/pages/EmergencyAlertsPage";
+import RiskPredictionPage from "../../risk-prediction/pages/RiskPredictionPage";
+import VulnerabilityImpactPage from "../../vulnerability-impact/pages/VulnerabilityImpactPage";
+import ResourceOptimizationPage from "../../resource-optimization/pages/ResourceOptimizationPage";
 import DisasterReportsPage from "../../disaster-reports/pages/DisasterReportsPage";
 import { Fragment, useEffect, useMemo, useState, type ReactNode, type Dispatch, type SetStateAction } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -155,6 +155,9 @@ type Section =
   | "user-profiles"
   | "disaster-reports"
   | "emergency-alerts"
+  | "risk-prediction"
+  | "vulnerability-impact"
+  | "resource-optimization"
   | "risk-information"
   | "relief-resources"  | "role-requests"
   | "permissions"
@@ -262,11 +265,13 @@ const userManagementItems = [
   "Relief Coordinators",
   "Disaster Reports",
   "Relief Requests",
-  "Emergency Alerts",
   "Risk Information",
-  "Relief Resources",
   "Location Sharing",
   "User Profiles",
+  "Risk Prediction",
+  "Vulnerability & Impact",
+  "Resource Optimization",
+  "Early Warning & Coordination",
 ];
 const aiAgentManagementItems = [
   "Risk Prediction",
@@ -574,7 +579,12 @@ const SystemAdministratorDashboard = () => {
     if (path.includes("/disaster-reports")) {
       setSection("disaster-reports");
     } else if (path.includes("/relief-requests")) {
-      setSection("relief-requests");
+      setSection("relief-requests");    } else if (path.includes("/risk-prediction")) {
+      setSection("risk-prediction");
+    } else if (path.includes("/vulnerability-impact")) {
+      setSection("vulnerability-impact");
+    } else if (path.includes("/resource-optimization")) {
+      setSection("resource-optimization");
     } else if (path.includes("/emergency-alerts")) {
       setSection("emergency-alerts");
     } else if (path.includes("/risk-information")) {
@@ -634,7 +644,7 @@ const SystemAdministratorDashboard = () => {
       api.get("/audit-logs"),
       api.get("/risk-predictions/agent-executions"),
       api.get("/auth/system-health"),
-      api.get("/resources"),
+      api.get("/resource-optimization/resources"),
       api.get("/risk-predictions"),
       api.get("/vulnerability-impact"),
       api.get("/emergency-alerts"),
@@ -885,6 +895,10 @@ const SystemAdministratorDashboard = () => {
       "Relief Resources": "relief-resources",
       "Location Sharing": "location-sharing",
       "User Profiles": "user-profiles",
+      "Risk Prediction": "risk-prediction",
+      "Vulnerability & Impact": "vulnerability-impact",
+      "Resource Optimization": "resource-optimization",
+      "Early Warning & Coordination": "emergency-alerts",
     };
 
     if (child === "Affected Users") {
@@ -1117,6 +1131,9 @@ const SystemAdministratorDashboard = () => {
       reports: "View Reports",
       settings: null,
       profile: null,
+      "risk-prediction": "Manage Users",
+      "vulnerability-impact": "Manage Users",
+      "resource-optimization": "Manage Users",
     };
 
     const permission = permissionMap[item.id];
@@ -1300,7 +1317,16 @@ const SystemAdministratorDashboard = () => {
         );
 
             case "emergency-alerts":
-        return <EmergencyAlertsPage />;
+              return <EmergencyAlertsPage />;
+
+            case "risk-prediction":
+              return <RiskPredictionPage />;
+
+            case "vulnerability-impact":
+              return <VulnerabilityImpactPage />;
+
+            case "resource-optimization":
+              return <ResourceOptimizationPage />;
 
       case "risk-information":
         return (
@@ -1476,29 +1502,12 @@ const SystemAdministratorDashboard = () => {
         );
 
       case "ai-agents":
-        if (selectedAiModule === "Risk Prediction") {
-          return <RiskPredictionPage />;
-        }
-
-        if (selectedAiModule === "Vulnerability & Impact") {
-          return <VulnerabilityImpactPage />;
-        }
-
-        if (selectedAiModule === "Resource Optimization") {
-          return <ResourceOptimizationPage />;
-        }
-        if (selectedAiModule === "Early Warning & Coordination") {
-          return <EmergencyAlertsPage />;
-        }
-
-
         return (
           <AIAgentsSection
             selectedModule={selectedAiModule}
             agentStatuses={agentStatuses}
           />
         );
-
       case "monitoring":
         return (
           <MonitoringSection systemHealth={systemHealth} />
@@ -1588,7 +1597,7 @@ const SystemAdministratorDashboard = () => {
             </button>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-hidden px-4 py-4">
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             <p className="px-3 pb-3 text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500">
               Administration
             </p>
@@ -1676,7 +1685,7 @@ const SystemAdministratorDashboard = () => {
                                 handleUserModuleClick(child)
                               }
                               className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[12px] font-medium transition ${
-                                selectedUserModule === child
+                                section === ({ "Risk Information": "risk-information", "Relief Resources": "relief-resources", "Location Sharing": "location-sharing", "Disaster Reports": "disaster-reports", "Relief Requests": "relief-requests", "Emergency Alerts": "emergency-alerts", "User Profiles": "user-profiles", "Risk Prediction": "risk-prediction", "Vulnerability & Impact": "vulnerability-impact", "Resource Optimization": "resource-optimization", "Early Warning & Coordination": "emergency-alerts" } as Record<string, Section>)[child]
                                   ? "bg-white/10 text-white"
                                   : "text-slate-400 hover:bg-white/5 hover:text-white"
                               }`}
@@ -2282,7 +2291,7 @@ const RoleRequestsSection = ({
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-white transition hover:bg-white/20"
                   aria-label="Close profile"
                 >
-                  <span className="text-xl leading-none">×</span>
+                  <span className="text-xl leading-none"></span>
                 </button>
               </div>
 
@@ -3112,7 +3121,7 @@ const OverviewSection = ({
 
         <DashboardCard
           title="AI Operations Summary"
-          subtitle="Four response agents · live operational metrics"
+          subtitle="Four response agents  live operational metrics"
           action={
             <button
               type="button"
@@ -3412,7 +3421,7 @@ const OverviewSection = ({
                 foot:
                   avgVulnerability !== null ||
                   avgImpact !== null
-                    ? `${avgVulnerability === null ? "N/A" : `${avgVulnerability.toFixed(1)}%`} vulnerability · ${avgImpact === null ? "N/A" : `${avgImpact.toFixed(1)}%`} impact`
+                    ? `${avgVulnerability === null ? "N/A" : `${avgVulnerability.toFixed(1)}%`} vulnerability  ${avgImpact === null ? "N/A" : `${avgImpact.toFixed(1)}%`} impact`
                     : "No impact summary",
                 latest: latestByDate(
                   vulnerabilityAssessments,
@@ -3442,7 +3451,7 @@ const OverviewSection = ({
                     : availableResourceStock.toLocaleString(),
                 foot:
                   reliefResources.length > 0
-                    ? `${allocatedResourceStock.toLocaleString()} allocated · ${totalResourceStock.toLocaleString()} total`
+                    ? `${allocatedResourceStock.toLocaleString()} allocated  ${totalResourceStock.toLocaleString()} total`
                     : "No resource inventory",
                 latest: latestByDate(
                   reliefResources,
@@ -3469,7 +3478,7 @@ const OverviewSection = ({
                 secondaryValue: emergencyAlerts.length,
                 foot:
                   criticalAlertCount || highAlertCount
-                    ? `${criticalAlertCount} critical · ${highAlertCount} high`
+                    ? `${criticalAlertCount} critical  ${highAlertCount} high`
                     : "No high-priority alerts",
                 latest: latestByDate(
                   emergencyAlerts,
@@ -3797,7 +3806,7 @@ const OverviewSection = ({
         </DashboardCard>
       </div>
 
-      {/* PENDING ADMIN WORK — SHOWN ONLY WHEN IT EXISTS */}
+      {/* PENDING ADMIN WORK  SHOWN ONLY WHEN IT EXISTS */}
       {roleRequests.length > 0 && (
         <DashboardCard
           title="Pending Role Requests"
@@ -4302,11 +4311,37 @@ const AIAgentsSection = ({
         ? "bg-red-500"
         : "bg-blue-500";
 
+  const hasTokenUsage =
+    execution &&
+    (
+      Number(execution.inputTokens || 0) > 0 ||
+      Number(execution.outputTokens || 0) > 0 ||
+      Number(execution.totalTokens || 0) > 0 ||
+      Boolean(execution.modelName)
+    );
+
+  const formatTokens = (value: unknown) => {
+    const tokens = Number(value || 0);
+    return tokens > 0 ? tokens.toLocaleString() : "Not available";
+  };
+
+  const formatCost = (value: unknown) => {
+    if (value === null || value === undefined || value === "") {
+      return "Not available";
+    }
+
+    const cost = Number(value);
+
+    return Number.isFinite(cost)
+      ? cost.toFixed(4)
+      : "Not available";
+  };
+
   const metricCards = [
     {
       label: "Execution Status",
       value: executionStatus,
-      icon: "?",
+      icon: "•",
       style:
         executionStatus.toLowerCase() === "completed"
           ? "bg-emerald-50 text-emerald-700"
@@ -4315,13 +4350,13 @@ const AIAgentsSection = ({
     {
       label: "Workflow ID",
       value: execution?.workflowId || "Not recorded",
-      icon: "?",
+      icon: "•",
       style: "bg-blue-50 text-blue-700",
     },
     {
       label: "Approval Status",
       value: execution?.approvalStatus || "NotRequired",
-      icon: "?",
+      icon: "•",
       style: "bg-slate-50 text-slate-700",
     },
     {
@@ -4329,8 +4364,45 @@ const AIAgentsSection = ({
       value: execution?.completedAt
         ? new Date(execution.completedAt).toLocaleString()
         : "Still running",
-      icon: "?",
+      icon: "•",
       style: "bg-slate-50 text-slate-700",
+    },
+    {
+      label: "Input Tokens",
+      value: hasTokenUsage
+        ? formatTokens(execution?.inputTokens)
+        : "Not available",
+      icon: "•",
+      style: "bg-violet-50 text-violet-700",
+    },
+    {
+      label: "Output Tokens",
+      value: hasTokenUsage
+        ? formatTokens(execution?.outputTokens)
+        : "Not available",
+      icon: "•",
+      style: "bg-indigo-50 text-indigo-700",
+    },
+    {
+      label: "Total Tokens",
+      value: hasTokenUsage
+        ? formatTokens(execution?.totalTokens)
+        : "Not available",
+      icon: "•",
+      style: "bg-purple-50 text-purple-700",
+    },
+    {
+      label: "Model / Cost",
+      value: hasTokenUsage
+        ? `${execution?.modelName || "Model not recorded"} ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· ${
+            execution?.estimatedCost !== null &&
+            execution?.estimatedCost !== undefined
+              ? formatCost(execution.estimatedCost)
+              : "Cost not available"
+          }`
+        : "Not available",
+      icon: "$",
+      style: "bg-amber-50 text-amber-700",
     },
   ];
 
@@ -4528,11 +4600,27 @@ const AIAgentsSection = ({
 
                   <div className="rounded-xl bg-slate-50 p-4">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Execution Time
+                      Execution Duration
                     </p>
                     <p className="mt-2 text-sm font-semibold text-slate-800">
-                      {execution.completedAt
-                        ? new Date(execution.completedAt).toLocaleString()
+                      {execution.startedAt && execution.completedAt
+                        ? (() => {
+                            const durationMs =
+                              new Date(execution.completedAt).getTime() -
+                              new Date(execution.startedAt).getTime();
+
+                            const totalSeconds = Math.max(
+                              0,
+                              Math.floor(durationMs / 1000)
+                            );
+
+                            const minutes = Math.floor(totalSeconds / 60);
+                            const seconds = totalSeconds % 60;
+
+                            return minutes > 0
+                              ? `${minutes}m ${seconds}s`
+                              : `${seconds}s`;
+                          })()
                         : "In progress"}
                     </p>
                   </div>
@@ -4617,6 +4705,51 @@ const AIAgentsSection = ({
                     </div>
                   ))}
               </div>
+            </div>
+          </div>
+
+          {/* EXECUTION TRACE */}
+          <div className="grid min-w-0 gap-5 xl:grid-cols-2">
+            <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-blue-600">
+                Completed Steps
+              </p>
+
+              <pre className="mt-4 max-h-60 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-slate-50 p-4 text-xs leading-5 text-slate-700">
+                {execution.completedSteps || "No completed steps recorded."}
+              </pre>
+            </div>
+
+            <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-blue-600">
+                Tool Results
+              </p>
+
+              <pre className="mt-4 max-h-60 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-slate-50 p-4 text-xs leading-5 text-slate-700">
+                {execution.toolResults || "No tool results recorded."}
+              </pre>
+            </div>
+          </div>
+
+          <div className="grid min-w-0 gap-5 md:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500">
+                Risk Prediction ID
+              </p>
+
+              <p className="mt-3 break-all font-mono text-xs leading-5 text-slate-700">
+                {execution.riskPredictionId || "Not linked"}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-red-200 bg-red-50/60 p-5 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-red-700">
+                Error Message
+              </p>
+
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-red-800">
+                {execution.errorMessage || "No errors recorded."}
+              </p>
             </div>
           </div>
 
@@ -4843,6 +4976,13 @@ const EmptyState = ({ text }: { text: string }) => (
 );
 
 export default SystemAdministratorDashboard;
+
+
+
+
+
+
+
 
 
 

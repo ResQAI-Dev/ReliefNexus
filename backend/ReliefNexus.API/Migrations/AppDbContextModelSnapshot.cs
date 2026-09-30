@@ -407,11 +407,21 @@ namespace ReliefNexus.API.Migrations
                     b.Property<string>("ErrorMessage")
                         .HasColumnType("text");
 
+                    b.Property<decimal?>("EstimatedCost")
+                        .HasColumnType("numeric");
+
                     b.Property<string>("FinalOutcome")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("InputSummary")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("InputTokens")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ModelName")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -422,6 +432,9 @@ namespace ReliefNexus.API.Migrations
                     b.Property<string>("OutputSummary")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("OutputTokens")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Plan")
                         .IsRequired()
@@ -440,6 +453,9 @@ namespace ReliefNexus.API.Migrations
                     b.Property<string>("ToolResults")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("TotalTokens")
+                        .HasColumnType("integer");
 
                     b.Property<string>("ValidationResults")
                         .IsRequired()

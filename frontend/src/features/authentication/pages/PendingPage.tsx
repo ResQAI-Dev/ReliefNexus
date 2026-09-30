@@ -1,4 +1,4 @@
-﻿import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 const PendingPage = () => {
   const location = useLocation();
@@ -98,7 +98,7 @@ const PendingPage = () => {
                 {/* Success icon */}
                 <div className="flex h-20 w-20 items-center justify-center rounded-[24px] border border-emerald-400/20 bg-emerald-400/10 shadow-[0_0_45px_rgba(52,211,153,0.12)]">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500 text-2xl font-black text-slate-950 shadow-lg">
-                    ✓
+                    
                   </div>
                 </div>
 
@@ -156,7 +156,7 @@ const PendingPage = () => {
                   <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] items-start gap-2">
                     <div>
                       <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 text-xs font-black text-slate-950">
-                        ✓
+                        
                       </div>
                       <div className="mt-2 text-xs font-bold text-white">
                         Submitted
@@ -204,7 +204,7 @@ const PendingPage = () => {
                   >
                     Go to Sign In
                     <span className="transition-transform group-hover:translate-x-1">
-                      →
+                      
                     </span>
                   </Link>
 
@@ -218,7 +218,7 @@ const PendingPage = () => {
 
                 <div className="mt-7 flex items-center gap-3 border-t border-white/10 pt-5">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.05] text-xs text-cyan-300">
-                    🔒
+                    
                   </span>
                   <p className="text-[10px] leading-5 text-slate-500">
                     Your registration details remain protected while your
@@ -231,7 +231,7 @@ const PendingPage = () => {
         </div>
 
         <p className="mt-5 text-center text-[10px] font-medium uppercase tracking-[0.18em] text-slate-600">
-          ReliefNexus • Smarter disaster response • Connected communities
+          ReliefNexus  Smarter disaster response  Connected communities
         </p>
       </div>
     </div>

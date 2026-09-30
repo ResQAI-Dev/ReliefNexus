@@ -291,7 +291,7 @@ function formatDate(
   value?: string
 ) {
   if (!value) {
-    return "—";
+    return "";
   }
 
   const date = new Date(value);
@@ -1489,7 +1489,7 @@ function ResourceFilters({
         className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 text-[10px] font-semibold text-slate-600"
       >
         <CalendarDays size={13} />
-        From — To
+        From  To
       </button>
     </div>
   );
@@ -2391,7 +2391,7 @@ export default function ResourceOptimizationPage() {
       const assessmentId = item.vulnerabilityAssessmentId || "unlinked";
       const current = grouped.get(assessmentId) || {
         assessmentId,
-        location: item.location || "—",
+        location: item.location || "",
         disasterType: "Agent 03",
         allocations: 0,
         quantity: 0,
@@ -3455,9 +3455,9 @@ export default function ResourceOptimizationPage() {
         {/* KPI ROW */}
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
           <KpiCard title="Affected People" value={Number(currentAssessment?.affectedPopulation || 0).toLocaleString()} subtitle="From selected locations" icon={<Package size={18} />} iconClass="bg-blue-50 text-blue-600" trend={currentAssessment ? "+12%" : undefined} />
-          <KpiCard title="Risk Level" value={currentAssessment?.riskScore != null ? `${Number(currentAssessment.riskScore).toFixed(1)}/100` : "—"} subtitle="Current disaster risk" icon={<AlertTriangle size={18} />} iconClass="bg-red-50 text-red-600" trend={currentAssessment?.riskLevel || undefined} negative={String(currentAssessment?.riskLevel || "").toLowerCase() === "critical"} />
-          <KpiCard title="Vulnerability" value={currentAssessment?.vulnerabilityScore != null ? `${Number(currentAssessment.vulnerabilityScore).toFixed(1)}/100` : "—"} subtitle="Exposure vulnerability" icon={<ShieldAlert size={18} />} iconClass="bg-amber-50 text-amber-600" trend={currentAssessment?.vulnerabilityLevel || undefined} />
-          <KpiCard title="Impact" value={currentAssessment?.impactScore != null ? `${Number(currentAssessment.impactScore).toFixed(1)}/100` : "—"} subtitle="Potential disaster impact" icon={<TrendingUp size={18} />} iconClass="bg-orange-50 text-orange-600" trend={currentAssessment?.impactLevel || undefined} />
+          <KpiCard title="Risk Level" value={currentAssessment?.riskScore != null ? `${Number(currentAssessment.riskScore).toFixed(1)}/100` : ""} subtitle="Current disaster risk" icon={<AlertTriangle size={18} />} iconClass="bg-red-50 text-red-600" trend={currentAssessment?.riskLevel || undefined} negative={String(currentAssessment?.riskLevel || "").toLowerCase() === "critical"} />
+          <KpiCard title="Vulnerability" value={currentAssessment?.vulnerabilityScore != null ? `${Number(currentAssessment.vulnerabilityScore).toFixed(1)}/100` : ""} subtitle="Exposure vulnerability" icon={<ShieldAlert size={18} />} iconClass="bg-amber-50 text-amber-600" trend={currentAssessment?.vulnerabilityLevel || undefined} />
+          <KpiCard title="Impact" value={currentAssessment?.impactScore != null ? `${Number(currentAssessment.impactScore).toFixed(1)}/100` : ""} subtitle="Potential disaster impact" icon={<TrendingUp size={18} />} iconClass="bg-orange-50 text-orange-600" trend={currentAssessment?.impactLevel || undefined} />
           <KpiCard title="Total Resources" value={inventorySummary.total.toLocaleString()} subtitle="Available in database" icon={<Boxes size={18} />} iconClass="bg-cyan-50 text-cyan-600" />
           <KpiCard title="Allocated" value={inventorySummary.allocated.toLocaleString()} subtitle="Currently allocated" icon={<PackageCheck size={18} />} iconClass="bg-red-50 text-red-600" />
           <KpiCard title="Utilization Rate" value={`${inventorySummary.utilization}%`} subtitle="Current allocation rate" icon={<Activity size={18} />} iconClass="bg-emerald-50 text-emerald-600" />
@@ -3475,7 +3475,7 @@ export default function ResourceOptimizationPage() {
                     </span>
                     <div>
                       <p className="text-[9px] font-black uppercase tracking-[0.16em] text-indigo-600">
-                        Agent 03 · Resource Intelligence
+                        Agent 03  Resource Intelligence
                       </p>
                       <h2 className="mt-0.5 text-base font-black text-slate-900">
                         Demand, Coverage & Optimization Analysis
@@ -4121,7 +4121,7 @@ export default function ResourceOptimizationPage() {
                           ? `VA-${currentAssessment.id
                               .slice(0, 8)
                               .toUpperCase()}`
-                          : "—"}
+                          : ""}
                       </p>
                     </div>
 
@@ -4165,7 +4165,7 @@ export default function ResourceOptimizationPage() {
                       <div className="mt-3 grid grid-cols-2 gap-2">
                         <ContextValue
                           label="Disaster"
-                          value={riskPrediction?.disasterType || currentAssessment.disasterType || "—"}
+                          value={riskPrediction?.disasterType || currentAssessment.disasterType || ""}
                         />
                         <ContextValue
                           label="Risk Score"
@@ -4174,19 +4174,19 @@ export default function ResourceOptimizationPage() {
                               ? `${Number(riskPrediction.riskScore).toFixed(1)} / 100`
                               : currentAssessment.riskScore != null
                                 ? `${Number(currentAssessment.riskScore).toFixed(1)} / 100`
-                                : "—"
+                                : ""
                           }
                         />
                         <ContextValue
                           label="Risk Level"
-                          value={riskPrediction?.riskLevel || currentAssessment.riskLevel || "—"}
+                          value={riskPrediction?.riskLevel || currentAssessment.riskLevel || ""}
                         />
                         <ContextValue
                           label="Confidence"
                           value={
                             riskPrediction?.confidence != null
                               ? `${Number(riskPrediction.confidence).toFixed(1)}%`
-                              : "—"
+                              : ""
                           }
                         />
                       </div>
@@ -4204,7 +4204,7 @@ export default function ResourceOptimizationPage() {
                             ? `${Number(
                                 currentAssessment.riskScore
                               ).toFixed(1)} / 100`
-                            : "—"
+                            : ""
                         }
                       />
                       <ContextValue
@@ -4214,7 +4214,7 @@ export default function ResourceOptimizationPage() {
                             ? `${Number(
                                 currentAssessment.impactScore
                               ).toFixed(1)} / 100`
-                            : "—"
+                            : ""
                         }
                       />
                     </div>
@@ -4240,7 +4240,7 @@ export default function ResourceOptimizationPage() {
                             <div className="grid grid-cols-3 gap-2">
                               <ContextValue label="Population" value={Number(demandReport.affectedPopulation || 0).toLocaleString()} />
                               <ContextValue label="Severity" value={`${Number(demandReport.severityIndex || 0).toFixed(1)}`} />
-                              <ContextValue label="Priority" value={demandReport.priority || "—"} />
+                              <ContextValue label="Priority" value={demandReport.priority || ""} />
                             </div>
 
                             <div className="mt-3 max-h-56 space-y-1.5 overflow-y-auto pr-1">
@@ -4390,7 +4390,7 @@ export default function ResourceOptimizationPage() {
                       <div className="rounded-lg border border-slate-200 bg-white px-2.5 py-2">
                         <p className="text-[7px] font-bold uppercase tracking-wider text-slate-400">Risk</p>
                         <p className="mt-0.5 text-[10px] font-black text-slate-800">
-                          {assessment.riskScore != null ? `${Number(assessment.riskScore).toFixed(1)}/100` : "—"}
+                          {assessment.riskScore != null ? `${Number(assessment.riskScore).toFixed(1)}/100` : ""}
                         </p>
                       </div>
                       <div className="rounded-lg border border-slate-200 bg-white px-2.5 py-2">
@@ -4440,7 +4440,7 @@ export default function ResourceOptimizationPage() {
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="text-sm font-black text-slate-900">
-                    Selected Assessment — Full Details
+                    Selected Assessment  Full Details
                   </h2>
                   <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-[8px] font-black text-emerald-700">
                     LIVE DB
@@ -4518,9 +4518,9 @@ export default function ResourceOptimizationPage() {
 
                   <div className="grid grid-cols-2 gap-2 p-4 md:grid-cols-5">
                     <ContextValue label="Affected People" value={Number(currentAssessment.affectedPopulation || 0).toLocaleString()} />
-                    <ContextValue label="Risk Score" value={currentAssessment.riskScore != null ? `${Number(currentAssessment.riskScore).toFixed(1)} / 100` : "—"} />
-                    <ContextValue label="Vulnerability" value={currentAssessment.vulnerabilityScore != null ? `${Number(currentAssessment.vulnerabilityScore).toFixed(1)} / 100` : "—"} />
-                    <ContextValue label="Impact" value={currentAssessment.impactScore != null ? `${Number(currentAssessment.impactScore).toFixed(1)} / 100` : "—"} />
+                    <ContextValue label="Risk Score" value={currentAssessment.riskScore != null ? `${Number(currentAssessment.riskScore).toFixed(1)} / 100` : ""} />
+                    <ContextValue label="Vulnerability" value={currentAssessment.vulnerabilityScore != null ? `${Number(currentAssessment.vulnerabilityScore).toFixed(1)} / 100` : ""} />
+                    <ContextValue label="Impact" value={currentAssessment.impactScore != null ? `${Number(currentAssessment.impactScore).toFixed(1)} / 100` : ""} />
                     <ContextValue label="Created" value={formatDate(currentAssessment.createdAt)} />
                   </div>
                 </div>
@@ -4529,17 +4529,17 @@ export default function ResourceOptimizationPage() {
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 text-blue-700">
                       <ShieldAlert size={14} />
-                      <h3 className="text-[10px] font-black uppercase tracking-wider">Agent 01 — Linked Risk Prediction</h3>
+                      <h3 className="text-[10px] font-black uppercase tracking-wider">Agent 01  Linked Risk Prediction</h3>
                     </div>
                     <span className="rounded-full bg-white px-2 py-1 text-[8px] font-bold text-blue-700">
                       {riskPrediction ? "Linked" : "Not Linked"}
                     </span>
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
-                    <ContextValue label="Disaster" value={riskPrediction?.disasterType || currentAssessment.disasterType || "—"} />
-                    <ContextValue label="Risk" value={riskPrediction?.riskScore != null ? `${Number(riskPrediction.riskScore).toFixed(1)} / 100` : currentAssessment.riskScore != null ? `${Number(currentAssessment.riskScore).toFixed(1)} / 100` : "—"} />
-                    <ContextValue label="Level" value={riskPrediction?.riskLevel || currentAssessment.riskLevel || "—"} />
-                    <ContextValue label="Confidence" value={riskPrediction?.confidence != null ? `${Number(riskPrediction.confidence).toFixed(1)}%` : "—"} />
+                    <ContextValue label="Disaster" value={riskPrediction?.disasterType || currentAssessment.disasterType || ""} />
+                    <ContextValue label="Risk" value={riskPrediction?.riskScore != null ? `${Number(riskPrediction.riskScore).toFixed(1)} / 100` : currentAssessment.riskScore != null ? `${Number(currentAssessment.riskScore).toFixed(1)} / 100` : ""} />
+                    <ContextValue label="Level" value={riskPrediction?.riskLevel || currentAssessment.riskLevel || ""} />
+                    <ContextValue label="Confidence" value={riskPrediction?.confidence != null ? `${Number(riskPrediction.confidence).toFixed(1)}%` : ""} />
                   </div>
                 </div>
 
@@ -4588,8 +4588,8 @@ export default function ResourceOptimizationPage() {
                           <div className="p-3">
                             <div className="grid grid-cols-2 gap-2">
                               <ContextValue label="Quantity" value={`${Number(allocation.recommendedQuantity || 0).toLocaleString()} units`} />
-                              <ContextValue label="Priority" value={allocation.priority || "—"} />
-                              <ContextValue label="Location" value={allocation.location || currentAssessment.location || "—"} />
+                              <ContextValue label="Priority" value={allocation.priority || ""} />
+                              <ContextValue label="Location" value={allocation.location || currentAssessment.location || ""} />
                               <ContextValue label="Status" value="Allocated" />
                             </div>
                             <div className="mt-2 flex items-center justify-between gap-2">
@@ -4625,7 +4625,7 @@ export default function ResourceOptimizationPage() {
                           <ContextValue label="Population" value={Number(demandReport.affectedPopulation || 0).toLocaleString()} />
                           <ContextValue label="Priority Population" value={Number(demandReport.priorityAffectedPopulation || 0).toLocaleString()} />
                           <ContextValue label="Severity Index" value={Number(demandReport.severityIndex || 0).toFixed(1)} />
-                          <ContextValue label="Priority" value={demandReport.priority || "—"} />
+                          <ContextValue label="Priority" value={demandReport.priority || ""} />
                           <ContextValue label="Resources" value={String(demandReport.resources?.length || 0)} />
                         </div>
                         <div className="mt-3 overflow-x-auto">
@@ -4665,7 +4665,7 @@ export default function ResourceOptimizationPage() {
                     <h3 className="text-[10px] font-black uppercase tracking-wider">Assessment Location</h3>
                   </div>
                   <p className="mt-2 text-xs font-black text-slate-800">{currentAssessment.location || "Location unavailable"}</p>
-                  <p className="mt-1 break-all text-[8px] text-slate-400">Assessment ID: {currentAssessment.id || "—"}</p>
+                  <p className="mt-1 break-all text-[8px] text-slate-400">Assessment ID: {currentAssessment.id || ""}</p>
                   {(() => {
                     const coords =
                       riskPrediction?.latitude != null && riskPrediction?.longitude != null
@@ -4685,9 +4685,9 @@ export default function ResourceOptimizationPage() {
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-500">Assessment Summary</h3>
                   <div className="mt-3 space-y-2">
-                    <ContextValue label="Vulnerability Level" value={currentAssessment.vulnerabilityLevel || "—"} />
-                    <ContextValue label="Impact Level" value={currentAssessment.impactLevel || "—"} />
-                    <ContextValue label="Risk Level" value={currentAssessment.riskLevel || "—"} />
+                    <ContextValue label="Vulnerability Level" value={currentAssessment.vulnerabilityLevel || ""} />
+                    <ContextValue label="Impact Level" value={currentAssessment.impactLevel || ""} />
+                    <ContextValue label="Risk Level" value={currentAssessment.riskLevel || ""} />
                     <ContextValue label="Created At" value={formatDate(currentAssessment.createdAt)} />
                     <ContextValue label="Linked Risk Prediction" value={currentAssessment.riskPredictionId ? "Yes" : "Fallback match"} />
                   </div>
@@ -4878,17 +4878,17 @@ export default function ResourceOptimizationPage() {
                               <div className="flex items-center gap-2">
                                 <ResourceImage name={item.resourceName} type={item.resourceType} />
                                 <div className="min-w-0">
-                                  <p className="truncate text-[10px] font-bold text-slate-800">{item.resourceName || "—"}</p>
-                                  <p className="truncate text-[8px] text-slate-400">{item.location || "—"}</p>
+                                  <p className="truncate text-[10px] font-bold text-slate-800">{item.resourceName || ""}</p>
+                                  <p className="truncate text-[8px] text-slate-400">{item.location || ""}</p>
                                 </div>
                               </div>
                             </td>
-                            <td className="px-5 py-3 text-xs text-slate-600">{item.resourceType || "—"}</td>
+                            <td className="px-5 py-3 text-xs text-slate-600">{item.resourceType || ""}</td>
                             <td className="px-5 py-3 text-xs font-semibold text-slate-700">{item.availableQuantity ?? 0}</td>
                             <td className="px-5 py-3 text-xs font-semibold text-slate-700">{item.allocatedQuantity ?? 0}</td>
                             <td className="px-5 py-3 text-xs font-semibold text-slate-700">{available}</td>
-                            <td className="px-5 py-3 text-xs text-slate-600">{item.location || "—"}</td>
-                            <td className="px-5 py-3 text-xs font-semibold text-slate-600">{item.status || "—"}</td>
+                            <td className="px-5 py-3 text-xs text-slate-600">{item.location || ""}</td>
+                            <td className="px-5 py-3 text-xs font-semibold text-slate-600">{item.status || ""}</td>
                             <td className="px-5 py-3">
                               <div className="flex justify-end gap-2">
                                 <button
@@ -4938,9 +4938,9 @@ export default function ResourceOptimizationPage() {
                       {requestRows.slice(0,10).map((item)=>(
                         <tr key={item.id} className="border-b border-slate-100 transition hover:bg-slate-50">
                           <td className="px-5 py-3"><div className="flex items-center gap-2"><ResourceImage name={item.resourceName} type={item.resourceType}/><div><p className="text-[10px] font-bold text-slate-800">{item.resourceName}</p><p className="text-[8px] text-slate-400">{item.resourceType}</p></div></div></td>
-                          <td className="px-5 py-3 text-[10px] text-slate-600">{item.location || "—"}</td>
+                          <td className="px-5 py-3 text-[10px] text-slate-600">{item.location || ""}</td>
                           <td className="px-5 py-3 text-[10px] font-bold text-slate-800">{Number(item.recommendedQuantity || 0).toLocaleString()}</td>
-                          <td className="px-5 py-3"><span className={`rounded-full border px-2 py-1 text-[8px] font-bold ${getPriorityBadge(item.priority)}`}>{item.priority || "—"}</span></td>
+                          <td className="px-5 py-3"><span className={`rounded-full border px-2 py-1 text-[8px] font-bold ${getPriorityBadge(item.priority)}`}>{item.priority || ""}</span></td>
                           <td className="px-5 py-3 text-[9px] text-slate-500">{formatDate(item.createdAt)}</td>
                           <td className="px-5 py-3"><span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[8px] font-bold text-emerald-700">Recorded</span></td>
                           <td className="px-5 py-3"><button type="button" onClick={()=>setViewAllocation(item)} className="inline-flex items-center gap-1 rounded-lg border border-blue-100 bg-blue-50 px-2.5 py-1.5 text-[8px] font-bold text-blue-700 hover:bg-blue-100"><Eye size={10}/> View</button></td>
@@ -5102,8 +5102,8 @@ export default function ResourceOptimizationPage() {
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <ContextValue label="Quantity" value={`${viewAllocation.recommendedQuantity} units`} />
-                    <ContextValue label="Priority" value={viewAllocation.priority || "—"} />
-                    <ContextValue label="Location" value={viewAllocation.location || "—"} />
+                    <ContextValue label="Priority" value={viewAllocation.priority || ""} />
+                    <ContextValue label="Location" value={viewAllocation.location || ""} />
                     <ContextValue label="Status" value="Allocated" />
                     <ContextValue label="Created" value={formatDate(viewAllocation.createdAt)} />
                     <ContextValue label="Assessment" value={`VA-${viewAllocation.vulnerabilityAssessmentId.slice(0, 6).toUpperCase()}`} />
@@ -5190,7 +5190,7 @@ export default function ResourceOptimizationPage() {
                 {resourceRun.completed && !resourceRun.error && resourceRun.resultAllocation && (
                   <>
                     <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4">
-                      <p className="text-sm font-black text-emerald-900">✓ Agent 03 completed successfully</p>
+                      <p className="text-sm font-black text-emerald-900"> Agent 03 completed successfully</p>
                       <p className="mt-1 text-[10px] leading-5 text-emerald-700">
                         The result below came from the Agent 03 API response and refreshed database inventory.
                       </p>
@@ -5198,9 +5198,9 @@ export default function ResourceOptimizationPage() {
 
                     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                       <ContextValue label="Allocated" value={`${resourceRun.resultAllocation.recommendedQuantity} units`} />
-                      <ContextValue label="Priority" value={resourceRun.resultAllocation.priority || "—"} />
-                      <ContextValue label="Location" value={resourceRun.resultAllocation.location || "—"} />
-                      <ContextValue label="Resource" value={resourceRun.resultAllocation.resourceName || "—"} />
+                      <ContextValue label="Priority" value={resourceRun.resultAllocation.priority || ""} />
+                      <ContextValue label="Location" value={resourceRun.resultAllocation.location || ""} />
+                      <ContextValue label="Resource" value={resourceRun.resultAllocation.resourceName || ""} />
                     </div>
 
                     {resourceRun.resourceAfter && (
@@ -5209,7 +5209,7 @@ export default function ResourceOptimizationPage() {
                         <div className="mt-3 grid grid-cols-3 gap-3">
                           <ContextValue label="Available" value={String(resourceRun.resourceAfter.availableQuantity)} />
                           <ContextValue label="Allocated" value={String(resourceRun.resourceAfter.allocatedQuantity)} />
-                          <ContextValue label="Status" value={resourceRun.resourceAfter.status || "—"} />
+                          <ContextValue label="Status" value={resourceRun.resourceAfter.status || ""} />
                         </div>
                       </div>
                     )}
@@ -5318,9 +5318,9 @@ export default function ResourceOptimizationPage() {
                         </div>
                         <div className="grid grid-cols-2 gap-3 p-4 md:grid-cols-4">
                           <ContextValue label="Affected Population" value={Number(assessmentActionModal.affectedPopulation || 0).toLocaleString()} />
-                          <ContextValue label="Risk Score" value={assessmentActionModal.riskScore != null ? `${Number(assessmentActionModal.riskScore).toFixed(1)} / 100` : "—"} />
-                          <ContextValue label="Vulnerability" value={assessmentActionModal.vulnerabilityScore != null ? `${Number(assessmentActionModal.vulnerabilityScore).toFixed(1)} / 100` : "—"} />
-                          <ContextValue label="Impact" value={assessmentActionModal.impactScore != null ? `${Number(assessmentActionModal.impactScore).toFixed(1)} / 100` : "—"} />
+                          <ContextValue label="Risk Score" value={assessmentActionModal.riskScore != null ? `${Number(assessmentActionModal.riskScore).toFixed(1)} / 100` : ""} />
+                          <ContextValue label="Vulnerability" value={assessmentActionModal.vulnerabilityScore != null ? `${Number(assessmentActionModal.vulnerabilityScore).toFixed(1)} / 100` : ""} />
+                          <ContextValue label="Impact" value={assessmentActionModal.impactScore != null ? `${Number(assessmentActionModal.impactScore).toFixed(1)} / 100` : ""} />
                         </div>
                       </div>
 
@@ -5330,12 +5330,12 @@ export default function ResourceOptimizationPage() {
                             <MapPin size={16} className="text-blue-600" />
                             <div>
                               <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">Location</p>
-                              <p className="mt-1 text-sm font-black text-slate-900">{assessmentActionModal.location || "—"}</p>
+                              <p className="mt-1 text-sm font-black text-slate-900">{assessmentActionModal.location || ""}</p>
                             </div>
                           </div>
                           <div className="mt-4 grid grid-cols-2 gap-2">
                             <ContextValue label="Coordinates" value={riskPrediction?.latitude != null && riskPrediction?.longitude != null ? `${Number(riskPrediction.latitude).toFixed(4)}, ${Number(riskPrediction.longitude).toFixed(4)}` : `${getCoordinates(assessmentActionModal.location || "").lat.toFixed(4)}, ${getCoordinates(assessmentActionModal.location || "").lng.toFixed(4)}`} />
-                            <ContextValue label="Assessment ID" value={`VA-${assessmentActionModal.id?.slice(0, 8).toUpperCase() || "—"}`} />
+                            <ContextValue label="Assessment ID" value={`VA-${assessmentActionModal.id?.slice(0, 8).toUpperCase() || ""}`} />
                           </div>
                           <button type="button" onClick={() => { closeAssessmentActionModal(); window.setTimeout(() => document.getElementById("resource-allocation-map")?.scrollIntoView({ behavior: "smooth", block: "center" }), 100); }} className="mt-3 inline-flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-[9px] font-bold text-slate-600 hover:bg-slate-50">
                             <MapPin size={13} /> View Location on Resource Map
@@ -5354,14 +5354,14 @@ export default function ResourceOptimizationPage() {
                             {riskPrediction?.disasterType || assessmentActionModal.disasterType || "Prediction unavailable"}
                           </p>
                           <div className="mt-3 grid grid-cols-2 gap-2">
-                            <ContextValue label="Risk Score" value={riskPrediction?.riskScore != null ? `${Number(riskPrediction.riskScore).toFixed(1)} / 100` : assessmentActionModal.riskScore != null ? `${Number(assessmentActionModal.riskScore).toFixed(1)} / 100` : "—"} />
-                            <ContextValue label="Risk Level" value={riskPrediction?.riskLevel || assessmentActionModal.riskLevel || "—"} />
-                            <ContextValue label="Confidence" value={riskPrediction?.confidence != null ? `${Number(riskPrediction.confidence).toFixed(1)}%` : "—"} />
+                            <ContextValue label="Risk Score" value={riskPrediction?.riskScore != null ? `${Number(riskPrediction.riskScore).toFixed(1)} / 100` : assessmentActionModal.riskScore != null ? `${Number(assessmentActionModal.riskScore).toFixed(1)} / 100` : ""} />
+                            <ContextValue label="Risk Level" value={riskPrediction?.riskLevel || assessmentActionModal.riskLevel || ""} />
+                            <ContextValue label="Confidence" value={riskPrediction?.confidence != null ? `${Number(riskPrediction.confidence).toFixed(1)}%` : ""} />
                             <ContextValue label="Prediction Source" value={riskPrediction?.predictionSource || "Not available"} />
                           </div>
                           <div className="mt-2 grid grid-cols-2 gap-2">
-                            <ContextValue label="Latitude" value={riskPrediction?.latitude != null ? Number(riskPrediction.latitude).toFixed(4) : "—"} />
-                            <ContextValue label="Longitude" value={riskPrediction?.longitude != null ? Number(riskPrediction.longitude).toFixed(4) : "—"} />
+                            <ContextValue label="Latitude" value={riskPrediction?.latitude != null ? Number(riskPrediction.latitude).toFixed(4) : ""} />
+                            <ContextValue label="Longitude" value={riskPrediction?.longitude != null ? Number(riskPrediction.longitude).toFixed(4) : ""} />
                           </div>
                         </div>
 
@@ -5375,8 +5375,8 @@ export default function ResourceOptimizationPage() {
                           </div>
                           <div className="mt-3 grid grid-cols-2 gap-2">
                             <ContextValue label="Affected Population" value={Number(assessmentActionModal.affectedPopulation || 0).toLocaleString()} />
-                            <ContextValue label="Vulnerability" value={assessmentActionModal.vulnerabilityScore != null ? `${Number(assessmentActionModal.vulnerabilityScore).toFixed(1)} / 100` : "—"} />
-                            <ContextValue label="Impact" value={assessmentActionModal.impactScore != null ? `${Number(assessmentActionModal.impactScore).toFixed(1)} / 100` : "—"} />
+                            <ContextValue label="Vulnerability" value={assessmentActionModal.vulnerabilityScore != null ? `${Number(assessmentActionModal.vulnerabilityScore).toFixed(1)} / 100` : ""} />
+                            <ContextValue label="Impact" value={assessmentActionModal.impactScore != null ? `${Number(assessmentActionModal.impactScore).toFixed(1)} / 100` : ""} />
                             <ContextValue label="Severity Index" value={`${getSeverityScore(assessmentActionModal).toFixed(1)} / 100`} />
                           </div>
                         </div>
@@ -5511,7 +5511,7 @@ export default function ResourceOptimizationPage() {
                                 <span className="text-[10px] font-semibold text-slate-600">{resource.available}</span>
                                 <span className="rounded-lg bg-emerald-50 px-2 py-1 text-center text-[10px] font-black text-emerald-700">{resource.recommended}</span>
                                 <span className={`text-[10px] font-black ${resource.gap > 0 ? "text-red-600" : "text-emerald-600"}`}>{resource.gap}</span>
-                                <span className="truncate text-[9px] font-semibold text-slate-600">{resource.location || assessmentActionModal.location || "—"}</span>
+                                <span className="truncate text-[9px] font-semibold text-slate-600">{resource.location || assessmentActionModal.location || ""}</span>
                               </div>
                             ))}
                           </div>
@@ -5575,7 +5575,7 @@ export default function ResourceOptimizationPage() {
                                 </div>
                                 <div className="min-w-0">
                                   <p className="truncate text-[10px] font-black text-slate-800">{resource.resourceName}</p>
-                                  <p className="mt-0.5 truncate text-[8px] text-slate-400">{resource.location || assessmentActionModal.location || "—"} | {resource.resourceType}</p>
+                                  <p className="mt-0.5 truncate text-[8px] text-slate-400">{resource.location || assessmentActionModal.location || ""} | {resource.resourceType}</p>
                                 </div>
                               </div>
                               <div className="flex shrink-0 items-center gap-3">
@@ -5665,7 +5665,7 @@ export default function ResourceOptimizationPage() {
                                         {allocation.resourceName}
                                       </p>
                                       <p className="mt-0.5 truncate text-[8px] text-slate-400">
-                                        {allocation.location || "—"} | {allocation.resourceType}
+                                        {allocation.location || ""} | {allocation.resourceType}
                                       </p>
                                     </div>
                                   </div>
@@ -5946,8 +5946,8 @@ export default function ResourceOptimizationPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <ContextValue label="Type" value={allocationForm.resourceType || "—"} />
-                  <ContextValue label="Resource" value={allocationForm.resourceName || "—"} />
+                  <ContextValue label="Type" value={allocationForm.resourceType || ""} />
+                  <ContextValue label="Resource" value={allocationForm.resourceName || ""} />
                 </div>
               </div>
 
@@ -6056,3 +6056,4 @@ function MiniMetric({
     </div>
   );
 }
+

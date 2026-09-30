@@ -21,14 +21,11 @@ public static class SeedData
         var adminPassword =
             configuration["InitialAdmin:Password"];
 
-        if (string.IsNullOrWhiteSpace(adminEmail) ||
-            string.IsNullOrWhiteSpace(adminPassword))
-        {
-            return;
-        }
-
-        adminEmail =
-            adminEmail.Trim().ToLower();
+        if (!string.IsNullOrWhiteSpace(adminEmail) &&
+    !string.IsNullOrWhiteSpace(adminPassword))
+{
+    adminEmail =
+        adminEmail.Trim().ToLower();
 
         /* =====================================================
            SYSTEM ADMINISTRATOR
@@ -77,6 +74,7 @@ public static class SeedData
         }
 
         await context.SaveChangesAsync();
+        }
 
         /* =====================================================
            RESOURCE INVENTORY
@@ -87,6 +85,8 @@ public static class SeedData
 
         var resourceCount =
             await context.ReliefResources.CountAsync();
+
+        Console.WriteLine($"[SeedData] ReliefResources BEFORE seed = {resourceCount}");
 
         if (resourceCount == 0)
         {

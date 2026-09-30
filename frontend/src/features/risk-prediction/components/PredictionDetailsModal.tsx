@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type {
   DisasterRisk,
   RiskFactor,
@@ -34,6 +34,7 @@ import {
 
 interface Props {
   prediction: RiskPrediction;
+  loading?: boolean;
   onClose: () => void;
   onApprovalComplete?: (
     prediction: RiskPrediction,
@@ -663,6 +664,7 @@ function buildRiskPdf(prediction: RiskPrediction): Uint8Array {
 
 export default function PredictionDetailsModal({
   prediction,
+  loading = false,
   onClose,
   onApprovalComplete,
 }: Props) {
@@ -827,7 +829,7 @@ export default function PredictionDetailsModal({
         },
         {
           label: "Heat / humidity",
-          value: `${fixed(prediction.temperature)} C Â· ${fixed(
+          value: `${fixed(prediction.temperature)} C  ${fixed(
             prediction.humidity,
             0
           )}%`,
@@ -1176,7 +1178,7 @@ export default function PredictionDetailsModal({
               <HeroKpi
                 label="Elevated hazards"
                 value={String(elevatedHazards)}
-                detail="Score â‰¥ 60"
+                detail="Score  60"
               />
               <HeroKpi
                 label="Input coverage"
@@ -1329,7 +1331,7 @@ export default function PredictionDetailsModal({
                   <span
                     className={`rounded-full border px-2.5 py-1.5 text-[13px] font-black ${tone.badge}`}
                   >
-                    {normalizeLevel(primaryLevel)} Â· {primaryScore.toFixed(1)}
+                    {normalizeLevel(primaryLevel)}  {primaryScore.toFixed(1)}
                   </span>
                 </div>
               </div>
@@ -1410,7 +1412,7 @@ export default function PredictionDetailsModal({
                   label="Next hazard"
                   value={
                     secondaryRisk
-                      ? `${secondaryRisk.disasterType} Â· ${safeNumber(
+                      ? `${secondaryRisk.disasterType}  ${safeNumber(
                           secondaryRisk.riskScore
                         ).toFixed(1)}`
                       : "No secondary"
@@ -1586,7 +1588,13 @@ export default function PredictionDetailsModal({
 
               {rankedRisks.length === 0 && (
                 <div className="sm:col-span-2 xl:col-span-3">
-                  <EmptyPanel text="No hazard portfolio data was returned." />
+                  <EmptyPanel
+  text={
+    loading
+      ? "Loading hazard intelligence..."
+      : "No hazard portfolio data was returned."
+  }
+/>
                 </div>
               )}
             </div>
@@ -2046,7 +2054,7 @@ export default function PredictionDetailsModal({
                     Agent Handoff
                   </p>
                   <h3 className="mt-1 text-[13px] font-black text-slate-900">
-                    Agent 01 â†’ Agent 02
+                    Agent 01  Agent 02
                   </h3>
                   <p className="mt-0.5 text-[13px] font-semibold leading-4 text-slate-500">
                     Key prediction context prepared for the next vulnerability and impact assessment stage.
@@ -2149,7 +2157,7 @@ export default function PredictionDetailsModal({
           </section>
 
           <p className="py-3 text-center text-[6.5px] font-semibold text-slate-400">
-            ReliefNexus Â· Risk Prediction Agent Â· Detailed operational intelligence generated from the selected prediction record.
+            ReliefNexus  Risk Prediction Agent  Detailed operational intelligence generated from the selected prediction record.
           </p>
         </main>
       </div>
@@ -2373,6 +2381,8 @@ function EmptyPanel({ text }: { text: string }) {
     </div>
   );
 }
+
+
 
 
 

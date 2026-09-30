@@ -280,7 +280,7 @@ public sealed class VolunteerAssignmentAgent
 
                         MatchReason =
                             string.Join(
-                                " • ",
+                                "  ",
                                 reasons)
                     };
                 })

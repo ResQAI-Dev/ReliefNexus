@@ -421,7 +421,7 @@ const FieldVolunteerAssignedIncidents = () => {
                           {report.location || "Unknown location"}
                         </h2>
                         <p className="mt-1 truncate text-xs text-slate-500">
-                          {report.disasterType || "Disaster"} · Assigned to{" "}
+                          {report.disasterType || "Disaster"}  Assigned to{" "}
                           {report.assignedVolunteerName || "you"}
                         </p>
                       </div>
@@ -519,7 +519,7 @@ const FieldVolunteerAssignedIncidents = () => {
                                 Assignment
                               </p>
                               <p className="mt-1 text-xs font-black text-slate-800">
-                                ✓ Completed by coordinator
+                                 Completed by coordinator
                               </p>
                             </div>
                             <div className="rounded-xl bg-white p-3">
@@ -528,7 +528,7 @@ const FieldVolunteerAssignedIncidents = () => {
                               </p>
                               <p className="mt-1 text-xs font-black text-slate-800">
                                 {completed
-                                  ? "✓ Completed"
+                                  ? " Completed"
                                   : status === "inprogress" ||
                                       status === "fieldupdatesubmitted"
                                     ? "In progress"
@@ -541,7 +541,7 @@ const FieldVolunteerAssignedIncidents = () => {
                               </p>
                               <p className="mt-1 text-xs font-black text-slate-800">
                                 {status === "resolved"
-                                  ? "✓ Resolved"
+                                  ? " Resolved"
                                   : "Waiting for coordinator"}
                               </p>
                             </div>
@@ -553,7 +553,7 @@ const FieldVolunteerAssignedIncidents = () => {
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div>
                             <p className="text-[9px] font-black uppercase tracking-[0.18em] text-blue-600">
-                              Process 7 · Assigned Volunteer
+                              Process 7  Assigned Volunteer
                             </p>
                             <h3 className="mt-1 text-lg font-black text-slate-950">
                               Field Response
@@ -757,3 +757,5 @@ const FieldVolunteerAssignedIncidents = () => {
 };
 
 export default FieldVolunteerAssignedIncidents;
+
+

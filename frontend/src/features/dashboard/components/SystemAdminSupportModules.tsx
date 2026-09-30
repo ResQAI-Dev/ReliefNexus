@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+﻿import { useEffect, useMemo, useState, type ReactNode } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import {
@@ -750,7 +750,7 @@ export function SystemReportsModule({
       .footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 8px; display: flex; justify-content: space-between; }
       @media print { .cover { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .kpi { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
     </style></head><body>
-      <div class="cover"><div class="eyebrow">Emergency Analytics • ReliefNexus</div><h1>System Operations Report</h1><div class="subtitle">Comprehensive operational intelligence covering disaster incidents, AI risk predictions, response workflow, volunteer activity and field operations.</div><div class="meta"><span>Generated: ${escapeHtml(generatedAt)}</span><span>Source: ReliefNexus live operational data</span></div></div>
+      <div class="cover"><div class="eyebrow">Emergency Analytics  ReliefNexus</div><h1>System Operations Report</h1><div class="subtitle">Comprehensive operational intelligence covering disaster incidents, AI risk predictions, response workflow, volunteer activity and field operations.</div><div class="meta"><span>Generated: ${escapeHtml(generatedAt)}</span><span>Source: ReliefNexus live operational data</span></div></div>
       <h2>Executive Summary</h2>
       <div class="grid">
         <div class="kpi"><div class="label">Total Incidents</div><div class="value">${summary.totalIncidents}</div><div class="detail">All operational cases</div></div>
@@ -765,7 +765,7 @@ export function SystemReportsModule({
       <div class="two"><div class="section"><h2>Incident Severity</h2><table><thead><tr><th>Severity</th><th>Count</th><th>Share</th></tr></thead><tbody>${severityRows}</tbody></table></div><div class="section"><h2>8-Step Response Workflow</h2><table><thead><tr><th>Workflow Step</th><th>Count</th></tr></thead><tbody>${workflowRows}</tbody></table></div></div>
       <div class="section"><h2>Monthly Incident Trend</h2><table><thead><tr><th>Month</th><th>Incidents</th></tr></thead><tbody>${monthlyRows}</tbody></table></div>
       <div class="section"><h2>Incident Intelligence Register</h2><div class="note">${mapReports.length} incident record(s) were returned by the live disaster-report API. The dashboard map uses available latitude/longitude values; reports without coordinates remain included in the operational dataset but cannot be plotted.</div><table><thead><tr><th>ID</th><th>Disaster</th><th>Location</th><th>Severity</th><th>Status</th><th>Risk</th><th>Created</th></tr></thead><tbody>${incidentRows}</tbody></table></div>
-      <div class="footer"><span>ReliefNexus • System Administrator Report</span><span>Confidential operational analytics</span></div>
+      <div class="footer"><span>ReliefNexus  System Administrator Report</span><span>Confidential operational analytics</span></div>
       <script>window.onload=function(){setTimeout(function(){window.print();},450);};</script>
     </body></html>`);
     popup.document.close();
@@ -874,7 +874,7 @@ export function SystemReportsModule({
               </div>
             ) : (
               <div className="rounded-xl border border-white/10 bg-slate-950/85 px-3 py-2 text-[8px] font-bold text-emerald-200 shadow-xl backdrop-blur-xl">
-                Live API • Sri Lanka incident coordinates
+                Live API  Sri Lanka incident coordinates
               </div>
             )}
           </div>
@@ -1203,62 +1203,280 @@ export function AdminProfileModule({
 
   const name = profile?.fullName || "System Administrator";
   const image = profile?.profileImageUrl;
+  const role = profile?.role || "System Administrator";
+  const email = profile?.email || "";
+  const active = profile?.isActive;
 
   return (
     <div className="space-y-6">
-      <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-r from-[#0b1f3a] via-[#315d88] to-[#83c5dc] px-6 pb-6 pt-7 text-white shadow-xl">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-cyan-100">User</p>
-            <h1 className="mt-2 text-3xl font-black">Profile</h1>
-            <p className="mt-2 text-sm text-slate-200">Manage your account information, identity and location preferences.</p>
+
+      {/* PROFILE HERO */}
+      <section className="relative overflow-hidden rounded-[30px] bg-[#081d38] shadow-xl">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#081d38] via-[#123f67] to-[#65bdd7]" />
+        <div className="absolute -right-20 -top-28 h-72 w-72 rounded-full bg-cyan-300/20 blur-3xl" />
+        <div className="absolute -bottom-32 left-1/3 h-72 w-72 rounded-full bg-blue-400/20 blur-3xl" />
+
+        <div className="relative flex flex-col gap-6 p-7 lg:flex-row lg:items-center lg:justify-between">
+
+          <div className="flex items-center gap-5">
+            {image ? (
+              <img
+                src={image}
+                alt="Profile"
+                className="h-24 w-24 rounded-3xl object-cover ring-4 ring-white/20 shadow-2xl"
+              />
+            ) : (
+              <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-500 to-cyan-400 text-3xl font-black text-white ring-4 ring-white/20 shadow-2xl">
+                {initials(name)}
+              </div>
+            )}
+
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[0.25em] text-cyan-200">
+                System Account
+              </p>
+
+              <h1 className="mt-1 text-2xl font-black text-white lg:text-3xl">
+                {name}
+              </h1>
+
+              <p className="mt-1 text-sm font-medium text-slate-200">
+                {role}
+              </p>
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-bold text-white backdrop-blur">
+                  {email}
+                </span>
+
+                <span className={`rounded-full px-3 py-1.5 text-[10px] font-black ${
+                  active
+                    ? "bg-emerald-400/20 text-emerald-100"
+                    : "bg-red-400/20 text-red-100"
+                }`}>
+                  ● {active ? "Active account" : "Inactive account"}
+                </span>
+              </div>
+            </div>
           </div>
-          <button type="button" onClick={onLogout} className="rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-[10px] font-black backdrop-blur hover:bg-white/15">Logout</button>
+
+          <button
+            type="button"
+            onClick={onLogout}
+            className="self-start rounded-xl border border-white/20 bg-white/10 px-5 py-2.5 text-xs font-black text-white backdrop-blur transition hover:bg-white/20 lg:self-center"
+          >
+            Logout
+          </button>
         </div>
+      </section>
+
+      {/* SUMMARY CARDS */}
+      <div className="grid gap-4 md:grid-cols-3">
+
+        <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-blue-500">
+            Account Status
+          </p>
+          <div className="mt-3 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <span className="text-lg">✓</span>
+            </div>
+            <div>
+              <p className="text-sm font-black text-slate-900">
+                {active ? "Active" : "Inactive"}
+              </p>
+              <p className="text-[10px] text-slate-400">
+                Current account state
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-cyan-100 bg-white p-5 shadow-sm">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-cyan-600">
+            Access Level
+          </p>
+          <div className="mt-3 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600">
+              <span className="text-lg">◆</span>
+            </div>
+            <div>
+              <p className="text-sm font-black text-slate-900">
+                Administrator
+              </p>
+              <p className="text-[10px] text-slate-400">
+                System management access
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-emerald-600">
+            Member Since
+          </p>
+          <div className="mt-3 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <span className="text-lg">◷</span>
+            </div>
+            <div>
+              <p className="text-sm font-black text-slate-900">
+                {formatDate(profile?.createdAt)}
+              </p>
+              <p className="text-[10px] text-slate-400">
+                Account creation date
+              </p>
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[1.1fr_.7fr_1fr]">
-        <Card title="Profile Information" eyebrow="Account details">
-          <div className="space-y-4">
+      {/* MAIN INFORMATION */}
+      <div className="grid gap-5 xl:grid-cols-[1.2fr_.8fr]">
+
+        {/* ACCOUNT INFORMATION */}
+        <Card title="Account Information" eyebrow="Personal & access details">
+          <div className="grid gap-3 sm:grid-cols-2">
+
             {[
               ["Full Name", name],
-              ["Email Address", profile?.email || ""],
-              ["Role", profile?.role || "SystemAdministrator"],
-              ["Account Status", profile?.isActive ? "Active" : "Inactive"],
+              ["Email Address", email],
+              ["Role", role],
+              ["Account Status", active ? "Active" : "Inactive"],
               ["Member Since", formatDate(profile?.createdAt)],
               ["Last Login", formatDate(profile?.lastLoginAt)],
             ].map(([label, value]) => (
-              <div key={label} className="flex items-start justify-between gap-5 border-b border-slate-100 pb-3 last:border-0 last:pb-0">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">{label}</span>
-                <span className="text-right text-sm font-black text-slate-800">{value}</span>
+              <div
+                key={label}
+                className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 transition hover:border-blue-100 hover:bg-blue-50/30"
+              >
+                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
+                  {label}
+                </p>
+
+                <p className="mt-2 break-words text-sm font-black text-slate-800">
+                  {value || "No data available"}
+                </p>
               </div>
             ))}
+
           </div>
         </Card>
 
-        <Card title="Profile Picture" eyebrow="Identity">
-          <div className="flex flex-col items-center justify-center rounded-2xl bg-slate-50 p-6">
+        {/* IDENTITY */}
+        <Card title="Identity" eyebrow="Profile overview">
+          <div className="flex min-h-[300px] flex-col items-center justify-center rounded-3xl bg-gradient-to-br from-slate-50 via-white to-blue-50 p-7">
+
             {image ? (
-              <img src={image} alt="Profile" className="h-32 w-32 rounded-full object-cover ring-4 ring-white shadow-lg" />
+              <img
+                src={image}
+                alt="Profile"
+                className="h-32 w-32 rounded-full object-cover ring-8 ring-white shadow-xl"
+              />
             ) : (
-              <div className="flex h-32 w-32 items-center justify-center rounded-full bg-blue-600 text-4xl font-black text-white ring-4 ring-white shadow-lg">{initials(name)}</div>
+              <div className="flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-cyan-400 text-4xl font-black text-white ring-8 ring-white shadow-xl">
+                {initials(name)}
+              </div>
             )}
-            <p className="mt-4 text-sm font-black text-slate-900">{name}</p>
-            <p className="mt-1 text-xs text-slate-400">{profile?.role || "System Administrator"}</p>
+
+            <p className="mt-5 text-base font-black text-slate-900">
+              {name}
+            </p>
+
+            <p className="mt-1 text-xs font-semibold text-slate-400">
+              {role}
+            </p>
+
+            <div className="mt-4 flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-4 py-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700">
+                {active ? "Account Active" : "Account Inactive"}
+              </span>
+            </div>
+
           </div>
         </Card>
 
-        <Card title="Location" eyebrow="Operational context">
-          <div className="relative h-[300px] overflow-hidden rounded-2xl bg-slate-100">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_35%_40%,rgba(59,130,246,.18),transparent_35%),linear-gradient(135deg,#e3eef5,#ecf3e8)]" />
-            <div className="absolute left-[42%] top-[45%] flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-4 border-white bg-blue-600 text-white shadow-xl"><MapPin size={18} /></div>
-            <div className="absolute bottom-4 left-4 right-4 rounded-xl border border-white/80 bg-white/92 px-4 py-3 shadow-lg backdrop-blur">
-              <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">Location Sharing</p>
-              <p className="mt-1 text-sm font-black text-slate-900">Manage current location in Location Sharing</p>
-            </div>
-          </div>
-        </Card>
       </div>
+
+      {/* LOCATION */}
+      <Card title="Location & Operational Context" eyebrow="Current location services">
+        <div className="grid gap-5 lg:grid-cols-[1.2fr_.8fr]">
+
+          <div className="relative h-[300px] overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-sky-50 via-white to-emerald-50">
+
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(59,130,246,.18),transparent_30%),radial-gradient(circle_at_75%_70%,rgba(16,185,129,.14),transparent_35%)]" />
+
+            <div className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-4 border-white bg-blue-600 text-white shadow-2xl">
+              <MapPin size={24} />
+            </div>
+
+            <div className="absolute left-5 top-5 rounded-xl border border-white/80 bg-white/80 px-4 py-3 shadow-sm backdrop-blur">
+              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
+                Location Service
+              </p>
+              <p className="mt-1 text-xs font-black text-slate-800">
+                Location sharing
+              </p>
+            </div>
+
+            <div className="absolute bottom-5 left-5 right-5 rounded-2xl border border-white/80 bg-white/90 p-4 shadow-lg backdrop-blur">
+              <p className="text-sm font-black text-slate-900">
+                Manage current location
+              </p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                Manage your current location through the Location Sharing module.
+              </p>
+            </div>
+
+          </div>
+
+          <div className="flex flex-col justify-center rounded-3xl border border-slate-100 bg-slate-50/70 p-6">
+
+            <p className="text-[9px] font-black uppercase tracking-[0.18em] text-blue-500">
+              Operational Context
+            </p>
+
+            <h3 className="mt-2 text-xl font-black text-slate-900">
+              System Administrator
+            </h3>
+
+            <p className="mt-2 text-sm leading-6 text-slate-500">
+              Your account provides system-level access for managing users,
+              roles, AI operations and platform controls.
+            </p>
+
+            <div className="mt-5 space-y-3">
+
+              <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
+                <p className="text-[9px] font-black uppercase tracking-wider text-blue-500">
+                  Role
+                </p>
+                <p className="mt-1 text-sm font-black text-slate-800">
+                  {role}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
+                <p className="text-[9px] font-black uppercase tracking-wider text-emerald-600">
+                  Account
+                </p>
+                <p className="mt-1 text-sm font-black text-slate-800">
+                  {active ? "Active and available" : "Currently inactive"}
+                </p>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+      </Card>
+
     </div>
   );
 }
+
+
+

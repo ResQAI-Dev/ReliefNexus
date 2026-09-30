@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../../../lib/api/apiClient";
 import { useAuth } from "../../../context/AuthContext";
 
@@ -600,7 +600,7 @@ export default function FieldVolunteerDisasterReports() {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-lg">
-                    ⚡
+                    
                   </span>
 
                   <h2 className="text-xl font-black text-slate-950">
@@ -645,7 +645,7 @@ export default function FieldVolunteerDisasterReports() {
 
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-5 pt-12">
                       <p className="text-xs font-bold text-white/80">
-                        📍 {report.location || "Location unavailable"}
+                         {report.location || "Location unavailable"}
                       </p>
                     </div>
                   </div>

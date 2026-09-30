@@ -51,8 +51,22 @@ public class RiskAgentExecution
 
     public string? ErrorMessage { get; set; }
 
+    public int InputTokens { get; set; }
+
+    public int OutputTokens { get; set; }
+
+    public int TotalTokens { get; set; }
+
+    public string ModelName { get; set; } = string.Empty;
+
+    public decimal? EstimatedCost { get; set; }
+
+
     public DateTime StartedAt { get; set; } =
         DateTime.UtcNow;
 
     public DateTime? CompletedAt { get; set; }
 }
+
+
+

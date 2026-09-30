@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using ReliefNexus.API.AI.Services;
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using ReliefNexus.API.Data;
 using ReliefNexus.API.Models;
 using ReliefNexus.API.DTOs.ResourceOptimization;
@@ -17,9 +19,13 @@ namespace ReliefNexus.API.AI.Agents;
 public class ResourceOptimizationAgent
 {
     private readonly AppDbContext _context;
+    private readonly IPythonResourceService _pythonResourceService;
 
-    public ResourceOptimizationAgent(AppDbContext context)
+    public ResourceOptimizationAgent(
+        AppDbContext context,
+        IPythonResourceService pythonResourceService)
     {
+        _pythonResourceService = pythonResourceService;
         _context = context;
     }
 
@@ -154,6 +160,25 @@ public class ResourceOptimizationAgent
             });
         }
 
+        var pythonResourceAnalysis = await _pythonResourceService.OptimizeAsync(
+            new
+            {
+                location = assessment.Location,
+                disaster_type = assessment.DisasterType,
+                severity_index = severity,
+                priority = priority,
+                affected_population = affected,
+                resources = lines.Select(x => new
+                {
+                    resource_id = x.ResourceId,
+                    resource_name = x.ResourceName,
+                    location = x.Location,
+                    required_quantity = x.RequiredQuantity,
+                    available_quantity = x.AvailableQuantity,
+                    gap_quantity = x.GapQuantity,
+                    coverage_status = x.CoverageStatus
+                }).ToList()
+            });
         return new ResourceDemandAssessmentDto
         {
             VulnerabilityAssessmentId = assessment.Id,
@@ -786,3 +811,5 @@ public class ResourceOptimizationAgent
         };
     }
 }
+
+

@@ -149,7 +149,7 @@ export default function ResourceAllocationTable({
                             className="text-slate-400"
                           />
                           {allocation.location ||
-                            "—"}
+                            ""}
                         </div>
                       </td>
 

@@ -1,4 +1,4 @@
-﻿import type { RiskPrediction } from "../types/riskPrediction.types";
+import type { RiskPrediction } from "../types/riskPrediction.types";
 import {
   formatDate,
   riskLevelClass,
@@ -98,27 +98,27 @@ function getPrimaryRiskDisplay(prediction: RiskPrediction) {
 function getRiskIcon(disasterType?: string): string {
   const type = disasterType?.toLowerCase() ?? "";
 
-  if (type.includes("flood")) return "ðŸŒŠ";
-  if (type.includes("landslide")) return "â›°ï¸";
+  if (type.includes("flood")) return "";
+  if (type.includes("landslide")) return "";
 
   if (
     type.includes("storm") ||
     type.includes("cyclone")
   ) {
-    return "ðŸŒªï¸";
+    return "";
   }
 
-  if (type.includes("drought")) return "â˜€ï¸";
-  if (type.includes("wildfire")) return "ðŸ”¥";
-  if (type.includes("earthquake")) return "ðŸŒ";
-  if (type.includes("tsunami")) return "ðŸŒŠ";
-  if (type.includes("lightning")) return "âš¡";
-  if (type.includes("heatwave")) return "ðŸŒ¡ï¸";
-  if (type.includes("volcanic")) return "ðŸŒ‹";
-  if (type.includes("avalanche")) return "ðŸ”ï¸";
-  if (type.includes("cold")) return "â„ï¸";
+  if (type.includes("drought")) return "";
+  if (type.includes("wildfire")) return "";
+  if (type.includes("earthquake")) return "";
+  if (type.includes("tsunami")) return "";
+  if (type.includes("lightning")) return "";
+  if (type.includes("heatwave")) return "";
+  if (type.includes("volcanic")) return "";
+  if (type.includes("avalanche")) return "";
+  if (type.includes("cold")) return "";
 
-  return "ðŸ›¡ï¸";
+  return "";
 }
 
 function safeFormatDate(value: string): string {
@@ -256,7 +256,7 @@ export default function RecentPredictions({
         /* Empty state */
         <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
           <div className="text-2xl">
-            ðŸ“‹
+            
           </div>
 
           <div className="mt-2 text-sm font-semibold text-slate-700">
@@ -337,7 +337,7 @@ export default function RecentPredictions({
                         </span>
 
                         <span aria-hidden="true">
-                          â€¢
+                          
                         </span>
 
                         <span>
@@ -396,5 +396,7 @@ export default function RecentPredictions({
     </section>
   );
 }
+
+
 
 

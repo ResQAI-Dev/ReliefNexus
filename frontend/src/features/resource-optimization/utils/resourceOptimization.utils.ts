@@ -155,7 +155,7 @@ export function formatResourceDate(
   value?: string
 ): string {
   if (!value) {
-    return "—";
+    return "";
   }
 
   const date = new Date(value);

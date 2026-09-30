@@ -138,7 +138,7 @@ const DashboardLayout = ({ sidebarItems, children }: DashboardLayoutProps) => {
                 className="rounded-lg p-2 text-slate-400 hover:bg-white/10 hover:text-white"
                 aria-label="Close menu"
               >
-                ×
+                
               </button>
             </div>
 
@@ -391,3 +391,4 @@ const DashboardLayout = ({ sidebarItems, children }: DashboardLayoutProps) => {
 };
 
 export default DashboardLayout;
+

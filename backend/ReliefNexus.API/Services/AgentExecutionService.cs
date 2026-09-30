@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ReliefNexus.API.Data;
 using ReliefNexus.API.Interfaces;
 using ReliefNexus.API.Models;
@@ -73,7 +73,12 @@ public class AgentExecutionService : IAgentExecutionService
         string outputSummary,
         string validationResults,
         string finalOutcome,
-        string approvalStatus)
+        string approvalStatus,
+        int inputTokens = 0,
+        int outputTokens = 0,
+        int totalTokens = 0,
+        string modelName = "",
+        decimal? estimatedCost = null)
     {
         var execution =
             await _context.RiskAgentExecutions
@@ -88,6 +93,18 @@ public class AgentExecutionService : IAgentExecutionService
         execution.ValidationResults = validationResults;
         execution.FinalOutcome = finalOutcome;
         execution.ApprovalStatus = approvalStatus;
+        if (inputTokens != 0 || outputTokens != 0 || totalTokens != 0 || !string.IsNullOrWhiteSpace(modelName))
+        {
+            execution.InputTokens = inputTokens;
+            execution.OutputTokens = outputTokens;
+            execution.TotalTokens = totalTokens;
+            execution.ModelName = modelName;
+        }
+
+        if (estimatedCost.HasValue)
+        {
+            execution.EstimatedCost = estimatedCost;
+        }
         execution.CurrentStep = "Workflow completed";
         execution.CompletedAt = DateTime.UtcNow;
 
@@ -96,6 +113,29 @@ public class AgentExecutionService : IAgentExecutionService
         return execution;
     }
 
+    public async Task<RiskAgentExecution?> RecordUsageAsync(
+        Guid executionId,
+        int inputTokens,
+        int outputTokens,
+        int totalTokens,
+        string modelName)
+    {
+        var execution =
+            await _context.RiskAgentExecutions
+                .FirstOrDefaultAsync(x => x.Id == executionId);
+
+        if (execution == null)
+            return null;
+
+        execution.InputTokens = inputTokens;
+        execution.OutputTokens = outputTokens;
+        execution.TotalTokens = totalTokens;
+        execution.ModelName = modelName ?? string.Empty;
+
+        await _context.SaveChangesAsync();
+
+        return execution;
+    }
     public async Task<RiskAgentExecution?> FailAsync(
         Guid executionId,
         string errorMessage)
@@ -155,4 +195,7 @@ public class AgentExecutionService : IAgentExecutionService
             .ToListAsync();
     }
 }
+
+
+
 

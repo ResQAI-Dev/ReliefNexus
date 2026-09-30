@@ -1,4 +1,4 @@
-﻿import {
+import {
   MapContainer,
   TileLayer,
   Circle,
@@ -154,7 +154,7 @@ export const DisasterRiskMap = ({
 
                       {report.location && (
                         <p className="text-sm text-slate-600">
-                          📍 {report.location}
+                           {report.location}
                         </p>
                       )}
 
@@ -190,7 +190,7 @@ export const DisasterRiskMap = ({
         {/* Map title badge */}
         <div className="absolute left-3 top-3 z-[1000] flex items-center gap-2 rounded-xl border border-white/60 bg-white/95 px-3 py-2 shadow-lg backdrop-blur">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm">
-            <span className="text-xs">●</span>
+            <span className="text-xs"></span>
           </div>
 
           <div>
@@ -249,7 +249,7 @@ export const DisasterRiskMap = ({
           <div className="pointer-events-none absolute inset-0 z-[400] flex items-center justify-center">
             <div className="rounded-2xl border border-white/70 bg-white/90 px-5 py-4 text-center shadow-xl backdrop-blur">
               <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 text-blue-600">
-                <span className="text-sm">●</span>
+                <span className="text-sm"></span>
               </div>
 
               <p className="text-sm font-bold text-slate-800">

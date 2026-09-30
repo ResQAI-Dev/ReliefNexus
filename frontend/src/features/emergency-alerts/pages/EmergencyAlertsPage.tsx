@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Activity,
   AlertTriangle,
@@ -748,7 +748,7 @@ const EmergencyAlertsPage: React.FC = () => {
               }}
               className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 text-[10px] font-black text-white shadow-lg shadow-blue-950/30 transition hover:bg-blue-500"
             >
-              <span className="text-sm">▶</span>
+              <span className="text-sm"></span>
               Run Coordination
             </button>
 
@@ -878,13 +878,13 @@ const EmergencyAlertsPage: React.FC = () => {
                                   {assessment.location || "Unknown"}
                                 </p>
                                 <p className="text-[11px] text-slate-400">
-                                  {assessment.id.slice(0, 8)}…
+                                  {assessment.id.slice(0, 8)}
                                 </p>
                               </div>
                             </div>
                           </td>
                           <td className="px-4 py-2.5 text-sm font-semibold">
-                            {assessment.disasterType || "—"}
+                            {assessment.disasterType || ""}
                           </td>
                           <td className="px-4 py-2.5">
                             <Score
@@ -969,15 +969,15 @@ const EmergencyAlertsPage: React.FC = () => {
                   <div className="grid grid-cols-2 gap-3">
                     <InfoBox
                       label="Risk"
-                      value={`${numberValue(selectedAssessment.riskScore).toFixed(1)} · ${selectedAssessment.riskLevel || "—"}`}
+                      value={`${numberValue(selectedAssessment.riskScore).toFixed(1)}  ${selectedAssessment.riskLevel || ""}`}
                     />
                     <InfoBox
                       label="Vulnerability"
-                      value={`${numberValue(selectedAssessment.vulnerabilityScore).toFixed(1)} · ${selectedAssessment.vulnerabilityLevel || "—"}`}
+                      value={`${numberValue(selectedAssessment.vulnerabilityScore).toFixed(1)}  ${selectedAssessment.vulnerabilityLevel || ""}`}
                     />
                     <InfoBox
                       label="Impact"
-                      value={`${numberValue(selectedAssessment.impactScore).toFixed(1)} · ${selectedAssessment.impactLevel || "—"}`}
+                      value={`${numberValue(selectedAssessment.impactScore).toFixed(1)}  ${selectedAssessment.impactLevel || ""}`}
                     />
                     <InfoBox
                       label="Population"
@@ -1143,7 +1143,7 @@ const EmergencyAlertsPage: React.FC = () => {
               style={{ zIndex: 0 }}
             >
               <TileLayer
-                attribution="© OpenStreetMap contributors"
+                attribution=" OpenStreetMap contributors"
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
 
@@ -1480,7 +1480,7 @@ const EmergencyAlertsPage: React.FC = () => {
                       </td>
 
                       <td className="px-4 py-3 text-sm font-semibold text-slate-700">
-                        {alert.disasterType || assessment?.disasterType || "—"}
+                        {alert.disasterType || assessment?.disasterType || ""}
                       </td>
 
                       <td className="px-4 py-3">
@@ -1515,7 +1515,7 @@ const EmergencyAlertsPage: React.FC = () => {
                       <td className="px-4 py-3 text-xs text-slate-500">
                         {alert.createdAt
                           ? new Date(alert.createdAt).toLocaleString()
-                          : "—"}
+                          : ""}
                       </td>
 
                       <td className="px-4 py-3">
@@ -1712,7 +1712,7 @@ const EmergencyAlertsPage: React.FC = () => {
                   />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-black">
-                      {a.location} · {a.disasterType}
+                      {a.location}  {a.disasterType}
                     </p>
                     <p className="text-[11px] text-slate-500">
                       {alertByAssessment.has(a.id)
@@ -1908,7 +1908,7 @@ function Score({ value, level }: { value?: number; level?: string }) {
           "border-slate-200 bg-slate-50 text-slate-600"
         }`}
       >
-        {level || "—"}
+        {level || ""}
       </span>
     </div>
   );
@@ -2015,7 +2015,7 @@ function RunModal({
   const actionItems = String(
     alert?.recommendedActions || assessment.recommendedActions || "",
   )
-    .split(/\r?\n|•|;|\|/)
+     .split(/\r?\n|\u2022|;|\|/)
     .map((item) => item.trim())
     .filter(Boolean)
     .slice(0, 8);
@@ -2037,10 +2037,10 @@ function RunModal({
 
   const dominantFactor =
     risk >= vulnerability && risk >= impact
-      ? `Risk · ${risk.toFixed(1)}`
+      ? `Risk  ${risk.toFixed(1)}`
       : vulnerability >= impact
-        ? `Vulnerability · ${vulnerability.toFixed(1)}`
-        : `Impact · ${impact.toFixed(1)}`;
+        ? `Vulnerability  ${vulnerability.toFixed(1)}`
+        : `Impact  ${impact.toFixed(1)}`;
 
   const pressureCount = [risk, vulnerability, impact].filter(
     (value) => value >= 60,
@@ -2075,19 +2075,19 @@ function RunModal({
       label: "Risk",
       value: risk,
       threshold: 75,
-      level: assessment.riskLevel || "—",
+      level: assessment.riskLevel || "",
     },
     {
       label: "Vulnerability",
       value: vulnerability,
       threshold: 75,
-      level: assessment.vulnerabilityLevel || "—",
+      level: assessment.vulnerabilityLevel || "",
     },
     {
       label: "Impact",
       value: impact,
       threshold: 75,
-      level: assessment.impactLevel || "—",
+      level: assessment.impactLevel || "",
     },
   ];
 
@@ -2095,7 +2095,44 @@ function RunModal({
     alert ? "pending" : "pending",
   );
   const [acknowledgedTasks, setAcknowledgedTasks] = useState<Record<string, boolean>>({});
+  const [sendingReport, setSendingReport] = useState(false);
+  const [sendReportMessage, setSendReportMessage] = useState("");
 
+  const sendMessageAndReport = async () => {
+    if (!alert?.id || sendingReport) return;
+
+    setSendingReport(true);
+    setSendReportMessage("");
+
+    try {
+      const response = await api.post(
+        `/emergency-alerts/${alert.id}/send-report`,
+      );
+
+      const data = response.data;
+
+      if (data?.success) {
+        const emailText = data.emailSent
+          ? `Email sent to ${data.recipientEmail || "the affected user"}.`
+          : "Notification saved, but email was not sent.";
+
+        setSendReportMessage(
+          `Report sent successfully. ${emailText}`,
+        );
+      } else {
+        setSendReportMessage(
+          "The report could not be sent.",
+        );
+      }
+    } catch (error: any) {
+      setSendReportMessage(
+        error?.response?.data?.message ||
+          "Failed to send the emergency report.",
+      );
+    } finally {
+      setSendingReport(false);
+    }
+  };
   useEffect(() => {
     setApprovalState(alert ? "pending" : "pending");
     setAcknowledgedTasks({});
@@ -2202,7 +2239,7 @@ function RunModal({
                     {assessment.location || "Unknown location"}
                   </h2>
                   <p className="mt-1 text-xs font-semibold text-slate-200">
-                    {assessment.disasterType || "Disaster assessment"} · Agent 01 → Agent 02 → Agent 03 → Agent 04
+                    {assessment.disasterType || "Disaster assessment"}  Agent 01 → Agent 02  Agent 03 → Agent 04
                   </p>
                 </div>
 
@@ -2218,9 +2255,9 @@ function RunModal({
           </div>
 
           <div className="grid grid-cols-2 gap-px bg-slate-200 sm:grid-cols-4">
-            <CommandKpi label="Risk" value={`${risk.toFixed(1)} · ${assessment.riskLevel || "—"}`} />
-            <CommandKpi label="Vulnerability" value={`${vulnerability.toFixed(1)} · ${assessment.vulnerabilityLevel || "—"}`} />
-            <CommandKpi label="Impact" value={`${impact.toFixed(1)} · ${assessment.impactLevel || "—"}`} />
+            <CommandKpi label="Risk" value={`${risk.toFixed(1)}  ${assessment.riskLevel || ""}`} />
+            <CommandKpi label="Vulnerability" value={`${vulnerability.toFixed(1)}  ${assessment.vulnerabilityLevel || ""}`} />
+            <CommandKpi label="Impact" value={`${impact.toFixed(1)}  ${assessment.impactLevel || ""}`} />
             <CommandKpi label="Population" value={population.toLocaleString()} />
           </div>
         </section>
@@ -2242,7 +2279,7 @@ function RunModal({
           <DecisionKpi
             label="Pressure indicators"
             value={`${pressureCount}/3`}
-            detail="≥ 60"
+            detail=" 60"
             tone={pressureCount >= 2 ? "red" : "blue"}
           />
           <DecisionKpi
@@ -2335,7 +2372,7 @@ function RunModal({
                             : "bg-slate-100 text-slate-500"
                       }`}
                     >
-                      {complete ? "✓" : process.no}
+                      {complete ? "" : process.no}
                     </span>
 
                     <div className="min-w-0">
@@ -2421,7 +2458,7 @@ function RunModal({
                   Coordination gate
                 </p>
                 <p className="mt-1 text-xs font-black text-slate-900">
-                  {coordinationLevel} · {coordinationScore.toFixed(1)}/100
+                  {coordinationLevel}  {coordinationScore.toFixed(1)}/100
                 </p>
                 <p className="mt-1 text-[10px] leading-4 text-slate-500">
                   Dominant pressure: {dominantFactor}. Exposure: {exposureBand}.
@@ -2437,7 +2474,7 @@ function RunModal({
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-[9px] font-black uppercase tracking-[0.18em] text-indigo-600">
-                  Agent 03 · Resource Intelligence
+                  Agent 03  Resource Intelligence
                 </p>
                 <h3 className="mt-1 text-sm font-black text-slate-900">
                   Resource prediction and deployment planning
@@ -2466,7 +2503,7 @@ function RunModal({
                         <p className="mt-1 text-[10px] text-slate-500">
                           {allocation.priority || "Normal priority"}
                           {allocation.location
-                            ? ` · ${allocation.location}`
+                            ? `  ${allocation.location}`
                             : ""}
                         </p>
                       </div>
@@ -2525,13 +2562,13 @@ function RunModal({
 
                         <div>
                           <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">
-                            Agent 04 · Final early-warning output
+                            Agent 04  Final early-warning output
                           </p>
                           <h3 className="mt-1 text-xl font-black leading-tight text-slate-950">
                             {alert.title}
                           </h3>
                           <p className="mt-1 text-xs font-semibold text-slate-600">
-                            {alert.location || assessment.location} ·{" "}
+                            {alert.location || assessment.location} {" "}
                             {alert.disasterType || assessment.disasterType}
                           </p>
                         </div>
@@ -2573,6 +2610,11 @@ function RunModal({
                       be validated by the responsible emergency authority before
                       any public dissemination.
                     </p>
+                  {sendReportMessage && (
+                    <p className="mt-2 text-xs font-bold text-slate-600">
+                      {sendReportMessage}
+                    </p>
+                  )}
                   </div>
                 </section>
 
@@ -2651,6 +2693,11 @@ function RunModal({
                         </div>
                       );
                     })}
+                  {sendReportMessage && (
+                    <p className="mt-2 text-xs font-bold text-slate-600">
+                      {sendReportMessage}
+                    </p>
+                  )}
                   </div>
                 </section>
 
@@ -2676,6 +2723,11 @@ function RunModal({
                     <InfoBox label="Population" value={affectedPeople.toLocaleString()} />
                     <InfoBox label="Exposure" value={exposureBand} />
                     <InfoBox label="Next review" value={monitoringCadence} />
+                  {sendReportMessage && (
+                    <p className="mt-2 text-xs font-bold text-slate-600">
+                      {sendReportMessage}
+                    </p>
+                  )}
                   </div>
                 </section>
 
@@ -2752,6 +2804,11 @@ function RunModal({
                         </p>
                       </div>
                     ))}
+                  {sendReportMessage && (
+                    <p className="mt-2 text-xs font-bold text-slate-600">
+                      {sendReportMessage}
+                    </p>
+                  )}
                   </div>
                 </section>
 
@@ -2789,7 +2846,7 @@ function RunModal({
                               <p className="mt-1 text-[10px] text-slate-500">
                                 {resource.priority || "Normal priority"}
                                 {resource.location
-                                  ? ` · ${resource.location}`
+                                  ? `  ${resource.location}`
                                   : ""}
                               </p>
                             </div>
@@ -2847,7 +2904,7 @@ function RunModal({
 
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <InfoBox label="Monitoring priority" value={monitoringCadence} />
-                    <InfoBox label="Multi-factor pressure" value={`${pressureCount}/3 indicators ≥ 60`} />
+                    <InfoBox label="Multi-factor pressure" value={`${pressureCount}/3 indicators  60`} />
                   </div>
 
                   <div className="mt-3 space-y-2">
@@ -2870,6 +2927,11 @@ function RunModal({
                         {item}
                       </div>
                     ))}
+                  {sendReportMessage && (
+                    <p className="mt-2 text-xs font-bold text-slate-600">
+                      {sendReportMessage}
+                    </p>
+                  )}
                   </div>
                 </section>
 
@@ -2906,6 +2968,11 @@ function RunModal({
                         ? ` ${pressureCount} of 3 core indicators are at or above 60, so coordinated monitoring is required.`
                         : " The available indicators do not show a broad multi-factor pressure pattern."}
                     </p>
+                  {sendReportMessage && (
+                    <p className="mt-2 text-xs font-bold text-slate-600">
+                      {sendReportMessage}
+                    </p>
+                  )}
                   </div>
                 </section>
 
@@ -3019,6 +3086,11 @@ function RunModal({
                         ? `Agent 03 returned ${allocations.length} live allocation record(s) covering ${resourceTotalUnits.toLocaleString()} recommended units across ${resourceLocations.length || 1} recorded location(s). A demand-baseline gap cannot be claimed from the available API data alone.`
                         : "No Agent 03 allocation records are available, so resource coverage cannot be confirmed."}
                     </p>
+                  {sendReportMessage && (
+                    <p className="mt-2 text-xs font-bold text-slate-600">
+                      {sendReportMessage}
+                    </p>
+                  )}
                   </div>
                 </section>
 
@@ -3057,9 +3129,56 @@ function RunModal({
                     >
                       Reject
                     </button>
-                    <span className="inline-flex items-center rounded-xl bg-white px-3 py-2.5 text-[9px] font-bold text-slate-500">
-                      UI approval gate · backend approval persistence endpoint not identified in the supplied source.
+                                        <button
+                      type="button"
+                      disabled={approvalState !== "approved" || sendingReport}
+                      onClick={sendMessageAndReport}
+                      className="rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-black text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {sendingReport ? "Sending..." : "Send Message & Report"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={approvalState !== "approved" || !alert}
+                      onClick={() => {
+                        if (!alert) return;
+                        const report = [
+                          "RELIEFNEXUS EMERGENCY REPORT",
+                          "",
+                          `Title: ${alert.title || "Emergency Alert"}`,
+                          `Location: ${alert.location || assessment.location || "Unknown"}`,
+                          `Disaster Type: ${alert.disasterType || assessment.disasterType || "Unknown"}`,
+                          `Severity: ${alert.severity || "Unknown"}`,
+                          `Status: ${alert.status || "Active"}`,
+                          "",
+                          "MESSAGE",
+                          alert.message || "",
+                          "",
+                          "RECOMMENDED ACTIONS",
+                          String(alert.recommendedActions || assessment.recommendedActions || ""),
+                          "",
+                          "RESOURCE INFORMATION",
+                          String(alert.resourceSummary || "No resource summary available."),
+                        ].join("\n");
+                        const blob = new Blob([report], { type: "text/plain;charset=utf-8" });
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement("a");
+                        link.href = url;
+                        link.download = `ReliefNexus-Emergency-Report-${alert.id}.txt`;
+                        link.click();
+                        URL.revokeObjectURL(url);
+                      }}
+                      className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-black text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Save Report
+                    </button><span className="inline-flex items-center rounded-xl bg-white px-3 py-2.5 text-[9px] font-bold text-slate-500">
+                      Approval controls are active. Send Message & Report is available after approval.
                     </span>
+                  {sendReportMessage && (
+                    <p className="mt-2 text-xs font-bold text-slate-600">
+                      {sendReportMessage}
+                    </p>
+                  )}
                   </div>
                 </section>
 
@@ -3131,10 +3250,15 @@ function RunModal({
                       Data lineage
                     </p>
                     <p className="mt-1 text-xs leading-5 text-slate-300">
-                      Agent 01 Risk Prediction → Agent 02 Vulnerability & Impact
-                      → Agent 03 Resource Optimization → Agent 04 Early Warning
+                      Agent 01 Risk Prediction  Agent 02 Vulnerability & Impact
+                       Agent 03 Resource Optimization  Agent 04 Early Warning
                       & Coordination.
                     </p>
+                  {sendReportMessage && (
+                    <p className="mt-2 text-xs font-bold text-slate-600">
+                      {sendReportMessage}
+                    </p>
+                  )}
                   </div>
                 </section>
               </>
@@ -3180,7 +3304,7 @@ function RunModal({
               onClick={onRun}
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700"
             >
-              <span className="text-sm">▶</span>
+              <span className="text-sm"></span>
               Start Agent 03 → Agent 04
             </button>
           )}
@@ -3388,9 +3512,9 @@ function ViewModal({
         </div>
 
         <div className="grid grid-cols-2 gap-2 bg-slate-50 p-3 sm:grid-cols-4">
-          <InfoBox label="Risk" value={`${risk.toFixed(1)} · ${assessment.riskLevel || "—"}`} />
-          <InfoBox label="Vulnerability" value={`${vulnerability.toFixed(1)} · ${assessment.vulnerabilityLevel || "—"}`} />
-          <InfoBox label="Impact" value={`${impact.toFixed(1)} · ${assessment.impactLevel || "—"}`} />
+          <InfoBox label="Risk" value={`${risk.toFixed(1)}  ${assessment.riskLevel || ""}`} />
+          <InfoBox label="Vulnerability" value={`${vulnerability.toFixed(1)}  ${assessment.vulnerabilityLevel || ""}`} />
+          <InfoBox label="Impact" value={`${impact.toFixed(1)}  ${assessment.impactLevel || ""}`} />
           <InfoBox label="Population" value={population.toLocaleString()} />
         </div>
       </div>
@@ -3426,7 +3550,7 @@ function ViewModal({
                   Warning classification
                 </p>
                 <p className="mt-1 text-sm font-black text-slate-900">
-                  {alert.severity} · {alert.status}
+                  {alert.severity}  {alert.status}
                 </p>
               </div>
               <span className="rounded-full bg-white px-3 py-1.5 text-[9px] font-black text-red-700">
@@ -3474,11 +3598,11 @@ function ViewModal({
                         {resource.resourceName || resource.resourceType || "Resource"}
                       </p>
                       <p className="text-[9px] text-slate-500">
-                        {resource.priority || "Normal"} · {resource.location || assessment.location}
+                        {resource.priority || "Normal"}  {resource.location || assessment.location}
                       </p>
                     </div>
                     <span className="rounded-md bg-indigo-50 px-2 py-1 text-[9px] font-black text-indigo-700">
-                      ×{numberValue(resource.recommendedQuantity)}
+                      {numberValue(resource.recommendedQuantity)}
                     </span>
                   </div>
                 ))}
@@ -3493,7 +3617,7 @@ function ViewModal({
             <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
               <InfoBox label="Dominant pressure" value={dominant} />
               <InfoBox label="Agent 03 allocations" value={String(allocations.length)} />
-              <InfoBox label="Alert created" value={alert.createdAt ? new Date(alert.createdAt).toLocaleString() : "—"} />
+              <InfoBox label="Alert created" value={alert.createdAt ? new Date(alert.createdAt).toLocaleString() : ""} />
             </div>
           </div>
         </>
@@ -3535,9 +3659,9 @@ function ViewModal({
 
         <div className="border-t border-blue-100 bg-white/60 px-4 py-2 text-[9px] font-semibold text-slate-500">
           Incident Details
-          <span className="mx-1.5 text-blue-400">→</span>
+          <span className="mx-1.5 text-blue-400"></span>
           Global Risk Map
-          <span className="mx-1.5 text-blue-400">→</span>
+          <span className="mx-1.5 text-blue-400"></span>
           {assessment.location || "Verified location"}
         </div>
       </div>
@@ -3679,3 +3803,4 @@ function Modal({
 }
 
 export default EmergencyAlertsPage;
+

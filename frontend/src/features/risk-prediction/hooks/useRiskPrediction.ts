@@ -3,7 +3,9 @@ import {
   createRiskPrediction,
   explainPrediction,
   getExternalEvents,
-  getPredictionHistory,} from "../services/riskPredictionApi";
+  getPredictionHistory,
+  getPredictionById,
+} from "../services/riskPredictionApi";
 
 import type {
   ExternalDisasterEvent,
@@ -80,6 +82,41 @@ export function useRiskPrediction() {
       setLoadingRecent(false);
     }
   }, []);
+  /*
+   * ---------------------------------------------------------
+   * Load Complete Prediction By ID
+   * ---------------------------------------------------------
+   */
+  const loadPredictionById = useCallback(
+    async (id: string) => {
+      if (!id.trim()) {
+        return null;
+      }
+
+      try {
+        const result = await getPredictionById(id);
+
+        console.log(
+          "[RiskPrediction] Full prediction by ID:",
+          result
+        );
+
+        console.log(
+          "[RiskPrediction] disasterRisks:",
+          result?.disasterRisks
+        );
+
+        return result;
+      } catch (err) {
+        console.error(
+          "Failed to load complete risk prediction:",
+          err
+        );
+        return null;
+      }
+    },
+    []
+  );
 /*
    * ---------------------------------------------------------
    * Load External Events
@@ -284,6 +321,7 @@ export function useRiskPrediction() {
 
     predict,
     loadRecentPredictions,
+    loadPredictionById,
     loadExternalEvents,
     loadExplanation,
     updatePrediction,
@@ -292,3 +330,6 @@ export function useRiskPrediction() {
     clearError,
   };
 }
+
+
+

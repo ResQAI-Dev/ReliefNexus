@@ -103,7 +103,7 @@ button.rounded-2xl.border.border-slate-200.bg-slate-50 {
 
 .relief-dashboard
 button.rounded-2xl.border.border-slate-200.bg-slate-50::after {
-  content: "→";
+  content: "";
   position: absolute;
   right: 18px;
   bottom: 17px;

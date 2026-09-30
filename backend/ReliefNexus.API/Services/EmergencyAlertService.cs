@@ -10,13 +10,16 @@ public class EmergencyAlertService : IEmergencyAlertService
 {
     private readonly AppDbContext _context;
     private readonly EarlyWarningCoordinationAgent _agent;
+    private readonly IEmailService _emailService;
 
     public EmergencyAlertService(
         AppDbContext context,
-        EarlyWarningCoordinationAgent agent)
+        EarlyWarningCoordinationAgent agent,
+        IEmailService emailService)
     {
         _context = context;
         _agent = agent;
+        _emailService = emailService;
     }
 
     public async Task<List<EmergencyAlert>> GetAllAsync()
@@ -78,6 +81,96 @@ public class EmergencyAlertService : IEmergencyAlertService
         return alert;
     }
 
+
+    public async Task<object?> SendMessageAndReportAsync(Guid alertId)
+    {
+        var alert = await _context.EmergencyAlerts
+            .FirstOrDefaultAsync(x => x.Id == alertId);
+
+        if (alert == null)
+            return null;
+
+        var prediction = await _context.RiskPredictions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == alert.RiskPredictionId);
+
+        if (prediction == null)
+            return null;
+
+        var report = await _context.DisasterReports
+            .AsNoTracking()
+            .Where(x =>
+                x.RiskPredictionId == prediction.Id &&
+                x.ReporterUserId != Guid.Empty)
+            .OrderByDescending(x => x.CreatedAt)
+            .FirstOrDefaultAsync();
+
+        if (report == null)
+            return null;
+
+        var user = await _context.Users
+            .FirstOrDefaultAsync(x => x.Id == report.ReporterUserId);
+
+        if (user == null)
+            return null;
+
+        var notificationMessage =
+            $"{alert.Message} " +
+            $"Location: {alert.Location}. " +
+            $"Severity: {alert.Severity}. " +
+            $"Recommended actions: {alert.RecommendedActions}";
+
+        _context.Notifications.Add(
+            new Notification
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                Title = alert.Title,
+                Message = notificationMessage,
+                Type = "EmergencyAlert",
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow
+            });
+
+        await _context.SaveChangesAsync();
+
+        var emailSent = false;
+
+        if (!string.IsNullOrWhiteSpace(user.Email))
+        {
+            var emailBody =
+                $"Hello {user.FullName},`r`n`r`n" +
+                $"{alert.Message}`r`n`r`n" +
+                "EMERGENCY REPORT`r`n" +
+                "--------------------------------`r`n" +
+                $"Disaster Type: {alert.DisasterType}`r`n" +
+                $"Location: {alert.Location}`r`n" +
+                $"Severity: {alert.Severity}`r`n" +
+                $"Status: {alert.Status}`r`n" +
+                $"Alert ID: {alert.Id}`r`n`r`n" +
+                "RECOMMENDED ACTIONS`r`n" +
+                $"{alert.RecommendedActions}`r`n`r`n" +
+                "RESOURCE INFORMATION`r`n" +
+                $"{alert.ResourceSummary}`r`n`r`n" +
+                "Please follow the emergency instructions and stay safe.`r`n`r`n" +
+                "ReliefNexus";
+
+            emailSent = await _emailService.SendAsync(
+                user.Email,
+                $"ReliefNexus - {alert.Title}",
+                emailBody);
+        }
+
+        return new
+        {
+            success = true,
+            alertId = alert.Id,
+            userId = user.Id,
+            notificationSent = true,
+            emailSent,
+            recipientEmail = user.Email
+        };
+    }
     public async Task<bool> DeleteAsync(Guid id)
     {
         var alert = await _context.EmergencyAlerts
@@ -90,3 +183,4 @@ public class EmergencyAlertService : IEmergencyAlertService
         await _context.SaveChangesAsync();
         return true;
     }}
+

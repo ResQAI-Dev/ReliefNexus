@@ -587,13 +587,13 @@ function DisasterReportsMap({
           </div>
           <div style="margin-top:7px;font-size:12px;color:#475569;line-height:1.75">
             <strong>Disaster:</strong> ${String(risk.disasterType)}<br/>
-            <strong>Risk:</strong> ${risk.riskScore.toFixed(1)} · ${String(risk.riskLevel)}<br/>
+            <strong>Risk:</strong> ${risk.riskScore.toFixed(1)}  ${String(risk.riskLevel)}<br/>
             <strong>Confidence:</strong> ${
               Number.isFinite(Number(prediction.confidence))
                 ? `${Number(prediction.confidence).toFixed(1)}%`
-                : "—"
+                : ""
             }<br/>
-            <strong>Model:</strong> ${String(prediction.modelVersion || "—")}<br/>
+            <strong>Model:</strong> ${String(prediction.modelVersion || "")}<br/>
             <strong>Coordinates:</strong> ${lat.toFixed(5)}, ${lng.toFixed(5)}
           </div>
         </div>
@@ -1189,7 +1189,7 @@ useEffect(() => {
   };
 
   const escapeReportHtml = (value: unknown) =>
-    String(value ?? "—")
+    String(value ?? "")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
@@ -1265,9 +1265,9 @@ useEffect(() => {
           <tr>
             <td>${index + 1}</td>
             <td>${escapeReportHtml(item.resourceType || item.type || item.name || "Resource")}</td>
-            <td>${escapeReportHtml(item.quantity ?? item.amount ?? "—")}</td>
-            <td>${escapeReportHtml(item.location || item.allocatedLocation || report.location || "—")}</td>
-            <td>${escapeReportHtml(item.status || item.allocationStatus || "—")}</td>
+            <td>${escapeReportHtml(item.quantity ?? item.amount ?? "")}</td>
+            <td>${escapeReportHtml(item.location || item.allocatedLocation || report.location || "")}</td>
+            <td>${escapeReportHtml(item.status || item.allocationStatus || "")}</td>
           </tr>`).join("")
       : `<tr><td colspan="5">No resource allocation records were returned by Agent 03.</td></tr>`;
 
@@ -1291,27 +1291,27 @@ useEffect(() => {
 
     const riskFactors = prediction?.disasterRisks?.length
       ? prediction.disasterRisks.map((item) => `
-          <tr><td>${escapeReportHtml(item.disasterType)}</td><td>${escapeReportHtml(item.riskScore ?? "—")}</td><td>${escapeReportHtml(item.riskLevel)}</td><td>${escapeReportHtml(item.dataAvailable === false ? "Unavailable" : item.dataSource || "Available")}</td></tr>`).join("")
+          <tr><td>${escapeReportHtml(item.disasterType)}</td><td>${escapeReportHtml(item.riskScore ?? "")}</td><td>${escapeReportHtml(item.riskLevel)}</td><td>${escapeReportHtml(item.dataAvailable === false ? "Unavailable" : item.dataSource || "Available")}</td></tr>`).join("")
       : `<tr><td colspan="4">No additional hazard records are available.</td></tr>`;
 
     const html = `<!doctype html><html><head><meta charset="utf-8" />
-      <title>ReliefNexus — Final Incident Report</title>
+      <title>ReliefNexus  Final Incident Report</title>
       <style>
         *{box-sizing:border-box}body{margin:0;background:#eef3f9;color:#10213b;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.5}.page{max-width:1100px;margin:24px auto;background:#fff;padding:34px 38px;box-shadow:0 10px 35px rgba(15,23,42,.12)}
         .brand{background:linear-gradient(135deg,#071b38,#123f73);color:#fff;padding:28px;border-radius:18px}.brand h1{margin:4px 0 0;font-size:28px}.eyebrow{font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:800;color:#7dd3fc}.meta{display:flex;flex-wrap:wrap;gap:16px;margin-top:18px}.meta span{opacity:.85}.section{margin-top:26px}.section h2{font-size:15px;margin:0 0 10px;color:#10213b}.section h2:before{content:"";display:inline-block;width:4px;height:18px;background:#2563eb;border-radius:4px;margin-right:8px;vertical-align:-4px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.card{border:1px solid #dce5f0;border-radius:12px;padding:12px;background:#f8fbff}.label{font-size:8px;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-weight:800}.value{margin-top:4px;font-size:15px;font-weight:800}.muted{color:#64748b;font-size:10px}table{width:100%;border-collapse:collapse}th{background:#0f2d52;color:#fff;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.6px;padding:9px}td{border:1px solid #e2e8f0;padding:8px;vertical-align:top}tr:nth-child(even) td{background:#f8fafc}.stage-no{font-weight:900;width:45px}.status{display:inline-block;padding:3px 7px;border-radius:999px;font-size:8px;font-weight:800}.done{background:#dcfce7;color:#166534}.progress{background:#dbeafe;color:#1d4ed8}.pending{background:#f1f5f9;color:#64748b}.timeline{border-left:2px solid #dbeafe;margin:8px 0 0 8px;padding-left:18px}.timeline-item{display:flex;gap:9px;position:relative;margin:0 0 13px}.timeline-item .dot{position:absolute;left:-24px;top:4px;width:10px;height:10px;border-radius:50%;background:#2563eb;border:2px solid #fff;box-shadow:0 0 0 2px #bfdbfe}.timeline-item div{display:flex;justify-content:space-between;gap:20px;width:100%}.timeline-item span{color:#64748b}.footer{margin-top:30px;padding-top:15px;border-top:1px solid #e2e8f0;color:#64748b;font-size:9px;display:flex;justify-content:space-between}.pill{font-weight:900;color:#166534}.note{padding:12px;border-radius:10px;background:#f0f9ff;border:1px solid #bae6fd}.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media print{body{background:#fff}.page{margin:0;box-shadow:none;max-width:none;padding:18px}.section{break-inside:avoid}.brand{print-color-adjust:exact;-webkit-print-color-adjust:exact}table{break-inside:auto}tr{break-inside:avoid;break-after:auto}}@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}}
       </style></head><body><main class="page">
-      <header class="brand"><div class="eyebrow">ReliefNexus · Final Incident Report</div><h1>${escapeReportHtml(report.location || "Disaster Incident")}</h1><div class="meta"><span><strong>Incident:</strong> ${escapeReportHtml(report.id)}</span><span><strong>Disaster:</strong> ${escapeReportHtml(report.disasterType)}</span><span><strong>Status:</strong> <b>${escapeReportHtml(formatStatus(report.status))}</b></span><span><strong>Generated:</strong> ${escapeReportHtml(formatDate(generatedAt))}</span></div></header>
-      <section class="section"><h2>Executive Summary</h2><div class="grid"><div class="card"><div class="label">Risk Score</div><div class="value">${escapeReportHtml(risk?.riskScore ?? "—")}</div></div><div class="card"><div class="label">Risk Level</div><div class="value">${escapeReportHtml(risk?.riskLevel || "—")}</div></div><div class="card"><div class="label">Confidence</div><div class="value">${escapeReportHtml(prediction?.confidence != null ? `${Number(prediction.confidence).toFixed(1)}%` : "—")}</div></div><div class="card"><div class="label">Workflow</div><div class="value">${completedCount}/8 Complete</div></div></div></section>
-      <section class="section"><h2>Incident Overview</h2><div class="two"><div class="card"><div class="label">Reporter</div><div class="value">${escapeReportHtml(report.reporterName || report.reporterEmail || "—")}</div><div class="muted">${escapeReportHtml(report.reporterEmail || "")}</div></div><div class="card"><div class="label">Coordinates</div><div class="value">${escapeReportHtml(report.latitude != null && report.longitude != null ? `${report.latitude}, ${report.longitude}` : "Not available")}</div></div><div class="card"><div class="label">Severity</div><div class="value">${escapeReportHtml(report.severity)}</div></div><div class="card"><div class="label">Description</div><div class="value">${escapeReportHtml(report.description || "No description supplied.")}</div></div></div></section>
+      <header class="brand"><div class="eyebrow">ReliefNexus  Final Incident Report</div><h1>${escapeReportHtml(report.location || "Disaster Incident")}</h1><div class="meta"><span><strong>Incident:</strong> ${escapeReportHtml(report.id)}</span><span><strong>Disaster:</strong> ${escapeReportHtml(report.disasterType)}</span><span><strong>Status:</strong> <b>${escapeReportHtml(formatStatus(report.status))}</b></span><span><strong>Generated:</strong> ${escapeReportHtml(formatDate(generatedAt))}</span></div></header>
+      <section class="section"><h2>Executive Summary</h2><div class="grid"><div class="card"><div class="label">Risk Score</div><div class="value">${escapeReportHtml(risk?.riskScore ?? "")}</div></div><div class="card"><div class="label">Risk Level</div><div class="value">${escapeReportHtml(risk?.riskLevel || "")}</div></div><div class="card"><div class="label">Confidence</div><div class="value">${escapeReportHtml(prediction?.confidence != null ? `${Number(prediction.confidence).toFixed(1)}%` : "")}</div></div><div class="card"><div class="label">Workflow</div><div class="value">${completedCount}/8 Complete</div></div></div></section>
+      <section class="section"><h2>Incident Overview</h2><div class="two"><div class="card"><div class="label">Reporter</div><div class="value">${escapeReportHtml(report.reporterName || report.reporterEmail || "")}</div><div class="muted">${escapeReportHtml(report.reporterEmail || "")}</div></div><div class="card"><div class="label">Coordinates</div><div class="value">${escapeReportHtml(report.latitude != null && report.longitude != null ? `${report.latitude}, ${report.longitude}` : "Not available")}</div></div><div class="card"><div class="label">Severity</div><div class="value">${escapeReportHtml(report.severity)}</div></div><div class="card"><div class="label">Description</div><div class="value">${escapeReportHtml(report.description || "No description supplied.")}</div></div></div></section>
       <section class="section"><h2>8-Step Operational Workflow</h2><table><thead><tr><th>#</th><th>Stage / Owner</th><th>Status</th></tr></thead><tbody>${stageRows}</tbody></table></section>
-      <section class="section"><h2>Agent 01 — Risk Prediction</h2><div class="grid"><div class="card"><div class="label">Primary Hazard</div><div class="value">${escapeReportHtml(risk?.disasterType || prediction?.disasterType)}</div></div><div class="card"><div class="label">Risk Score</div><div class="value">${escapeReportHtml(risk?.riskScore)}</div></div><div class="card"><div class="label">Model</div><div class="value">${escapeReportHtml(prediction?.modelVersion || "Default")}</div></div><div class="card"><div class="label">Source</div><div class="value">${escapeReportHtml(prediction?.predictionSource || "Risk Prediction Service")}</div></div></div><table style="margin-top:12px"><thead><tr><th>Hazard</th><th>Score</th><th>Level</th><th>Evidence</th></tr></thead><tbody>${riskFactors}</tbody></table></section>
-      <section class="section"><h2>Agent 02 — Vulnerability & Impact</h2><div class="grid"><div class="card"><div class="label">Assessment</div><div class="value">${assessment ? "Completed" : "Not available"}</div></div><div class="card"><div class="label">Assessment ID</div><div class="value">${escapeReportHtml(assessment?.id || "—")}</div></div><div class="card"><div class="label">Location</div><div class="value">${escapeReportHtml(assessment?.location || report.location)}</div></div><div class="card"><div class="label">Disaster</div><div class="value">${escapeReportHtml(assessment?.disasterType || report.disasterType)}</div></div></div></section>
-      <section class="section"><h2>Agent 03 — Resource Optimization</h2><table><thead><tr><th>#</th><th>Resource</th><th>Quantity</th><th>Location</th><th>Status</th></tr></thead><tbody>${resourceRows}</tbody></table></section>
-      <section class="section"><h2>Agent 04 — Early Warning</h2><div class="grid"><div class="card"><div class="label">Warning</div><div class="value">${alert ? "Generated" : "Not available"}</div></div><div class="card"><div class="label">Severity</div><div class="value">${escapeReportHtml(alert?.severity || "—")}</div></div><div class="card"><div class="label">Status</div><div class="value">${escapeReportHtml(alert?.status || "—")}</div></div><div class="card"><div class="label">Created</div><div class="value">${escapeReportHtml(alert?.createdAt ? formatDate(alert.createdAt) : "—")}</div></div></div></section>
-      <section class="section"><h2>Volunteer & Field Response</h2><div class="two"><div class="card"><div class="label">Assigned Volunteer</div><div class="value">${escapeReportHtml(report.assignedVolunteerName || "Not assigned")}</div><div class="muted">Assigned: ${escapeReportHtml(report.assignedAt ? formatDate(report.assignedAt) : "—")}</div></div><div class="card"><div class="label">Field Status</div><div class="value">${escapeReportHtml(formatStatus(report.status))}</div><div class="muted">Updated: ${escapeReportHtml(report.fieldUpdatedAt ? formatDate(report.fieldUpdatedAt) : "—")}</div></div><div class="card"><div class="label">Latest Situation</div><div class="value">${escapeReportHtml(report.fieldSituation || "No field situation submitted.")}</div></div><div class="card"><div class="label">Field Notes</div><div class="value">${escapeReportHtml(report.fieldUpdateNotes || "No field notes submitted.")}</div></div></div></section>
-      <section class="section"><h2>Resolution</h2><div class="note"><strong class="pill">✓ Incident Resolved</strong><br/>The incident completed the ReliefNexus operational lifecycle after the field response stage. Final lifecycle status: <strong>${escapeReportHtml(formatStatus(report.status))}</strong>.</div></section>
+      <section class="section"><h2>Agent 01  Risk Prediction</h2><div class="grid"><div class="card"><div class="label">Primary Hazard</div><div class="value">${escapeReportHtml(risk?.disasterType || prediction?.disasterType)}</div></div><div class="card"><div class="label">Risk Score</div><div class="value">${escapeReportHtml(risk?.riskScore)}</div></div><div class="card"><div class="label">Model</div><div class="value">${escapeReportHtml(prediction?.modelVersion || "Default")}</div></div><div class="card"><div class="label">Source</div><div class="value">${escapeReportHtml(prediction?.predictionSource || "Risk Prediction Service")}</div></div></div><table style="margin-top:12px"><thead><tr><th>Hazard</th><th>Score</th><th>Level</th><th>Evidence</th></tr></thead><tbody>${riskFactors}</tbody></table></section>
+      <section class="section"><h2>Agent 02  Vulnerability & Impact</h2><div class="grid"><div class="card"><div class="label">Assessment</div><div class="value">${assessment ? "Completed" : "Not available"}</div></div><div class="card"><div class="label">Assessment ID</div><div class="value">${escapeReportHtml(assessment?.id || "")}</div></div><div class="card"><div class="label">Location</div><div class="value">${escapeReportHtml(assessment?.location || report.location)}</div></div><div class="card"><div class="label">Disaster</div><div class="value">${escapeReportHtml(assessment?.disasterType || report.disasterType)}</div></div></div></section>
+      <section class="section"><h2>Agent 03  Resource Optimization</h2><table><thead><tr><th>#</th><th>Resource</th><th>Quantity</th><th>Location</th><th>Status</th></tr></thead><tbody>${resourceRows}</tbody></table></section>
+      <section class="section"><h2>Agent 04  Early Warning</h2><div class="grid"><div class="card"><div class="label">Warning</div><div class="value">${alert ? "Generated" : "Not available"}</div></div><div class="card"><div class="label">Severity</div><div class="value">${escapeReportHtml(alert?.severity || "")}</div></div><div class="card"><div class="label">Status</div><div class="value">${escapeReportHtml(alert?.status || "")}</div></div><div class="card"><div class="label">Created</div><div class="value">${escapeReportHtml(alert?.createdAt ? formatDate(alert.createdAt) : "")}</div></div></div></section>
+      <section class="section"><h2>Volunteer & Field Response</h2><div class="two"><div class="card"><div class="label">Assigned Volunteer</div><div class="value">${escapeReportHtml(report.assignedVolunteerName || "Not assigned")}</div><div class="muted">Assigned: ${escapeReportHtml(report.assignedAt ? formatDate(report.assignedAt) : "")}</div></div><div class="card"><div class="label">Field Status</div><div class="value">${escapeReportHtml(formatStatus(report.status))}</div><div class="muted">Updated: ${escapeReportHtml(report.fieldUpdatedAt ? formatDate(report.fieldUpdatedAt) : "")}</div></div><div class="card"><div class="label">Latest Situation</div><div class="value">${escapeReportHtml(report.fieldSituation || "No field situation submitted.")}</div></div><div class="card"><div class="label">Field Notes</div><div class="value">${escapeReportHtml(report.fieldUpdateNotes || "No field notes submitted.")}</div></div></div></section>
+      <section class="section"><h2>Resolution</h2><div class="note"><strong class="pill"> Incident Resolved</strong><br/>The incident completed the ReliefNexus operational lifecycle after the field response stage. Final lifecycle status: <strong>${escapeReportHtml(formatStatus(report.status))}</strong>.</div></section>
       <section class="section"><h2>Operational Timeline</h2><div class="timeline">${timelineRows || "<p class='muted'>No timestamped events are available.</p>"}</div></section>
-      <footer class="footer"><span>ReliefNexus · AI-Powered Disaster Management Platform</span><span>Generated from live operational records · ${escapeReportHtml(formatDate(generatedAt))}</span></footer>
+      <footer class="footer"><span>ReliefNexus  AI-Powered Disaster Management Platform</span><span>Generated from live operational records  ${escapeReportHtml(formatDate(generatedAt))}</span></footer>
       </main><script>window.onload=function(){setTimeout(function(){window.print()},450)};</script></body></html>`;
 
     popup.document.open();
@@ -2052,15 +2052,15 @@ useEffect(() => {
             }}
             className="shrink-0 rounded-2xl bg-slate-950 px-5 py-3 text-xs font-black text-white shadow-lg transition hover:bg-blue-700"
           >
-            Open Global Map →
+            Open Global Map 
           </button>
         </div>
       </section>
 
-      <div className="grid items-start gap-6 xl:grid-cols-2">
+      <div className="grid items-stretch gap-6 xl:grid-cols-2">
       {/* ONE UNIFIED INCIDENT REGISTER */}
-      <section className="min-w-0 overflow-hidden rounded-[30px] border border-violet-200 bg-white shadow-sm">
-        <div className="border-b border-violet-100 bg-gradient-to-r from-violet-950 via-violet-900 to-slate-950 px-5 py-6 text-white sm:px-6">
+      <section className="min-w-0 h-full overflow-hidden rounded-[30px] border border-violet-200 bg-white shadow-sm flex flex-col">
+        <div className="h-[240px] border-b border-violet-100 bg-gradient-to-r from-violet-950 via-violet-900 to-slate-950 px-5 py-6 text-white sm:px-6">
           <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
             <div className="flex min-w-0 items-center gap-4">
               <div className="h-14 w-20 shrink-0 overflow-hidden rounded-2xl border border-white/20 bg-white/10 shadow-lg">
@@ -2075,7 +2075,7 @@ useEffect(() => {
               </div>
               <div className="min-w-0 max-w-4xl">
                 <p className="text-[9px] font-black uppercase tracking-[0.2em] text-violet-300">
-                  Community Submitted · Unified Operational Workflow
+                  Community Submitted  Unified Operational Workflow
                 </p>
                 <h2 className="mt-1 text-2xl font-black text-white">
                   Disaster Reports
@@ -2086,7 +2086,7 @@ useEffect(() => {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-3 min-w-[270px]">
               <HeroStat label="Reports" value={filteredReports.length} />
               <HeroStat
                 label="Assigned"
@@ -2224,8 +2224,8 @@ useEffect(() => {
                           </h3>
 
                           <p className="mt-0.5 truncate text-xs text-slate-500">
-                            {report.disasterType || "Disaster"} ·{" "}
-                            {report.reporterName || "Unknown reporter"} ·{" "}
+                            {report.disasterType || "Disaster"} {" "}
+                            {report.reporterName || "Unknown reporter"} {" "}
                             {report.assignedVolunteerName
                               ? `Assigned to ${report.assignedVolunteerName}`
                               : "Volunteer not assigned"}
@@ -2240,7 +2240,7 @@ useEffect(() => {
                               AI
                             </p>
                             <p className="mt-0.5 text-xs font-black text-emerald-800">
-                              {prediction ? "Ready" : "—"}
+                              {prediction ? "Ready" : ""}
                             </p>
                           </div>
 
@@ -2264,7 +2264,7 @@ useEffect(() => {
                         </div>
 
                         <span className="hidden rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-[9px] font-black uppercase tracking-wider text-blue-700 sm:inline-flex">
-                          Open workflow →
+                          Open workflow 
                         </span>
                       </div>
                     </div>
@@ -2287,7 +2287,7 @@ useEffect(() => {
                           <div className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-5 py-4 sm:px-7">
                               <div>
                                 <p className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-600">
-                                  ReliefNexus · Separate Incident Workflow
+                                  ReliefNexus  Separate Incident Workflow
                                 </p>
                                 <h3 className="mt-1 text-lg font-black text-slate-950">
                                   {report.location || "Incident Workflow"}
@@ -2313,7 +2313,7 @@ useEffect(() => {
                                 Incident Execution Pipeline
                               </p>
                               <h4 className="mt-1 text-sm font-black text-slate-950">
-                                01 Report Submitted → 02 Risk Prediction → 03 Vulnerability & Impact → 04 Resource Optimization → 05 Early Warning → 06 Volunteer Assignment → 07 Field Response → 08 Resolution
+                                01 Report Submitted  02 Risk Prediction  03 Vulnerability & Impact  04 Resource Optimization  05 Early Warning  06 Volunteer Assignment  07 Field Response  08 Resolution
                               </h4>
                             </div>
 
@@ -2349,7 +2349,7 @@ useEffect(() => {
 
                               <div className="min-w-0">
                                 <p className="text-[9px] font-black uppercase tracking-[0.18em] text-blue-600">
-                                  Process {step} · {active.owner}
+                                  Process {step}  {active.owner}
                                 </p>
 
                                 <h4 className="mt-1 text-lg font-black text-slate-950">
@@ -2358,11 +2358,11 @@ useEffect(() => {
 
                                 <p className="mt-2 text-xs leading-5 text-slate-600">
                                   {step === 1 &&
-                                    "01 Report Submitted — The incident has been received from the disaster-reporting flow. The report, location, reporter, severity and coordinates are now the master incident record."}
+                                    "01 Report Submitted  The incident has been received from the disaster-reporting flow. The report, location, reporter, severity and coordinates are now the master incident record."}
 
                                   {step === 2 &&
                                     (prediction
-                                      ? `02 Risk Prediction — Agent 01 risk prediction is linked to this report. Primary result: ${primaryRisk(
+                                      ? `02 Risk Prediction  Agent 01 risk prediction is linked to this report. Primary result: ${primaryRisk(
                                           prediction,
                                         ).riskScore.toFixed(1)} ${
                                           primaryRisk(prediction).riskLevel
@@ -2373,12 +2373,12 @@ useEffect(() => {
 
                                   {step === 3 &&
                                     (assessment
-                                      ? "03 Vulnerability & Impact — Agent 02 has completed the vulnerability and impact assessment that becomes the operational input for the downstream response stages."
+                                      ? "03 Vulnerability & Impact  Agent 02 has completed the vulnerability and impact assessment that becomes the operational input for the downstream response stages."
                                       : "Agent 02 vulnerability and impact assessment is not yet linked to this report.")}
 
                                   {step === 4 &&
                                     (resourceLoading[String(assessment?.id || "")]
-                                      ? "04 Resource Optimization — Agent 03 resource allocation is being loaded from the live Resource Optimization API."
+                                      ? "04 Resource Optimization  Agent 03 resource allocation is being loaded from the live Resource Optimization API."
                                       : resources && resources.length > 0
                                         ? `Agent 03 returned ${resources.length} allocation record(s) for this incident.`
                                         : assessment
@@ -2387,7 +2387,7 @@ useEffect(() => {
 
                                   {step === 5 &&
                                     (alert
-                                      ? `05 Early Warning — Agent 04 has generated a ${alert.severity || "warning"} warning for this incident.`
+                                      ? `05 Early Warning  Agent 04 has generated a ${alert.severity || "warning"} warning for this incident.`
                                       : assessment
                                         ? "The incident has the Agent 02 prerequisite, but no Agent 04 warning record is currently linked."
                                         : "Early Warning stays waiting until the upstream analysis stages are available.")}
@@ -2395,19 +2395,19 @@ useEffect(() => {
                                   {step === 6 &&
                                     (report.assignedVolunteerName
                                       ? `Volunteer assignment is confirmed. ${report.assignedVolunteerName} is the current field volunteer for this incident.`
-                                      : "06 Volunteer Assignment — The next operational decision is to match an approved, active Field Volunteer and confirm the assignment.")}
+                                      : "06 Volunteer Assignment  The next operational decision is to match an approved, active Field Volunteer and confirm the assignment.")}
 
                                   {step === 7 &&
                                     (report.fieldSituation ||
                                     report.fieldUpdateNotes
-                                      ? "07 Field Response — The assigned volunteer has submitted field information. Review the latest situation and notes before changing the response posture."
+                                      ? "07 Field Response  The assigned volunteer has submitted field information. Review the latest situation and notes before changing the response posture."
                                       : report.assignedVolunteerName
                                         ? `The assigned volunteer ${report.assignedVolunteerName} is responsible for the field-response stage.`
                                         : "Field response cannot start until a volunteer is assigned.")}
 
                                   {step === 8 &&
                                     (normalize(report.status) === "resolved"
-                                      ? "08 Resolution — This incident has completed the operational response lifecycle and is marked Resolved."
+                                      ? "08 Resolution  This incident has completed the operational response lifecycle and is marked Resolved."
                                       : "Resolution is the final administrative stage after the field response has been completed and the incident is ready to close.")}
                                 </p>
                               </div>
@@ -2507,7 +2507,7 @@ useEffect(() => {
                                         ? String(
                                             prediction.id,
                                           ).slice(0, 14)
-                                        : "—"
+                                        : ""
                                     }
                                   />
                                   <InfoBox
@@ -2545,7 +2545,7 @@ useEffect(() => {
                                         ? String(
                                             assessment.id,
                                           ).slice(0, 14)
-                                        : "—"
+                                        : ""
                                     }
                                   />
                                   <InfoBox
@@ -2642,7 +2642,7 @@ useEffect(() => {
                                         ? String(
                                             alert.id,
                                           ).slice(0, 14)
-                                        : "—"
+                                        : ""
                                     }
                                   />
                                   <InfoBox
@@ -2853,7 +2853,7 @@ useEffect(() => {
                                                 {resource.location ||
                                                   report.location ||
                                                   "Incident location"}{" "}
-                                                ·{" "}
+                                                {" "}
                                                 {resource.priority ||
                                                   "Recommended"}
                                               </p>
@@ -2940,7 +2940,7 @@ useEffect(() => {
                                     Stage Action
                                   </p>
                                   <h5 className="mt-1 text-sm font-black text-slate-950">
-                                    Step {step} · {active.title}
+                                    Step {step}  {active.title}
                                   </h5>
                                   <p className="mt-1 text-[10px] leading-4 text-slate-500">
                                     Complete the current operational stage before
@@ -2987,7 +2987,7 @@ useEffect(() => {
                                       </button>
                                     ) : (
                                       <span className="rounded-xl bg-emerald-50 px-4 py-2.5 text-xs font-black text-emerald-700">
-                                        ✓ Review started
+                                         Review started
                                       </span>
                                     )}
                                   </div>
@@ -2998,7 +2998,7 @@ useEffect(() => {
                                     <div className="flex flex-col gap-4">
                                       <div>
                                         <p className="text-xs font-black text-slate-900">
-                                          Agent 01 · Risk Prediction
+                                          Agent 01  Risk Prediction
                                         </p>
                                         <p className="mt-1 text-[10px] leading-4 text-slate-500">
                                           Use the exact Agent 01 prediction for this incident. A matching prediction is selected automatically; you can explicitly choose another live prediction when there is no automatic link.
@@ -3009,7 +3009,7 @@ useEffect(() => {
                                         <div className="grid gap-2 sm:grid-cols-3">
                                           <InfoBox
                                             label="Risk"
-                                            value={`${primaryRisk(prediction).riskScore.toFixed(1)} · ${primaryRisk(prediction).riskLevel}`}
+                                            value={`${primaryRisk(prediction).riskScore.toFixed(1)}  ${primaryRisk(prediction).riskLevel}`}
                                           />
                                           <InfoBox
                                             label="Disaster"
@@ -3054,7 +3054,7 @@ useEffect(() => {
                                                   }
                                                   value={String(item.id || "")}
                                                 >
-                                                  {item.location || "Unknown"} · {risk.disasterType} · {risk.riskScore.toFixed(1)} · {risk.riskLevel}
+                                                  {item.location || "Unknown"}  {risk.disasterType}  {risk.riskScore.toFixed(1)}  {risk.riskLevel}
                                                 </option>
                                               );
                                             })}
@@ -3087,7 +3087,7 @@ useEffect(() => {
                                                     prediction.location ||
                                                     report.location ||
                                                     "AI prediction",
-                                                  subtitle: `${primaryRisk(prediction).disasterType} · ${primaryRisk(prediction).riskScore.toFixed(1)} · ${primaryRisk(prediction).riskLevel}`,
+                                                  subtitle: `${primaryRisk(prediction).disasterType}  ${primaryRisk(prediction).riskScore.toFixed(1)}  ${primaryRisk(prediction).riskLevel}`,
                                                   kind: "prediction",
                                                 });
                                               }
@@ -3111,7 +3111,7 @@ useEffect(() => {
                                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                       <div>
                                         <p className="text-xs font-black text-slate-900">
-                                          Agent 02 · Vulnerability & Impact
+                                          Agent 02  Vulnerability & Impact
                                         </p>
                                         <p className="mt-1 text-[10px] leading-4 text-slate-500">
                                           Run Agent 02 against the selected Agent 01 prediction. The saved assessment becomes the input for Agent 03 and Agent 04.
@@ -3160,7 +3160,7 @@ useEffect(() => {
                                           value={
                                             assessment.id
                                               ? String(assessment.id).slice(0, 14)
-                                              : "—"
+                                              : ""
                                           }
                                         />
                                         <InfoBox
@@ -3187,7 +3187,7 @@ useEffect(() => {
                                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                       <div>
                                         <p className="text-xs font-black text-slate-900">
-                                          Agent 03 · Resource Optimization
+                                          Agent 03  Resource Optimization
                                         </p>
                                         <p className="mt-1 text-[10px] leading-4 text-slate-500">
                                           Generate the live resource allocation
@@ -3242,7 +3242,7 @@ useEffect(() => {
                                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                       <div>
                                         <p className="text-xs font-black text-slate-900">
-                                          Agent 04 · Early Warning
+                                          Agent 04  Early Warning
                                         </p>
                                         <p className="mt-1 text-[10px] leading-4 text-slate-500">
                                           Create the real emergency warning
@@ -3278,7 +3278,7 @@ useEffect(() => {
                                         `agent04-${report.id || assessment?.id}`
                                           ? "Generating..."
                                           : alert
-                                            ? "✓ Warning Generated"
+                                            ? " Warning Generated"
                                             : "Generate Warning"}
                                       </button>
                                     </div>
@@ -3289,7 +3289,7 @@ useEffect(() => {
                                           Live Agent 04 output
                                         </p>
                                         <p className="mt-1 text-xs font-black text-emerald-800">
-                                          {alert.severity || "Warning"} ·{" "}
+                                          {alert.severity || "Warning"} {" "}
                                           {alert.status || "Active"}
                                         </p>
                                       </div>
@@ -3302,7 +3302,7 @@ useEffect(() => {
                                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                       <div>
                                         <p className="text-[9px] font-black uppercase tracking-[0.18em] text-violet-600">
-                                          Process 6 · Volunteer Assignment
+                                          Process 6  Volunteer Assignment
                                         </p>
                                         <h5 className="mt-1 text-sm font-black text-slate-900">
                                           Assign an approved Field Volunteer
@@ -3371,8 +3371,8 @@ useEffect(() => {
                                               </p>
                                               {recommendation.recommendedVolunteer && (
                                                 <p className="mt-1 text-[10px] text-slate-600">
-                                                  {recommendation.recommendedVolunteer.district || "District unavailable"} ·{" "}
-                                                  {recommendation.recommendedVolunteer.availability || "Availability unavailable"} ·{" "}
+                                                  {recommendation.recommendedVolunteer.district || "District unavailable"} {" "}
+                                                  {recommendation.recommendedVolunteer.availability || "Availability unavailable"} {" "}
                                                   Workload {recommendation.recommendedVolunteer.currentWorkload}
                                                 </p>
                                               )}
@@ -3416,8 +3416,8 @@ useEffect(() => {
                                                     {candidate.volunteerName}
                                                   </p>
                                                   <p className="mt-1 text-[10px] text-slate-500">
-                                                    {candidate.district || "District unavailable"} ·{" "}
-                                                    {candidate.availability || "Availability unavailable"} ·{" "}
+                                                    {candidate.district || "District unavailable"} {" "}
+                                                    {candidate.availability || "Availability unavailable"} {" "}
                                                     Workload {candidate.currentWorkload}
                                                   </p>
                                                   <p className="mt-1 text-[10px] leading-4 text-slate-500">
@@ -3579,7 +3579,7 @@ useEffect(() => {
                                       className="rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-black text-white disabled:opacity-40"
                                     >
                                       {status === "resolved"
-                                        ? "✓ Resolved"
+                                        ? " Resolved"
                                         : actionLoading ===
                                             `resolve-${reportId}`
                                           ? "Resolving..."
@@ -3608,7 +3608,7 @@ useEffect(() => {
                                     }
                                     className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-black text-slate-700"
                                   >
-                                    ← Previous Step
+                                     Previous Step
                                   </button>
                                 )}
 
@@ -3646,7 +3646,7 @@ useEffect(() => {
                                     }
                                     className="rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-40"
                                   >
-                                    Next Step →
+                                    Next Step 
                                   </button>
                                 )}
 
@@ -3659,7 +3659,7 @@ useEffect(() => {
                                           latitude: Number(report.latitude),
                                           longitude: Number(report.longitude),
                                           title: getReportLocation(report),
-                                          subtitle: `${report.disasterType || "Disaster"} · ${report.severity || "Unknown"}`,
+                                          subtitle: `${report.disasterType || "Disaster"}  ${report.severity || "Unknown"}`,
                                           kind: "report",
                                         })
                                       }
@@ -3713,7 +3713,7 @@ useEffect(() => {
                                   label="Risk"
                                   value={
                                     prediction
-                                      ? `${primaryRisk(prediction).riskScore.toFixed(1)} · ${primaryRisk(prediction).riskLevel}`
+                                      ? `${primaryRisk(prediction).riskScore.toFixed(1)}  ${primaryRisk(prediction).riskLevel}`
                                       : "Not linked"
                                   }
                                 />
@@ -3731,7 +3731,7 @@ useEffect(() => {
                                   label="Agent 04"
                                   value={
                                     alert
-                                      ? `${alert.severity || "Warning"} · ${alert.status || "Active"}`
+                                      ? `${alert.severity || "Warning"}  ${alert.status || "Active"}`
                                       : "Not generated"
                                   }
                                 />
@@ -3851,7 +3851,7 @@ useEffect(() => {
 
       {/* AGENT 01 RISK PREDICTIONS */}
       <section className="overflow-hidden rounded-[30px] border border-violet-200 bg-white shadow-sm">
-        <div className="border-b border-violet-100 bg-gradient-to-r from-violet-950 via-violet-900 to-slate-950 px-5 py-6 text-white sm:px-6">
+        <div className="h-[240px] border-b border-violet-100 bg-gradient-to-r from-violet-950 via-violet-900 to-slate-950 px-5 py-6 text-white sm:px-6">
           <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
             <div className="flex min-w-0 items-center gap-4">
               <div className="h-14 w-20 shrink-0 overflow-hidden rounded-2xl border border-white/20 bg-white/10 shadow-lg">
@@ -3866,7 +3866,7 @@ useEffect(() => {
               </div>
               <div className="min-w-0 max-w-4xl">
                 <p className="text-[9px] font-black uppercase tracking-[0.2em] text-violet-300">
-                  Agent 01 · Unified Operational Workflow
+                  Agent 01  Unified Operational Workflow
                 </p>
                 <h2 className="mt-1 text-2xl font-black">
                   Risk Prediction Results
@@ -3877,7 +3877,7 @@ useEffect(() => {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-3 min-w-[270px]">
               <HeroStat label="Predictions" value={predictions.length} />
               <HeroStat label="Mapped" value={mappedPredictionCount} tone="green" />
               <HeroStat
@@ -4148,12 +4148,12 @@ useEffect(() => {
                         </h3>
 
                         <p className="mt-0.5 truncate text-[10px] text-slate-500">
-                          {risk.disasterType} · Risk {risk.riskScore.toFixed(1)}
+                          {risk.disasterType}  Risk {risk.riskScore.toFixed(1)}
                           {linkedReport
-                            ? ` · Linked incident: ${
+                            ? `  Linked incident: ${
                                 linkedReport.location || "Incident"
                               }`
-                            : " · No incident linked yet"}
+                            : "  No incident linked yet"}
                         </p>
                       </div>
 
@@ -4173,7 +4173,7 @@ useEffect(() => {
                           <p className="text-sm font-black text-blue-900">
                             {Number.isFinite(Number(prediction.confidence))
                               ? `${Number(prediction.confidence).toFixed(0)}%`
-                              : "—"}
+                              : ""}
                           </p>
                         </div>
                         <div className="flex h-full items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-[9px] font-black uppercase tracking-wider text-slate-500">
@@ -4188,7 +4188,7 @@ useEffect(() => {
                           <div className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-5 py-4 sm:px-7">
                             <div className="min-w-0">
                               <p className="text-[9px] font-black uppercase tracking-[0.2em] text-violet-600">
-                                ReliefNexus · Agent 01 Unified Workflow
+                                ReliefNexus  Agent 01 Unified Workflow
                               </p>
                               <h3 className="mt-1 truncate text-lg font-black text-slate-950">
                                 {prediction.location || "Risk Prediction Workflow"}
@@ -4217,7 +4217,7 @@ useEffect(() => {
                                   {active.title}
                                 </h4>
                                 <p className="mt-1 text-[10px] font-black uppercase tracking-wider text-slate-400">
-                                  Step {step} of 8 · {active.owner}
+                                  Step {step} of 8  {active.owner}
                                 </p>
                               </div>
 
@@ -4253,17 +4253,17 @@ useEffect(() => {
 
                             <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
                               <p className="text-[9px] font-black uppercase tracking-[0.18em] text-blue-600">
-                                Process {step} · Operational Details
+                                Process {step}  Operational Details
                               </p>
 
                               <p className="mt-1 text-xs leading-5 text-slate-600">
                                 {step === 1 &&
                                   (linkedReport
-                                    ? `01 Report Submitted — this Agent 01 prediction is linked to the ${linkedReport.disasterType || "disaster"} incident at ${linkedReport.location || prediction.location || "the selected location"}.`
-                                    : `01 Report Submitted — the prediction is registered as an operational case for ${prediction.location || "the selected location"}. Link an existing incident to enable the same downstream response lifecycle.`)}
+                                    ? `01 Report Submitted  this Agent 01 prediction is linked to the ${linkedReport.disasterType || "disaster"} incident at ${linkedReport.location || prediction.location || "the selected location"}.`
+                                    : `01 Report Submitted  the prediction is registered as an operational case for ${prediction.location || "the selected location"}. Link an existing incident to enable the same downstream response lifecycle.`)}
 
                                 {step === 2 &&
-                                  `02 Risk Prediction — Agent 01 generated a ${risk.riskLevel} ${risk.disasterType} risk result with score ${risk.riskScore.toFixed(1)} and confidence ${
+                                  `02 Risk Prediction  Agent 01 generated a ${risk.riskLevel} ${risk.disasterType} risk result with score ${risk.riskScore.toFixed(1)} and confidence ${
                                     Number.isFinite(Number(prediction.confidence))
                                       ? `${Number(prediction.confidence).toFixed(1)}%`
                                       : "not available"
@@ -4271,27 +4271,27 @@ useEffect(() => {
 
                                 {step === 3 &&
                                   (assessment
-                                    ? "03 Vulnerability & Impact — Agent 02 has completed the assessment linked to this Agent 01 prediction."
-                                    : "03 Vulnerability & Impact — Agent 02 has not yet produced the linked assessment.")}
+                                    ? "03 Vulnerability & Impact  Agent 02 has completed the assessment linked to this Agent 01 prediction."
+                                    : "03 Vulnerability & Impact  Agent 02 has not yet produced the linked assessment.")}
 
                                 {step === 4 &&
                                   (resourcesReady
-                                    ? `04 Resource Optimization — Agent 03 has produced ${resources?.length || 0} live resource allocation record(s) from the Agent 02 assessment.`
+                                    ? `04 Resource Optimization  Agent 03 has produced ${resources?.length || 0} live resource allocation record(s) from the Agent 02 assessment.`
                                     : assessment
-                                      ? "04 Resource Optimization — Agent 03 is ready to generate the live resource allocation records."
-                                      : "04 Resource Optimization — waiting for Agent 02.")}
+                                      ? "04 Resource Optimization  Agent 03 is ready to generate the live resource allocation records."
+                                      : "04 Resource Optimization  waiting for Agent 02.")}
 
                                 {step === 5 &&
                                   (alert
-                                    ? `05 Early Warning — Agent 04 has generated a ${alert.severity || "warning"} warning with status ${alert.status || "active"}.`
+                                    ? `05 Early Warning  Agent 04 has generated a ${alert.severity || "warning"} warning with status ${alert.status || "active"}.`
                                     : resourcesReady
-                                      ? "05 Early Warning — Agent 04 is ready to generate the warning record."
-                                      : "05 Early Warning — waiting for the upstream assessment and resource stages.")}
+                                      ? "05 Early Warning  Agent 04 is ready to generate the warning record."
+                                      : "05 Early Warning  waiting for the upstream assessment and resource stages.")}
 
                                 {step === 6 &&
                                   (linkedReport?.assignedVolunteerName
-                                    ? `06 Volunteer Assignment — ${linkedReport.assignedVolunteerName} is the confirmed field volunteer for the linked incident.`
-                                    : "06 Volunteer Assignment — link this prediction to an incident report, then the Volunteer Assignment Agent can recommend and assign an approved active field volunteer.")}
+                                    ? `06 Volunteer Assignment  ${linkedReport.assignedVolunteerName} is the confirmed field volunteer for the linked incident.`
+                                    : "06 Volunteer Assignment  link this prediction to an incident report, then the Volunteer Assignment Agent can recommend and assign an approved active field volunteer.")}
 
                                 {step === 7 &&
                                   (linkedReport
@@ -4299,14 +4299,14 @@ useEffect(() => {
                                       linkedReport.fieldUpdateNotes ||
                                       linkedStatus === "inprogress" ||
                                       linkedStatus === "fieldupdatesubmitted"
-                                      ? "07 Field Response — the assigned volunteer can start the field response, submit situation updates and complete the field stage from this workflow."
-                                      : "07 Field Response — an assigned volunteer is ready to start the field response."
-                                    : "07 Field Response — waiting for a linked incident and an assigned volunteer.")}
+                                      ? "07 Field Response  the assigned volunteer can start the field response, submit situation updates and complete the field stage from this workflow."
+                                      : "07 Field Response  an assigned volunteer is ready to start the field response."
+                                    : "07 Field Response  waiting for a linked incident and an assigned volunteer.")}
 
                                 {step === 8 &&
                                   (linkedStatus === "resolved"
-                                    ? "08 Resolution — the linked incident has been marked Resolved."
-                                    : "08 Resolution — complete the field response first, then mark the linked incident as Resolved.")}
+                                    ? "08 Resolution  the linked incident has been marked Resolved."
+                                    : "08 Resolution  complete the field response first, then mark the linked incident as Resolved.")}
                               </p>
 
                               <div className="mt-4 grid gap-2 sm:grid-cols-3">
@@ -4331,7 +4331,7 @@ useEffect(() => {
                                       value={
                                         linkedReport
                                           ? "Linked"
-                                          : "Required for stages 6–8"
+                                          : "Required for stages 68"
                                       }
                                     />
                                   </>
@@ -4403,7 +4403,7 @@ useEffect(() => {
                                       value={
                                         assessment?.id
                                           ? String(assessment.id).slice(0, 14)
-                                          : "—"
+                                          : ""
                                       }
                                     />
                                     <InfoBox
@@ -4421,7 +4421,7 @@ useEffect(() => {
                                           ? String(
                                               assessment.riskPredictionId,
                                             ).slice(0, 14)
-                                          : "—"
+                                          : ""
                                       }
                                     />
                                   </>
@@ -4479,7 +4479,7 @@ useEffect(() => {
                                       value={
                                         alert?.id
                                           ? String(alert.id).slice(0, 14)
-                                          : "—"
+                                          : ""
                                       }
                                     />
                                     <InfoBox
@@ -4640,7 +4640,7 @@ useEffect(() => {
                                 )}
                               </div>
 
-                              {/* STEP 1 — OPERATIONAL INCIDENT */}
+                              {/* STEP 1  OPERATIONAL INCIDENT */}
                               {step === 1 && (
                                 <div className="mt-4 rounded-xl border border-blue-100 bg-white p-4">
                                   <div className="flex items-start justify-between gap-4">
@@ -4710,13 +4710,13 @@ useEffect(() => {
                                 </div>
                               )}
 
-                              {/* STEP 3 — AGENT 02 */}
+                              {/* STEP 3  AGENT 02 */}
                               {step === 3 && (
                                 <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
                                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div>
                                       <p className="text-xs font-black text-slate-900">
-                                        Agent 02 · Vulnerability & Impact
+                                        Agent 02  Vulnerability & Impact
                                       </p>
                                       <p className="mt-1 text-[10px] leading-4 text-slate-500">
                                         Run the real Agent 02 assessment for this
@@ -4756,13 +4756,13 @@ useEffect(() => {
                                 </div>
                               )}
 
-                              {/* STEP 4 — AGENT 03 */}
+                              {/* STEP 4  AGENT 03 */}
                               {step === 4 && (
                                 <div className="mt-4 rounded-xl border border-violet-100 bg-violet-50/60 p-4">
                                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div>
                                       <p className="text-xs font-black text-slate-900">
-                                        Agent 03 · Resource Optimization
+                                        Agent 03  Resource Optimization
                                       </p>
                                       <p className="mt-1 text-[10px] leading-4 text-slate-500">
                                         Generate the live allocation records from the
@@ -4839,7 +4839,7 @@ useEffect(() => {
                                                 {resource.location ||
                                                   prediction.location ||
                                                   "Incident location"}{" "}
-                                                ·{" "}
+                                                {" "}
                                                 {resource.priority ||
                                                   "Recommended"}
                                               </p>
@@ -4859,13 +4859,13 @@ useEffect(() => {
                                 </div>
                               )}
 
-                              {/* STEP 5 — AGENT 04 */}
+                              {/* STEP 5  AGENT 04 */}
                               {step === 5 && (
                                 <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50/60 p-4">
                                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div>
                                       <p className="text-xs font-black text-slate-900">
-                                        Agent 04 · Early Warning
+                                        Agent 04  Early Warning
                                       </p>
                                       <p className="mt-1 text-[10px] leading-4 text-slate-500">
                                         Generate the real emergency warning from
@@ -4933,7 +4933,7 @@ useEffect(() => {
                                 </div>
                               )}
 
-                              {/* STEP 6 — VOLUNTEER */}
+                              {/* STEP 6  VOLUNTEER */}
                               {step === 6 && (
                                 <div className="mt-3 w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-violet-100 bg-violet-50/70 p-2.5 sm:p-3">
                                   {!linkedReport ? (
@@ -5060,8 +5060,8 @@ useEffect(() => {
                                                       </p>
                                                       {recommendation.recommendedVolunteer && (
                                                         <p className="mt-1 text-[10px] text-slate-600">
-                                                          {recommendation.recommendedVolunteer.district} ·{" "}
-                                                          {recommendation.recommendedVolunteer.availability} ·{" "}
+                                                          {recommendation.recommendedVolunteer.district} {" "}
+                                                          {recommendation.recommendedVolunteer.availability} {" "}
                                                           Workload {recommendation.recommendedVolunteer.currentWorkload}
                                                         </p>
                                                       )}
@@ -5111,7 +5111,7 @@ useEffect(() => {
                                                             {candidate.volunteerName}
                                                           </p>
                                                           <p className="mt-1 text-[10px] text-slate-500">
-                                                            {candidate.district || "District unavailable"} ·{" "}
+                                                            {candidate.district || "District unavailable"} {" "}
                                                             {candidate.availability}
                                                           </p>
                                                         </div>
@@ -5165,7 +5165,7 @@ useEffect(() => {
                                 </div>
                               )}
 
-                               {/* STEP 7 — FIELD RESPONSE */}
+                               {/* STEP 7  FIELD RESPONSE */}
                               {step === 7 && (
                                 <div className="mt-4 min-w-0 max-w-full overflow-hidden rounded-xl border border-cyan-100 bg-cyan-50/50 p-3 sm:p-4">
                                   <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -5273,7 +5273,7 @@ useEffect(() => {
                                             STEP 7 ACTIONS
                                           </span>
                                           <span className="text-[9px] font-semibold text-blue-800">
-                                            Start Field Response → Submit Field Update → Complete Field Response
+                                            Start Field Response  Submit Field Update  Complete Field Response
                                           </span>
                                         </div>
                                       </div>
@@ -5286,7 +5286,7 @@ useEffect(() => {
                                 </div>
                               )}
 
-                              {/* STEP 8 — RESOLUTION */}
+                              {/* STEP 8  RESOLUTION */}
                               {step === 8 && linkedReport && (
                                 <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
                                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -5317,7 +5317,7 @@ useEffect(() => {
                                       className="rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-black text-white disabled:opacity-40"
                                     >
                                       {linkedStatus === "resolved"
-                                        ? "✓ Resolved"
+                                        ? " Resolved"
                                         : actionLoading ===
                                             `resolve-${linkedReport.id}`
                                           ? "Resolving..."
@@ -5378,7 +5378,7 @@ useEffect(() => {
                                     }
                                     className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-black text-slate-700"
                                   >
-                                    ← Previous Step
+                                     Previous Step
                                   </button>
                                 )}
 
@@ -5401,7 +5401,7 @@ useEffect(() => {
                                     }
                                     className="rounded-xl bg-violet-600 px-4 py-2.5 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-40"
                                   >
-                                    Next Step →
+                                    Next Step 
                                   </button>
                                 )}
 
@@ -5420,7 +5420,7 @@ useEffect(() => {
                                           title:
                                             prediction.location ||
                                             "AI risk prediction",
-                                          subtitle: `${risk.disasterType} · ${risk.riskScore.toFixed(1)} · ${risk.riskLevel}`,
+                                          subtitle: `${risk.disasterType}  ${risk.riskScore.toFixed(1)}  ${risk.riskLevel}`,
                                           kind: "prediction",
                                         })
                                       }
@@ -5445,7 +5445,7 @@ useEffect(() => {
                               <div className="mt-4 space-y-2">
                                 <InfoBox
                                   label="Risk"
-                                  value={`${risk.riskScore.toFixed(1)} · ${risk.riskLevel}`}
+                                  value={`${risk.riskScore.toFixed(1)}  ${risk.riskLevel}`}
                                 />
                                 <InfoBox
                                   label="Agent 02"
@@ -5469,7 +5469,7 @@ useEffect(() => {
                                   label="Agent 04"
                                   value={
                                     alert
-                                      ? `${alert.severity || "Warning"} · ${alert.status || "Active"}`
+                                      ? `${alert.severity || "Warning"}  ${alert.status || "Active"}`
                                       : "Not generated"
                                   }
                                 />
@@ -5563,13 +5563,13 @@ useEffect(() => {
               <div className="flex flex-col gap-3 border-b border-slate-200 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
                 <div>
                   <p className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-600">
-                    ReliefNexus · Geographic Intelligence
+                    ReliefNexus  Geographic Intelligence
                   </p>
                   <h3 className="mt-1 text-xl font-black text-slate-950">
                     Global Disaster Risk & Incident Map
                   </h3>
                   <p className="mt-0.5 text-xs font-semibold text-slate-500">
-                    {validMappedCount(filteredReports)} submitted incidents · {mappedPredictionCount} AI prediction locations
+                    {validMappedCount(filteredReports)} submitted incidents  {mappedPredictionCount} AI prediction locations
                   </p>
                 </div>
                 <button
@@ -5578,7 +5578,7 @@ useEffect(() => {
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-lg font-black text-slate-500 hover:bg-slate-50"
                   aria-label="Close global disaster map"
                 >
-                  ×
+                  
                 </button>
               </div>
 
@@ -5619,3 +5619,5 @@ useEffect(() => {
     </div>
   );
 }
+
+

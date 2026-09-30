@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ReliefNexus.API.Data;
 using ReliefNexus.API.DTOs.ResourceOptimization;
 using ReliefNexus.API.Interfaces;
 using ReliefNexus.API.Models;
@@ -12,10 +14,12 @@ namespace ReliefNexus.API.Controllers;
 public class ResourceOptimizationController : ControllerBase
 {
     private readonly IResourceService _service;
+    private readonly AppDbContext _context;
 
-    public ResourceOptimizationController(IResourceService service)
+    public ResourceOptimizationController(IResourceService service, AppDbContext context)
     {
         _service = service;
+        _context = context;
     }
 
     // ============================================================
@@ -88,14 +92,14 @@ public class ResourceOptimizationController : ControllerBase
     public async Task<ActionResult<List<ResourceAllocationDto>>> GetAllAllocations()
     {
         var allocations = await _service.GetAllAllocationsAsync();
-        return Ok(ToDto(allocations));
+        return Ok(await ToDto(allocations));
     }
 
     [HttpGet("allocations/{id:guid}")]
     public async Task<ActionResult<ResourceAllocationDto>> GetAllocation(Guid id)
     {
         var allocation = await _service.GetAllocationByIdAsync(id);
-        return allocation == null ? NotFound() : Ok(ToDto(allocation));
+        return allocation == null ? NotFound() : Ok(await ToDto(allocation));
     }
 
     [HttpPost("allocations")]
@@ -128,7 +132,7 @@ public class ResourceOptimizationController : ControllerBase
         try
         {
             var updated = await _service.UpdateAllocationAsync(id, allocation);
-            return updated == null ? NotFound() : Ok(ToDto(updated));
+            return updated == null ? NotFound() : Ok(await ToDto(updated));
         }
         catch (KeyNotFoundException ex)
         {
@@ -155,7 +159,7 @@ public class ResourceOptimizationController : ControllerBase
     }
 
     // ============================================================
-    // AGENT 03 — READ-ONLY DEMAND ANALYSIS
+    // AGENT 03  READ-ONLY DEMAND ANALYSIS
     // ============================================================
 
     [HttpGet("{vulnerabilityAssessmentId:guid}/demand")]
@@ -172,7 +176,7 @@ public class ResourceOptimizationController : ControllerBase
     }
 
     // ============================================================
-    // AGENT 03 — ACTUAL OPTIMIZATION / ALLOCATION MUTATION
+    // AGENT 03  ACTUAL OPTIMIZATION / ALLOCATION MUTATION
     // ============================================================
 
     [HttpPost("{vulnerabilityAssessmentId:guid}/optimize")]
@@ -194,7 +198,7 @@ public class ResourceOptimizationController : ControllerBase
                 });
             }
 
-            return Ok(ToDto(allocations));
+            return Ok(await ToDto(allocations));
         }
         catch (KeyNotFoundException ex)
         {
@@ -207,7 +211,7 @@ public class ResourceOptimizationController : ControllerBase
     }
 
     // ============================================================
-    // ASSESSMENT-SCOPED ALLOCATIONS — READ ONLY
+    // ASSESSMENT-SCOPED ALLOCATIONS  READ ONLY
     // IMPORTANT: this GET NEVER runs Agent 03 again.
     // ============================================================
 
@@ -219,29 +223,45 @@ public class ResourceOptimizationController : ControllerBase
             return BadRequest(new { message = "Vulnerability assessment id is required." });
 
         var allocations = await _service.GetExistingAllocationsAsync(vulnerabilityAssessmentId);
-        return Ok(ToDto(allocations));
+        return Ok(await ToDto(allocations));
     }
 
-    private static ResourceAllocationDto ToDto(ResourceAllocation allocation)
+    private async Task<ResourceAllocationDto> ToDto(ResourceAllocation allocation)
     {
+        var resource = await _context.ReliefResources.AsNoTracking().FirstOrDefaultAsync(x => x.Id == allocation.ResourceId);
+        var available = resource?.AvailableQuantity ?? 0;
+        var recommended = allocation.RecommendedQuantity;
+        var allocated = Math.Min(recommended, available);
+        var remaining = Math.Max(available - allocated, 0);
+        var gap = Math.Max(recommended - available, 0);
         return new ResourceAllocationDto
         {
             Id = allocation.Id,
             VulnerabilityAssessmentId = allocation.VulnerabilityAssessmentId,
             ResourceId = allocation.ResourceId,
-            ResourceType = allocation.ResourceType,
-            ResourceName = allocation.ResourceName,
-            RecommendedQuantity = allocation.RecommendedQuantity,
+            ResourceType = resource?.ResourceType ?? allocation.ResourceType,
+            ResourceName = resource?.ResourceName ?? allocation.ResourceName,
+            RecommendedQuantity = recommended,
             Priority = allocation.Priority,
-            Location = allocation.Location,
-            CreatedAt = allocation.CreatedAt
+            Location = resource?.Location ?? allocation.Location,
+            CreatedAt = allocation.CreatedAt,
+            AvailableQuantity = available,
+            AllocatedQuantity = allocated,
+            RemainingQuantity = remaining,
+            GapQuantity = gap,
+            Status = resource?.Status ?? "Unknown"
         };
     }
 
-    private static List<ResourceAllocationDto> ToDto(
-        IEnumerable<ResourceAllocation> allocations)
+    private async Task<List<ResourceAllocationDto>> ToDto(IEnumerable<ResourceAllocation> allocations)
     {
-        return allocations.Select(ToDto).ToList();
+        var result = new List<ResourceAllocationDto>();
+        foreach (var allocation in allocations)
+        {
+            result.Add(await ToDto(allocation));
+        }
+        return result;
     }
 }
+
 

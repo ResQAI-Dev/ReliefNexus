@@ -4,6 +4,7 @@ using ReliefNexus.API.Data;
 using ReliefNexus.API.DTOs;
 using ReliefNexus.API.Interfaces;
 using ReliefNexus.API.Models;
+using ReliefNexus.API.AI.Services;
 
 namespace ReliefNexus.API.Services;
 
@@ -11,13 +12,19 @@ public class RiskPredictionService : IRiskPredictionService
 {
     private readonly AppDbContext _context;
     private readonly RiskPredictionAgent _agent;
+    private readonly IPythonAIService _pythonAIService;
+    private readonly IAgentExecutionService _agentExecutionService;
 
     public RiskPredictionService(
         AppDbContext context,
-        RiskPredictionAgent agent)
+        RiskPredictionAgent agent,
+        IPythonAIService pythonAIService,
+        IAgentExecutionService agentExecutionService)
     {
         _context = context;
         _agent = agent;
+        _pythonAIService = pythonAIService;
+        _agentExecutionService = agentExecutionService;
     }
 
     public async Task<RiskPredictionDto> CreateAsync(
@@ -28,6 +35,68 @@ public class RiskPredictionService : IRiskPredictionService
         var agentResult =
             await _agent.RunAsync(request, executionId);
 
+        var aiAssessment =
+            await _pythonAIService.AssessRiskAsync(agentResult);
+
+        if (aiAssessment != null)
+        {
+            await _agentExecutionService.UpdateStepAsync(
+                executionId,
+                "Python AI assessment completed",
+                "WeatherTool -> DisasterDataTool -> RiskEngine -> Validation -> Python AI",
+                $"Gemini model={aiAssessment.Usage.Model}; " +
+                $"InputTokens={aiAssessment.Usage.InputTokens}; " +
+                $"OutputTokens={aiAssessment.Usage.OutputTokens}; " +
+                $"TotalTokens={aiAssessment.Usage.TotalTokens}");
+
+            await _agentExecutionService.RecordUsageAsync(
+                executionId,
+                aiAssessment.Usage.InputTokens,
+                aiAssessment.Usage.OutputTokens,
+                aiAssessment.Usage.TotalTokens,
+                aiAssessment.Usage.Model);
+        }
+
+        if (aiAssessment != null &&
+            aiAssessment.Status.Equals(
+                "completed",
+                StringComparison.OrdinalIgnoreCase) &&
+            aiAssessment.Validation.ScoreValid &&
+            aiAssessment.Validation.ConfidenceValid &&
+            aiAssessment.Validation.EvidenceGrounded)
+        {
+            agentResult.RiskScore =
+                aiAssessment.RiskScore;
+
+            agentResult.RiskLevel =
+                aiAssessment.RiskLevel;
+
+            agentResult.Confidence =
+                aiAssessment.Confidence * 100.0;
+
+            if (!string.IsNullOrWhiteSpace(
+                    aiAssessment.PrimaryHazard))
+            {
+                agentResult.DisasterType =
+                    aiAssessment.PrimaryHazard;
+            }
+
+            agentResult.PredictionSource =
+                "ReliefNexus AI Agent + Gemini";
+
+            agentResult.ModelVersion =
+                "Gemini AI Risk Agent";
+
+            if (!string.IsNullOrWhiteSpace(
+                    aiAssessment.Reasoning))
+            {
+                agentResult.OfficialAlertSummary =
+                    string.IsNullOrWhiteSpace(
+                        agentResult.OfficialAlertSummary)
+                        ? aiAssessment.Reasoning
+                        : agentResult.OfficialAlertSummary;
+            }
+        }
         var prediction = new RiskPrediction
         {
             UserId = userId,
@@ -126,21 +195,6 @@ public class RiskPredictionService : IRiskPredictionService
 
         await _context.SaveChangesAsync();
 
-        // Keep only the latest 10 prediction records in the database.
-        // Whenever a new prediction is added, older records are removed.
-        var oldPredictions =
-            await _context.RiskPredictions
-                .Include(x => x.RiskFactors)
-                .OrderByDescending(x => x.CreatedAt)
-                .Skip(10)
-                .ToListAsync();
-
-        if (oldPredictions.Count > 0)
-        {
-            _context.RiskPredictions.RemoveRange(oldPredictions);
-            await _context.SaveChangesAsync();
-        }
-
         var response =
             MapToDto(prediction);
 
@@ -164,20 +218,65 @@ public class RiskPredictionService : IRiskPredictionService
             .Select(MapToDto)
             .ToList();
     }
-
-    public async Task<RiskPredictionDto?>
-        GetByIdAsync(Guid id)
+    public async Task<RiskPredictionDto?> GetByIdAsync(Guid id)
     {
         var prediction =
             await _context.RiskPredictions
                 .Include(x => x.RiskFactors)
-                .FirstOrDefaultAsync(
-                    x => x.Id == id);
+                .FirstOrDefaultAsync(x => x.Id == id);
 
-        return prediction == null
-            ? null
-            : MapToDto(prediction);
+        if (prediction == null)
+            return null;
+
+        var response = MapToDto(prediction);
+
+        // Rebuild Agent 01 multi-disaster results
+        // using the actual stored prediction inputs.
+        var agentInput = new RiskPredictionDto
+        {
+            Location = prediction.Location,
+            Latitude = prediction.Latitude,
+            Longitude = prediction.Longitude,
+
+            Rainfall1h = prediction.Rainfall1h,
+            Rainfall3h = prediction.Rainfall3h,
+            Rainfall24h = prediction.Rainfall24h,
+
+            RiverLevel = prediction.RiverLevel,
+            RiverFlow = prediction.RiverFlow,
+
+            Temperature = prediction.Temperature,
+            Humidity = prediction.Humidity,
+            WindSpeed = prediction.WindSpeed,
+
+            SoilMoisture = prediction.SoilMoisture,
+            Elevation = prediction.Elevation,
+            PopulationDensity = prediction.PopulationDensity,
+
+            HistoricalFloodCount =
+                prediction.HistoricalFloodCount,
+
+            HistoricalSeverity =
+                prediction.HistoricalSeverity,
+
+            DrainageCapacity =
+                prediction.DrainageCapacity,
+
+            ForecastRainfall =
+                prediction.ForecastRainfall
+        };
+
+        var agentResult =
+            await _agent.RunAsync(
+                agentInput,
+                Guid.NewGuid());
+
+        response.DisasterRisks =
+            agentResult.DisasterRisks;
+
+        return response;
     }
+
 
     public async Task<List<RiskPredictionDto>>
         GetByLocationAsync(
@@ -689,6 +788,13 @@ public class RiskPredictionService : IRiskPredictionService
         };
     }
 }
+
+
+
+
+
+
+
 
 
 

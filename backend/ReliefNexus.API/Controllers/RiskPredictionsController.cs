@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.AspNetCore.Mvc;
@@ -38,8 +38,8 @@ public class RiskPredictionsController : ControllerBase
         _volunteerAssignmentService;
 
     private readonly AppDbContext _context;
-
-    public RiskPredictionsController(
+    private readonly IDisasterReportService _disasterReportService;
+public RiskPredictionsController(
         IRiskPredictionService service,
         IAgentExecutionService agentExecutionService,
         DisasterDataTool disasterDataTool,
@@ -52,7 +52,8 @@ public class RiskPredictionsController : ControllerBase
         IResourceService resourceService,
         EarlyWarningCoordinationAgent earlyWarningCoordinationAgent,
         IVolunteerAssignmentService volunteerAssignmentService,
-        AppDbContext context)
+        AppDbContext context,
+        IDisasterReportService disasterReportService)
     {
         _service = service;
         _agentExecutionService = agentExecutionService;
@@ -77,9 +78,11 @@ public class RiskPredictionsController : ControllerBase
             volunteerAssignmentService;
 
         _context = context;
+        _disasterReportService = disasterReportService;
     }
 
     // ============================================================
+
     // CREATE RISK PREDICTION
     // ============================================================
 
@@ -596,6 +599,40 @@ public class RiskPredictionsController : ControllerBase
                 .FirstOrDefaultAsync(
                     x => x.RiskPredictionId == id);
 
+        if (report == null)
+        {
+            var currentUserId = GetCurrentUserId();
+
+            if (currentUserId == null)
+                return Unauthorized();
+
+            var reportRequest = new DisasterReportDto
+            {
+                DisasterType = result.DisasterType,
+                Description =
+                    $"Operational incident created from Agent 01 risk prediction {id}.",
+                Location = result.Location,
+                Latitude = result.Latitude,
+                Longitude = result.Longitude,
+                Severity = result.RiskLevel,
+                RiskPredictionId = id
+            };
+
+            var createdReport =
+                await _disasterReportService.CreateFromPredictionAsync(
+                    currentUserId.Value,
+                    id,
+                    reportRequest);
+
+            if (createdReport != null)
+            {
+                report =
+                    await _context.DisasterReports
+                        .FirstOrDefaultAsync(
+                            x => x.Id == createdReport.Id);
+            }
+        }
+
         if (report != null)
         {
             // ----------------------------------------------------
@@ -719,6 +756,10 @@ public class RiskPredictionsController : ControllerBase
         return Ok(result);
     }
 }
+
+
+
+
 
 
 
