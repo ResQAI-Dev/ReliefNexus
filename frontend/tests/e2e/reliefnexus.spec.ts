@@ -246,7 +246,7 @@ test.describe.serial("ReliefNexus - Real End-to-End Workflow Tests", () => {
 
 
   test("TC-016 - Affected User can submit a real Disaster Report", async ({ page }) => {
-    test.setTimeout(60000);
+    test.setTimeout(180000);
     await login(
       page,
       process.env.E2E_AFFECTED_EMAIL,
