@@ -1,4 +1,4 @@
-﻿using ReliefNexus.API.AI.Services;
+using ReliefNexus.API.AI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.FileProviders;
 using ReliefNexus.API.AI.Tools;
@@ -29,7 +29,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("FrontendPolicy", policy =>
     {
         policy
-            .WithOrigins("http://localhost:5173")
+            .WithOrigins("http://localhost:5173", "https://relief-nexus.vercel.app")
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -449,6 +449,7 @@ app.MapControllers();
 // ======================================================
 
 app.Run();
+
 
 
 
