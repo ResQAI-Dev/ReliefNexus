@@ -393,11 +393,8 @@ await SeedData.InitializeAsync(
 // HTTP REQUEST PIPELINE
 // ======================================================
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // ======================================================
 // HTTPS
@@ -452,6 +449,7 @@ app.MapControllers();
 // ======================================================
 
 app.Run();
+
 
 
 
