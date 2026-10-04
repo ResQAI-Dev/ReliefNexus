@@ -321,6 +321,12 @@ builder.Services.AddHttpClient<IPythonEarlyWarningService, PythonEarlyWarningSer
 });
 var app = builder.Build();
 
+var uploadsPath = Path.Combine(
+    builder.Environment.ContentRootPath,
+    "uploads");
+
+Directory.CreateDirectory(uploadsPath);
+
 // ======================================================
 // DATABASE / INITIAL SCHEMA
 // ======================================================
@@ -446,6 +452,7 @@ app.MapControllers();
 // ======================================================
 
 app.Run();
+
 
 
 
