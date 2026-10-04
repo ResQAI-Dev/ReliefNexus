@@ -1,7 +1,7 @@
-﻿import axios from "axios";
+import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:5115/api",
+  baseURL: "https://reliefnexus.onrender.com/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -45,5 +45,6 @@ api.interceptors.response.use(
 );
 
 export default api;
+
 
 
