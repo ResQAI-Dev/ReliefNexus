@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eff6ff"/><stop offset="1" stop-color="#dbeafe"/></linearGradient>
+ <linearGradient id="box" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f8fafc"/><stop offset="1" stop-color="#cbd5e1"/></linearGradient>
+</defs>
+<rect width="256" height="256" rx="32" fill="url(#bg)"/>
+<rect x="55" y="48" width="146" height="160" rx="18" fill="url(#box)" stroke="#94a3b8" stroke-width="4"/>
+<rect x="70" y="69" width="116" height="82" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="3"/>
+<path d="M92 124c13-28 25-36 36-36s23 8 36 36" fill="none" stroke="#2563eb" stroke-width="7" stroke-linecap="round"/>
+<circle cx="128" cy="105" r="10" fill="#f59e0b"/>
+<text x="128" y="177" text-anchor="middle" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#1e3a8a">FOOD</text>
+<text x="128" y="196" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" font-weight="600" fill="#64748b">RELIEF PACK</text>
+</svg>
