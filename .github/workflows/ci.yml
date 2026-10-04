@@ -27,6 +27,9 @@ jobs:
       - name: Restore backend dependencies
         run: dotnet restore backend/ReliefNexus.API/ReliefNexus.API.csproj
 
+      - name: Restore backend test dependencies
+        run: dotnet restore backend/ReliefNexus.API.Tests/ReliefNexus.API.Tests.csproj
+
       - name: Build backend
         run: dotnet build backend/ReliefNexus.API/ReliefNexus.API.csproj --no-restore --configuration Release
 
@@ -67,9 +70,11 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.35.7"
           channel: stable
           cache: true
+
+      - name: Check Flutter installation
+        run: flutter --version
 
       - name: Install Flutter dependencies
         working-directory: mobile
@@ -77,4 +82,6 @@ jobs:
 
       - name: Run Flutter tests
         working-directory: mobile
-        run: flutter test
+        run: flutter test --no-pub
+
+
