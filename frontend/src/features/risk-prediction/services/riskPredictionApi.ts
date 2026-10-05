@@ -6,7 +6,7 @@
 } from "../types/riskPrediction.types";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5115/api";
+  import.meta.env.VITE_API_BASE_URL ?? "https://reliefnexus.onrender.com/api";
 
 function getAccessToken(): string | null {
   const keys = ["accessToken", "token", "jwtToken"];
@@ -276,3 +276,4 @@ export async function rejectRiskPrediction(
     }
   );
 }
+
