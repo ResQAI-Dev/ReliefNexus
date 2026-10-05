@@ -1,4 +1,5 @@
 ﻿import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Activity,
   AlertTriangle,
@@ -542,7 +543,7 @@ const EmergencyAlertsPage: React.FC = () => {
       // This prevents the modal from jumping directly from Analysis to Warning.
       await wait(1200);
 
-      // Step 02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Agent 03 resource optimization.
+      // Step 02 ?f????s???,?? Agent 03 resource optimization.
       setAgentStep("resource");
 
       // Keep the Agent 03 stage visible even when the API responds very quickly.
@@ -551,7 +552,7 @@ const EmergencyAlertsPage: React.FC = () => {
       const resourceData = await optimizeResources(selectedAssessment.id);
       setAllocations(resourceData);
 
-      // Step 03 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Agent 04 early-warning coordination.
+      // Step 03 ?f????s???,?? Agent 04 early-warning coordination.
       setAgentStep("alert");
 
       // Give the UI a short transition so the user can clearly see
@@ -565,7 +566,7 @@ const EmergencyAlertsPage: React.FC = () => {
       await loadAll();
 
       setRunSuccess(
-        "Agent workflow completed successfully: Risk Prediction ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Vulnerability & Impact ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Resource Optimization ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Early Warning.",
+        "Agent workflow completed successfully: Risk Prediction -> Vulnerability & Impact -> Resource Optimization -> Early Warning.",
       );
       // Keep the modal open so the user can see the completed Agent 03
       // prediction/allocation result and the real Agent 04 warning.
@@ -712,7 +713,7 @@ const EmergencyAlertsPage: React.FC = () => {
             <div className="max-w-3xl">
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] backdrop-blur-md">
                 <Globe2 className="h-3.5 w-3.5" />
-                Early Warning & Coordination Ãƒâ€šÃ‚Â· Agent 04
+                Early Warning & Coordination ?f??s?,? Agent 04
               </div>
               <h2 className="text-3xl font-black leading-[1.02] tracking-tight sm:text-4xl lg:text-5xl">
                 From risk signal to coordinated{" "}
@@ -941,7 +942,7 @@ const EmergencyAlertsPage: React.FC = () => {
                   <h3 className="mt-4 text-lg font-black">Select an assessment</h3>
                   <p className="mt-2 text-sm leading-6 text-slate-500">
                     Select a row from the register to view the assessment and run
-                    the Agent 03 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Agent 04 workflow.
+                    the Agent 03 ?f???,????,??"? Agent 04 workflow.
                   </p>
                 </div>
               </div>
@@ -1059,8 +1060,8 @@ const EmergencyAlertsPage: React.FC = () => {
                         <path d="M7.2 4.4a1 1 0 0 1 1.55-.83l6.2 4.1a1 1 0 0 1 0 1.66l-6.2 4.1A1 1 0 0 1 7.2 12.6V4.4Z" />
                       </svg>
                       {selectedAlert
-                        ? "Run Again (Agent 03 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Agent 04)"
-                        : "Run Assessment (Agent 03 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Agent 04)"}
+                        ? "Run Again (Agent 03 + Agent 04)"
+                        : "Run Assessment (Agent 03 + Agent 04)"}
                     </button>
                   </div>
 
@@ -1281,7 +1282,7 @@ const EmergencyAlertsPage: React.FC = () => {
                     disabled={mapSearchLoading || !mapSearchQuery.trim()}
                     className="rounded-xl bg-slate-900 px-3 py-2 text-[10px] font-black text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    {mapSearchLoading ? "SearchingÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦" : "Search"}
+                    {mapSearchLoading ? "Searching?f????s??,?" : "Search"}
                   </button>
                 </div>
 
@@ -1568,7 +1569,7 @@ const EmergencyAlertsPage: React.FC = () => {
                         No emergency alerts generated yet.
                       </p>
                       <p className="mt-1 text-xs text-slate-400">
-                        Run Agent 03 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Agent 04 from a real Agent 02 assessment.
+                        Run Agent 03 ?f???,????,??"? Agent 04 from a real Agent 02 assessment.
                       </p>
                     </td>
                   </tr>
@@ -1992,7 +1993,7 @@ function RunModal({
     {
       no: "01",
       title: "Assessment Analysis",
-      owner: "Agent 01 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Agent 02",
+      owner: "Agent 01 + Agent 02",
       description:
         "Validate the selected risk, vulnerability, impact and exposure indicators before operational execution.",
     },
@@ -2200,26 +2201,26 @@ function RunModal({
         : "Review the generated warning and confirm the operational response posture.",
     },
     {
-      label: "0ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“1 H",
+      label: "01 H",
       title: "Coordinate resources",
       text: allocations.length
         ? `Coordinate ${allocations.length} Agent 03 allocation record${allocations.length === 1 ? "" : "s"} and confirm availability at the selected location.`
         : "Confirm resource availability and identify any response gaps.",
     },
     {
-      label: "1ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“6 H",
+      label: "16 H",
       title: "Reassess conditions",
       text: `${monitoringCadence} based on the current risk, vulnerability and impact indicators.`,
     },
     {
-      label: "6ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“24 H",
+      label: "24 H",
       title: "Update response posture",
       text: "Use the next validated assessment to confirm whether the response posture should be maintained, escalated or reduced.",
     },
   ];
 
   return (
-    <Modal title="Run Agent 04 Ãƒâ€šÃ‚Â· Emergency Coordination" onClose={onClose}>
+    <Modal title="Run Agent 04 — Emergency Coordination" onClose={onClose}>
       <div className="space-y-4">
         {/* HERO / INCIDENT IDENTITY */}
         <section className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-950 shadow-lg">
@@ -2241,7 +2242,7 @@ function RunModal({
                     {assessment.location || "Unknown location"}
                   </h2>
                   <p className="mt-1 text-xs font-semibold text-slate-200">
-                    {assessment.disasterType || "Disaster assessment"}  Agent 01 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Agent 02  Agent 03 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Agent 04
+                    {assessment.disasterType || "Disaster assessment"}  Agent 01 ?f???,????,??"? Agent 02  Agent 03 ?f???,????,??"? Agent 04
                   </p>
                 </div>
 
@@ -2819,7 +2820,7 @@ function RunModal({
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-[9px] font-black uppercase tracking-[0.18em] text-indigo-600">
-                        Agent 03 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Agent 04
+                        Agent 03 ?f???,????,??"? Agent 04
                       </p>
                       <h3 className="mt-1 text-sm font-black text-slate-900">
                         Resource deployment plan
@@ -3307,7 +3308,7 @@ function RunModal({
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700"
             >
               <span className="text-sm"></span>
-              Start Agent 03 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Agent 04
+              Start Agent 03 + Agent 04
             </button>
           )}
 
@@ -3774,9 +3775,9 @@ function Modal({
     return () => { document.body.style.overflow = previousOverflow; };
   }, []);
 
-  return (
+  const modal = (
     <div
-      className="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[9999] flex min-h-screen min-w-full items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       onMouseDown={(event) => {
@@ -3784,7 +3785,7 @@ function Modal({
       }}
     >
       <div
-        className="relative z-[2001] max-h-[94vh] w-full max-w-6xl overflow-y-auto overscroll-contain rounded-3xl bg-white shadow-2xl"
+        className="relative z-[10000] max-h-[94vh] w-full max-w-6xl overflow-y-auto overscroll-contain rounded-3xl bg-white shadow-2xl"
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white p-5">
@@ -3802,9 +3803,11 @@ function Modal({
       </div>
     </div>
   );
-}
 
+  return createPortal(modal, document.body);
+}
 export default EmergencyAlertsPage;
+
 
 
 

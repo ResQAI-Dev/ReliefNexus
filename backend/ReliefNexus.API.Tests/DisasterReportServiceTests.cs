@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using ReliefNexus.API.AI.Agents;
+using ReliefNexus.API.AI.Policies;
 using ReliefNexus.API.AI.Services;
 using ReliefNexus.API.Data;
 using ReliefNexus.API.Interfaces;
@@ -22,7 +23,8 @@ public class DisasterReportServiceTests
             new EarlyWarningCoordinationAgent(
                 context,
                 Mock.Of<IAgentExecutionService>(),
-                Mock.Of<IPythonEarlyWarningService>()),
+                Mock.Of<IPythonEarlyWarningService>(),
+                Mock.Of<IAgentToolPolicyService>()),
             Mock.Of<IEmailService>(),
             Mock.Of<Microsoft.AspNetCore.Http.IHttpContextAccessor>());
     }
@@ -138,3 +140,5 @@ public class DisasterReportServiceTests
         Assert.Equal("Assigned", savedReport.Status);
     }
 }
+
+

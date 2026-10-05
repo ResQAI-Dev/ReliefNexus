@@ -1677,7 +1677,7 @@ export function AdminProfileModule({
                     ? "bg-emerald-400/20 text-emerald-100"
                     : "bg-red-400/20 text-red-100"
                 }`}>
-                  â— {active ? "Active account" : "Inactive account"}
+                  ?-? {active ? "Active account" : "Inactive account"}
                 </span>
               </div>
             </div>
@@ -1702,7 +1702,7 @@ export function AdminProfileModule({
           </p>
           <div className="mt-3 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-              <span className="text-lg">âœ“</span>
+              <span className="text-lg">?o"</span>
             </div>
             <div>
               <p className="text-sm font-black text-slate-900">
@@ -1721,7 +1721,7 @@ export function AdminProfileModule({
           </p>
           <div className="mt-3 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600">
-              <span className="text-lg">â—†</span>
+              <span className="text-lg">?-?</span>
             </div>
             <div>
               <p className="text-sm font-black text-slate-900">
@@ -1740,7 +1740,7 @@ export function AdminProfileModule({
           </p>
           <div className="mt-3 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-              <span className="text-lg">â—·</span>
+              <span className="text-lg">?-?</span>
             </div>
             <div>
               <p className="text-sm font-black text-slate-900">

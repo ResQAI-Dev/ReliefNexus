@@ -5065,7 +5065,7 @@ const AIAgentMonitoringSection = ({
                   <td className="px-4 py-4 font-mono text-slate-700">
                     {agent.runs > 0
                       ? formatNumber(agent.averageTokens)
-                      : "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÂ¢ÃƒÆ’Â¢ÃƒÂ¢Ã¢â‚¬Å¡Â¬Ãƒâ€¦Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÂ¬ÃƒÆ’Ã†â€™Ãƒâ€šÂ¢ÃƒÆ’Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÂ¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÂ"}
+                      : "N/A"}
                   </td>
 
                   <td className="px-4 py-4 font-mono text-slate-700">

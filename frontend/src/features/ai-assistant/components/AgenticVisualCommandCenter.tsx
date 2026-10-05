@@ -123,7 +123,7 @@ export default function AgenticVisualCommandCenter({
           </div>
 
           <div className="rn-agentic-credit">
-            Real disaster-response photo Â· CC BY 2.0 Â· Wikimedia Commons
+            Real disaster-response photo ? CC BY 2.0 ? Wikimedia Commons
           </div>
         </div>
       )}
@@ -132,7 +132,7 @@ export default function AgenticVisualCommandCenter({
         <div className="rn-agentic-section-head">
           <div>
             <span className="rn-agentic-mini-label">SUPERVISED AGENTIC LOOP</span>
-            <h3>Goal â†’ Plan â†’ Act â†’ Observe â†’ Re-plan</h3>
+            <h3>Goal ??' Plan ??' Act ??' Observe ??' Re-plan</h3>
           </div>
           <div className="rn-supervisor-pill">
             <CircleDot size={14} /> ASP.NET governed execution
@@ -190,7 +190,7 @@ export default function AgenticVisualCommandCenter({
               </span>
 
               <h3>
-                Agent {activeAgent.id} â€” {activeAgent.name}
+                Agent {activeAgent.id} ??" {activeAgent.name}
               </h3>
 
               <p>
@@ -215,7 +215,7 @@ export default function AgenticVisualCommandCenter({
             <div>
               <span>Dynamic Plan</span>
               <strong>
-                Goal â†’ Plan â†’ Execute â†’ Observe â†’ Re-plan
+                Goal ??' Plan ??' Execute ??' Observe ??' Re-plan
               </strong>
             </div>
 
