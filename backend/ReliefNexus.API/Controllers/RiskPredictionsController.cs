@@ -429,6 +429,56 @@ public RiskPredictionsController(
     // AGENT EXECUTIONS
     // ============================================================
 
+    public record AgentExecutionApprovalRequest(string Status);
+
+    [HttpPut("agent-executions/{id:guid}/approval")]
+    [Authorize(Policy = "Permission:AI Agent Monitoring")]
+    public async Task<ActionResult<RiskAgentExecution>> UpdateAgentExecutionApproval(
+        Guid id,
+        AgentExecutionApprovalRequest request)
+    {
+        var allowedStatuses = new[] { "Approved", "Rejected", "NeedsRevision" };
+
+        if (!allowedStatuses.Contains(request.Status))
+            return BadRequest(new
+            {
+                message = "Invalid approval status."
+            });
+
+        var execution = await _context.RiskAgentExecutions
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (execution == null)
+            return NotFound(new
+            {
+                message = "Agent execution not found."
+            });
+
+        var allowedAgents = new[]
+        {
+            "Risk Prediction Agent",
+            "Vulnerability & Impact Agent",
+            "Resource Optimization Agent",
+            "Early Warning & Coordination Agent"
+        };
+
+        if (!allowedAgents.Contains(execution.AgentName))
+            return BadRequest(new
+            {
+                message = "This agent does not support human approval."
+            });
+
+        var approvalUser =
+            User.Identity?.Name ?? "Authenticated User";
+
+        var updated =
+            await _agentExecutionService.RecordApprovalAsync(
+                execution.Id,
+                request.Status,
+                approvalUser);
+
+        return Ok(updated);
+    }
     [HttpGet("agent-executions")]
     public async Task<ActionResult<List<RiskAgentExecution>>>
         GetAgentExecutions()
@@ -756,6 +806,7 @@ public RiskPredictionsController(
         return Ok(result);
     }
 }
+
 
 
 
