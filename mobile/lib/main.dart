@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
+ HEAD
 import 'theme/app_theme.dart';
 import 'views/dashboard_screen.dart';
 
@@ -27,7 +27,7 @@ class ReliefNexusApp extends StatelessWidget {
       home: const DashboardScreen(),
     );
   }
-=======
+
 import 'package:provider/provider.dart';
 
 import 'app/app.dart';
@@ -42,5 +42,5 @@ void main() {
       child: const ReliefNexusApp(),
     ),
   );
->>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
+e607c09081109747a894baa16772e0eb4a19a0ef
 }
