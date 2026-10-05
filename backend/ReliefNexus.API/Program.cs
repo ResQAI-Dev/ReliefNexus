@@ -85,11 +85,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Core Services
 // ------------------------------------------------------
 
-<<<<<<< HEAD
+ HEAD
 // Component 2 – Population Vulnerability & Impact Assessment
 builder.Services.AddScoped<IVulnerabilityService, VulnerabilityService>();
 
-=======
+
 builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddScoped<
@@ -203,7 +203,7 @@ builder.Services.AddHttpClient<
 
 builder.Services.AddHttpClient<
     DrainageDataTool>();
->>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
+ e607c09081109747a894baa16772e0eb4a19a0ef
 // ======================================================
 // JWT AUTHENTICATION
 // ======================================================
