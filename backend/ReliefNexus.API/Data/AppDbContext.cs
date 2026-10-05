@@ -17,19 +17,19 @@ public class AppDbContext : DbContext
     // =========================================================================
 
     public DbSet<User> Users { get; set; }
-<<<<<<< HEAD
+ HEAD
 
     // =========================================================================
     // Component 1 – Risk Prediction (from develop)
     // =========================================================================
 
-=======
+
     public DbSet<DisasterReport> DisasterReports { get; set; }
     public DbSet<ReliefRequest> ReliefRequests { get; set; }
     public DbSet<LocationShare> LocationShares { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
     public DbSet<Notification> Notifications { get; set; }
->>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
+ e607c09081109747a894baa16772e0eb4a19a0ef
     public DbSet<RiskPrediction> RiskPredictions { get; set; }
     public DbSet<RiskAgentExecution> RiskAgentExecutions { get; set; }
     public DbSet<VulnerabilityAssessment> VulnerabilityAssessments { get; set; }
@@ -71,7 +71,7 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-<<<<<<< HEAD
+ HEAD
         // ─────────────────────────────────────────────────────────────────────
         // Component 1 – Risk Prediction (from develop)
         // ─────────────────────────────────────────────────────────────────────
@@ -181,7 +181,7 @@ public class AppDbContext : DbContext
         });
     }
 }
-=======
+
         modelBuilder.Entity<User>()
             .Property(u => u.Permissions)
             .HasColumnType("jsonb")
@@ -228,4 +228,4 @@ public class AppDbContext : DbContext
 
 
 
->>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
+e607c09081109747a894baa16772e0eb4a19a0ef
