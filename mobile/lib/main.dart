@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'theme/app_theme.dart';
 import 'views/dashboard_screen.dart';
 import 'features/auth/providers/auth_provider.dart';
-import 'package:reliefnexus_mobile/main.dart';
+
 /// Main entry point for the ReliefNexus Flutter application.
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
