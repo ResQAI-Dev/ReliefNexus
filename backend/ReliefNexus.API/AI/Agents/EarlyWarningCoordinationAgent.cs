@@ -27,7 +27,8 @@ public class EarlyWarningCoordinationAgent
     }
 
     public async Task<EmergencyAlert?> CreateAlertAsync(
-        Guid vulnerabilityAssessmentId)
+        Guid vulnerabilityAssessmentId,
+        Guid? existingExecutionId = null)
     {
         var assessment =
             await _context.VulnerabilityAssessments
@@ -37,34 +38,63 @@ public class EarlyWarningCoordinationAgent
         if (assessment == null)
             return null;
 
-        var execution =
-            await _agentExecutionService.StartAsync(
-                $"VulnerabilityAssessmentId={assessment.Id}; " +
-                $"RiskPredictionId={assessment.RiskPredictionId}; " +
-                $"Location={assessment.Location}; " +
-                $"DisasterType={assessment.DisasterType}; " +
-                $"RiskScore={assessment.RiskScore:F2}; " +
-                $"RiskLevel={assessment.RiskLevel}; " +
-                $"VulnerabilityScore={assessment.VulnerabilityScore:F2}; " +
-                $"VulnerabilityLevel={assessment.VulnerabilityLevel}; " +
-                $"ImpactScore={assessment.ImpactScore:F2}; " +
-                $"ImpactLevel={assessment.ImpactLevel}; " +
-                $"AffectedPopulation={assessment.AffectedPopulation}",
+        RiskAgentExecution? execution;
 
-                "Create and coordinate an early warning emergency alert " +
-                "using the validated Agent 01 risk prediction, Agent 02 " +
-                "vulnerability and impact assessment, and Agent 03 resource allocation.",
+        if (existingExecutionId.HasValue)
+        {
+            execution =
+                await _context.RiskAgentExecutions
+                    .FirstOrDefaultAsync(
+                        x => x.Id == existingExecutionId.Value);
 
-                "1. Load vulnerability assessment; " +
-                "2. Check existing emergency alert; " +
-                "3. Load Agent 03 resource allocations; " +
-                "4. Determine severity; " +
-                "5. Build warning message and coordination actions; " +
-                "6. Persist emergency alert; " +
-                "7. Validate alert output.",
+            if (execution == null)
+                return null;
 
-                "Early Warning & Coordination Agent"
-            );
+            if (execution.AgentName !=
+                "Early Warning & Coordination Agent")
+                return null;
+
+            if (execution.ApprovalStatus != "Approved")
+                return null;
+
+            execution.CurrentStep =
+                "Approved - Agent 04 execution resumed";
+
+            execution.Status = "Running";
+
+            await _context.SaveChangesAsync();
+        }
+        else
+        {
+            execution =
+                await _agentExecutionService.StartAsync(
+                    $"VulnerabilityAssessmentId={assessment.Id}; " +
+                    $"RiskPredictionId={assessment.RiskPredictionId}; " +
+                    $"Location={assessment.Location}; " +
+                    $"DisasterType={assessment.DisasterType}; " +
+                    $"RiskScore={assessment.RiskScore:F2}; " +
+                    $"RiskLevel={assessment.RiskLevel}; " +
+                    $"VulnerabilityScore={assessment.VulnerabilityScore:F2}; " +
+                    $"VulnerabilityLevel={assessment.VulnerabilityLevel}; " +
+                    $"ImpactScore={assessment.ImpactScore:F2}; " +
+                    $"ImpactLevel={assessment.ImpactLevel}; " +
+                    $"AffectedPopulation={assessment.AffectedPopulation}",
+
+                    "Create and coordinate an early warning emergency alert " +
+                    "using the validated Agent 01 risk prediction, Agent 02 " +
+                    "vulnerability and impact assessment, and Agent 03 resource allocation.",
+
+                    "1. Load vulnerability assessment; " +
+                    "2. Check existing emergency alert; " +
+                    "3. Load Agent 03 resource allocations; " +
+                    "4. Determine severity; " +
+                    "5. Build warning message and coordination actions; " +
+                    "6. Persist emergency alert; " +
+                    "7. Validate alert output.",
+
+                    "Early Warning & Coordination Agent"
+                );
+        }
 
         var completedSteps = new List<string>();
 
@@ -817,6 +847,8 @@ await _agentExecutionService.UpdateStepAsync(
         return errors;
     }
 }
+
+
 
 
 

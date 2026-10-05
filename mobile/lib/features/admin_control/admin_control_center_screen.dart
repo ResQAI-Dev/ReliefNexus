@@ -7,6 +7,7 @@ import 'package:reliefnexus_mobile/features/role_requests/presentation/screens/r
 import 'package:reliefnexus_mobile/features/disaster_reports/presentation/screens/disaster_reports_screen.dart';
 import 'package:reliefnexus_mobile/features/risk_predictions/presentation/screens/risk_predictions_screen.dart';
 import 'package:reliefnexus_mobile/features/vulnerability_impact/presentation/screens/vulnerability_impact_screen.dart';
+import 'package:reliefnexus_mobile/features/admin_control/system_monitoring_pro_page.dart';
 
 class AdminControlCenterPage extends StatefulWidget {
   const AdminControlCenterPage({super.key});
@@ -802,7 +803,7 @@ class AdminSystemMonitoringPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _SystemHealthPage();
+    return const SystemMonitoringProPage();
   }
 }
 

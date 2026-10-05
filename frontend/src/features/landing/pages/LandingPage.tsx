@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../../../components/layout/Navbar";
 
@@ -208,6 +208,7 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#f4f8fc] text-[#07182f]">
+      <div className="rn-landing-real-photo" style={{ backgroundImage: `url("https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Woman_in_Sri_Lanka_rescued_during_monsoon_flooding.jpg/1024px-Woman_in_Sri_Lanka_rescued_during_monsoon_flooding.jpg")` }} aria-hidden="true" />
       <style>{`
         html { scroll-behavior: smooth; }
 
@@ -1086,5 +1087,6 @@ const LandingPage = () => {
 /* Light premium surface refinements */
 
 export default LandingPage;
+
 
 

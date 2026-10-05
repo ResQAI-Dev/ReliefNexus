@@ -1,7 +1,8 @@
-import { useMemo, useState, type ReactNode, type ChangeEvent } from "react";
+﻿import { useMemo, useState, type ReactNode, type ChangeEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import Sidebar from "./Sidebar";
+import FloatingAIAssistant from "../../features/ai-assistant/components/FloatingAIAssistant";
 
 interface SidebarItem {
   label: string;
@@ -53,9 +54,12 @@ const LogoMark = () => (
 );
 
 const DashboardLayout = ({ sidebarItems, children }: DashboardLayoutProps) => {
-  const { user, logout } = useAuth();
+const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const showCommandPulse =
+    location.pathname === "/dashboard/user" ||
+    location.pathname === "/dashboard/system-administrator";
 
   const [search, setSearch] = useState("");
   const [profileOpen, setProfileOpen] = useState(false);
@@ -381,14 +385,40 @@ const DashboardLayout = ({ sidebarItems, children }: DashboardLayoutProps) => {
           </div>
         </header>
 
+
+        {showCommandPulse && (
+          <div className="rn-command-pulse">
+            <div className="rn-command-photo" />
+            <div className="rn-command-photo-overlay" />
+            <div className="rn-command-content">
+              <div className="rn-command-robot"><span>AI</span></div>
+              <div>
+                <span className="rn-command-eyebrow"><i /> RELIEFNEXUS RESPONSE NETWORK</span>
+                <h2>{role === "System Administrator" ? "Command the response with governed AI." : "Stay ahead of the next emergency."}</h2>
+                <p>{role === "System Administrator"
+                  ? "Monitor specialist agents, review approvals and keep every high-impact action traceable."
+                  : "Risk intelligence, warnings, resources and field response are connected in one operational workspace."}</p>
+              </div>
+              <div className="rn-command-metrics">
+                <span><b>05</b> AI agents</span>
+                <span><b>24/7</b> response</span>
+                <span><b>HITL</b> governance</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Page content */}
         <main className="min-h-[calc(100vh-72px)]">
           {children}
         </main>
       </div>
+      <FloatingAIAssistant />
     </div>
   );
 };
 
 export default DashboardLayout;
+
+
 

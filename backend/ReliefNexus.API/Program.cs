@@ -36,7 +36,8 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins("http://localhost:5173", "https://relief-nexus.vercel.app")
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+                    .AllowCredentials();
     });
 });
 
@@ -324,6 +325,16 @@ builder.Services.AddHttpClient<IPythonEarlyWarningService, PythonEarlyWarningSer
 
     client.Timeout = TimeSpan.FromSeconds(60);
 });
+
+builder.Services.AddHttpClient<IPythonOrchestratorService, PythonOrchestratorService>(client =>
+{
+    client.BaseAddress = new Uri(
+        builder.Configuration["AIService:BaseUrl"]
+        ?? "http://127.0.0.1:8000");
+
+    client.Timeout = TimeSpan.FromSeconds(180);
+});
+
 var app = builder.Build();
 
 var uploadsPath = Path.Combine(
@@ -489,6 +500,7 @@ app.MapGet("/health", () =>
         timestamp = DateTime.UtcNow
     }))
     .AllowAnonymous();
+
 
 
 

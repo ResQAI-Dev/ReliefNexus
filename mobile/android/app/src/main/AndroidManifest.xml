@@ -1,4 +1,5 @@
-﻿<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
     <application android:usesCleartextTraffic="true"
         android:label="reliefnexus_mobile"
         android:name="${applicationName}"
@@ -43,4 +44,6 @@
         </intent>
     </queries>
 </manifest>
+
+
 

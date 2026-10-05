@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -921,7 +921,7 @@ export default function DisasterReportsPage({ users: suppliedUsers }: Props) {
       await Promise.allSettled([
         api.get("/disaster-reports"),
         api.get("/risk-predictions/history"),
-        api.get("/vulnerability-impact"),
+        Promise.resolve({ data: [] }),
         api.get("/emergency-alerts"),
       ]);
 

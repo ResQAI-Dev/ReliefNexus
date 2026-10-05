@@ -13,6 +13,8 @@ import { useAuth } from "../../../context/AuthContext";
 import DashboardLayout from "../../../components/layout/DashboardLayout";
 import RiskPredictionPage from "../../risk-prediction/pages/RiskPredictionPage";
 import ResourceOptimizationPage from "../../resource-optimization/pages/ResourceOptimizationPage";
+import AgenticVisualCommandCenter from "../../ai-assistant/components/AgenticVisualCommandCenter";
+import AdvancedAIAgentWorkspace from "../../ai-assistant/pages/AdvancedAIAgentWorkspace";
 import FieldVolunteerDisasterReports from "../components/FieldVolunteerDisasterReports";
 
 import {
@@ -38,7 +40,13 @@ type SectionId =
   | "resources"
   | "location"
   | "profile"
-  | "field";
+  | "field"
+  | "ai-risk"
+  | "ai-vulnerability"
+  | "ai-resource"
+  | "ai-warning"
+  | "ai-operations"
+  | "ai-volunteer";
 
 interface RiskPrediction {
   id?: string;
@@ -130,11 +138,11 @@ const ROLE_CONFIG: Record<
     menu: [
       "dashboard",
       "reports",
-      "requests",
       "alerts",
-      "risk",
-      "resources",
       "location",
+      "ai-risk",
+      "ai-operations",
+      "ai-warning",
       "profile",
     ],
     quickActions: ["reports", "requests", "location", "alerts"],
@@ -147,11 +155,12 @@ const ROLE_CONFIG: Record<
     menu: [
       "dashboard",
       "reports",
-      "requests",
       "alerts",
-      "risk",
       "location",
       "field",
+      "ai-risk",
+      "ai-operations",
+      "ai-warning",
       "profile",
     ],
     quickActions: ["reports", "requests", "risk", "alerts"],
@@ -166,10 +175,13 @@ const ROLE_CONFIG: Record<
       "reports",
       "requests",
       "alerts",
-      "risk",
       "resources",
-      "profile",
-    ],
+      "ai-risk",
+      "ai-operations",
+      "ai-vulnerability",
+      "ai-resource",
+      "ai-warning",
+      "profile",    ],
     quickActions: ["requests", "risk", "resources", "alerts"],
   },
 };
@@ -204,9 +216,37 @@ const UserDashboard = () => {
     location: "Share Location",
     profile: null,
     field: null,
-  };
+    "ai-operations": null,
+    "ai-risk": null,
+    "ai-vulnerability": null,
+    "ai-resource": null,
+    "ai-warning": null,
+    "ai-volunteer": null,
+  };  const canAccessSection = (section: SectionId) => {
+    if (
+      section === "ai-vulnerability" ||
+      section === "ai-resource" ||
+      section === "ai-volunteer"
+    ) {
+      return role === "ReliefCoordinator";
+    }
 
-  const canAccessSection = (section: SectionId) => {
+    if (section === "ai-warning") {
+      return (
+        role === "AffectedUser" ||
+        role === "FieldVolunteer" ||
+        role === "ReliefCoordinator"
+      );
+    }
+
+    if (section === "ai-risk") {
+      return (
+        role === "AffectedUser" ||
+        role === "FieldVolunteer" ||
+        role === "ReliefCoordinator"
+      );
+    }
+
     const permission = sectionPermission[section];
     return permission === null || hasPermission(permission);
   };
@@ -251,7 +291,13 @@ const UserDashboard = () => {
       risk: "Risk Prediction",
       resources: "Relief Resources",
       location: "Location Sharing",
-      field: "Field Operations",
+      field: "Field Operations",    "ai-operations": "AI Operations Center",
+
+      "ai-risk": "Risk Prediction AI",
+      "ai-vulnerability": "Vulnerability & Impact AI",
+      "ai-resource": "Resource Optimization AI",
+      "ai-warning": "Early Warning & Coordination AI",
+      "ai-volunteer": "Volunteer Assignment AI",
       profile: "Profile",
     };
 
@@ -263,7 +309,13 @@ const UserDashboard = () => {
       risk: <ChartIcon />,
       resources: <LayersIcon />,
       location: <LocationIcon />,
-      field: <AlertTriangleIcon />,
+      field: <AlertTriangleIcon />,    "ai-operations": <LayersIcon />,
+
+      "ai-risk": <ChartIcon />,
+      "ai-vulnerability": <AlertTriangleIcon />,
+      "ai-resource": <LayersIcon />,
+      "ai-warning": <BellIcon />,
+      "ai-volunteer": <UserIcon />,
       profile: <UserIcon />,
     };
 
@@ -543,9 +595,17 @@ const UserDashboard = () => {
     >
       <div className="min-h-screen bg-[radial-gradient(circle_at_top,#ffffff_0,#f1f5fa_42%,#eaf0f8_100%)]">
         <div className="mx-auto w-full max-w-[1540px] px-4 py-5 sm:px-6 lg:px-8 xl:px-10">
+          {/* =====================================================
+              AI OPERATIONS CENTER
+             ===================================================== */}
+
+          {currentSection === "ai-operations" && (
+            <AgenticVisualCommandCenter />
+          )}
+
           {currentSection === "dashboard" && (
             <>
-              {/* ==========================================================
+          {/* ==========================================================
                   REFERENCE-STYLE HERO
                  ========================================================== */}
               <section
@@ -1243,11 +1303,35 @@ const UserDashboard = () => {
                 <AlertsContent alerts={alerts} loading={loading} />
               </DashboardCard>
             </PageShell>
+          )}          {currentSection === "ai-risk" && (
+            <RiskPredictionPage />
           )}
 
-            {currentSection === "risk" && (
-              <RiskPredictionPage />
+          {/* =====================================================
+              COORDINATOR AI OPTIMIZATION
+              Same Agent 01-04 mapping used by Admin AI Operations
+             ===================================================== */}
+
+
+          {currentSection === "ai-vulnerability" &&
+            role === "ReliefCoordinator" && (
+              <AdvancedAIAgentWorkspace agent="vulnerability" />
             )}
+
+          {currentSection === "ai-resource" &&
+            role === "ReliefCoordinator" && (
+              <AdvancedAIAgentWorkspace agent="resource" />
+            )}
+
+          {currentSection === "ai-warning" &&
+            (role === "AffectedUser" ||
+              role === "FieldVolunteer" ||
+              role === "ReliefCoordinator") && (
+              <AdvancedAIAgentWorkspace agent="warning" />
+            )}
+          {currentSection === "risk" && (
+            <RiskPredictionPage />
+          )}
 
             {currentSection === "resources" && (
               <ResourceOptimizationPage />
@@ -2934,6 +3018,10 @@ const getCurrentSection = (pathname: string): SectionId => {
   }
 
   if (pathname.endsWith("/emergency-alerts")) return "alerts";
+  if (pathname.endsWith("/ai-risk")) return "ai-risk";
+  if (pathname.endsWith("/ai-vulnerability")) return "ai-vulnerability";
+  if (pathname.endsWith("/ai-resource")) return "ai-resource";
+  if (pathname.endsWith("/ai-warning")) return "ai-warning";
   if (pathname.endsWith("/risk-prediction")) return "risk";
     if (pathname.endsWith("/risk-information")) return "risk";
   if (pathname.endsWith("/relief-resources")) return "resources";
@@ -2946,7 +3034,13 @@ const getCurrentSection = (pathname: string): SectionId => {
 
 const sectionRoute = (section: SectionId) => {
   const routes: Record<Exclude<SectionId, "dashboard">, string> = {
-    reports: "reports",
+    reports: "reports",    "ai-operations": "ai-operations",
+
+    "ai-risk": "ai-risk",
+    "ai-vulnerability": "ai-vulnerability",
+    "ai-resource": "ai-resource",
+    "ai-warning": "ai-warning",
+    "ai-volunteer": "ai-volunteer",
     requests: "my-requests",
     alerts: "emergency-alerts",
     risk: "risk-prediction",
@@ -3090,6 +3184,43 @@ const ShieldCheckIcon = () => (
 
 
 export default UserDashboard;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

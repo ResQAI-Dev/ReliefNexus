@@ -330,3 +330,38 @@ select {
 }
 /* ===== END RELIEFNEXUS PREMIUM RISK PREDICTION UI ===== */
 
+
+
+/* ===== RELIEFNEXUS AGENTIC ASSISTANT POLISH ===== */
+.rn-ai-fab{position:fixed;animation:rnFabFloat 4s ease-in-out infinite;overflow:visible}
+.rn-ai-fab::before{content:"";position:absolute;inset:-7px;border:1px solid rgba(56,189,248,.28);border-radius:50%;animation:rnFabPulse 2.8s ease-out infinite;pointer-events:none}
+.rn-float-bot{animation:rnFabFloat 3.5s ease-in-out infinite}
+@keyframes rnFabFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes rnFabPulse{0%{transform:scale(.86);opacity:.65}80%,100%{transform:scale(1.25);opacity:0}}
+/* ===== END RELIEFNEXUS AGENTIC ASSISTANT POLISH ===== */
+
+
+/* ===== RELIEFNEXUS COMMAND PULSE ===== */
+.rn-command-pulse{position:relative;min-height:142px;margin:18px 22px 0;overflow:hidden;border:1px solid rgba(148,197,226,.2);border-radius:24px;background:#061a31;box-shadow:0 18px 45px rgba(7,28,54,.12)}
+.rn-command-photo{position:absolute;inset:0;background:url("https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Woman_in_Sri_Lanka_rescued_during_monsoon_flooding.jpg/1024px-Woman_in_Sri_Lanka_rescued_during_monsoon_flooding.jpg") center 48%/cover no-repeat;opacity:.34;animation:rnCommandPhoto 14s ease-in-out infinite alternate}
+.rn-command-photo-overlay{position:absolute;inset:0;background:linear-gradient(90deg,#061a31 0%,rgba(6,26,49,.95) 42%,rgba(6,26,49,.55) 72%,rgba(6,26,49,.68) 100%)}
+.rn-command-content{position:relative;z-index:2;display:flex;align-items:center;gap:16px;min-height:142px;padding:20px 24px;color:#fff}
+.rn-command-robot{width:48px;height:48px;display:grid;place-items:center;flex:none;border:1px solid rgba(125,211,252,.32);border-radius:15px;background:linear-gradient(145deg,#143e61,#0b233e);box-shadow:0 0 28px rgba(56,189,248,.18);animation:rnCommandRobot 3.6s ease-in-out infinite}
+.rn-command-robot span{color:#75e2ff;font-size:10px;font-weight:950;letter-spacing:.08em}
+.rn-command-eyebrow{display:flex;align-items:center;gap:7px;color:#83dcff;font-size:7px;font-weight:900;letter-spacing:.18em}
+.rn-command-eyebrow i{width:6px;height:6px;border-radius:50%;background:#34d399;box-shadow:0 0 0 4px rgba(52,211,153,.1)}
+.rn-command-content h2{margin:5px 0 0;font-size:18px;line-height:1.05;font-weight:950;letter-spacing:-.035em}
+.rn-command-content p{max-width:610px;margin:6px 0 0;color:rgba(226,242,254,.63);font-size:9px;line-height:1.55}
+.rn-command-metrics{display:flex;gap:7px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+.rn-command-metrics span{border:1px solid rgba(255,255,255,.1);border-radius:12px;background:rgba(255,255,255,.07);padding:9px 10px;color:rgba(226,242,254,.62);font-size:7px;font-weight:800;white-space:nowrap}
+.rn-command-metrics b{display:block;color:#fff;font-size:12px}
+@keyframes rnCommandPhoto{from{transform:scale(1.03)}to{transform:scale(1.09) translateX(-.8%)}}
+@keyframes rnCommandRobot{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@media(max-width:900px){.rn-command-pulse{margin:12px 12px 0}.rn-command-content{padding:18px}.rn-command-metrics{display:none}.rn-command-content h2{font-size:16px}}
+@media(max-width:560px){.rn-command-robot{width:40px;height:40px}.rn-command-content p{display:none}.rn-command-content h2{font-size:14px}}
+/* ===== END RELIEFNEXUS COMMAND PULSE ===== */
+
+
+/* Real disaster-response visual layer on the public landing experience */
+.rn-landing-real-photo{position:absolute;top:78px;right:-8%;z-index:0;width:46%;height:560px;pointer-events:none;background-position:center;background-size:cover;border-radius:40px 0 0 40px;opacity:.055;filter:saturate(.8) contrast(1.05);animation:rnLandingPhoto 18s ease-in-out infinite alternate}
+@keyframes rnLandingPhoto{from{transform:scale(1.01) translateX(0)}to{transform:scale(1.06) translateX(-1.5%)}}

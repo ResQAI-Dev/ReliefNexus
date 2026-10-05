@@ -1,4 +1,4 @@
-import {
+﻿import {
   Activity,
   AlertTriangle,
   Boxes,
@@ -36,7 +36,10 @@ import {
 
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import api from "../../../lib/api/apiClient";
+import api, {
+  getVulnerabilityImpactShared,
+  getRiskPredictionsShared,
+} from "../../../lib/api/apiClient";
 
 import {
   useResourceOptimization,
@@ -2544,7 +2547,7 @@ export default function ResourceOptimizationPage() {
     // Agent 02 assessments must load independently.
     // A failure in risk-predictions must not hide valid Agent 02 assessments.
     try {
-      const response = await api.get("/vulnerability-impact");
+      const response = await getVulnerabilityImpactShared();
       loadedAssessments = toArray<VulnerabilityAssessmentSummary>(
         unwrapApiData(response)
       );
@@ -2553,7 +2556,7 @@ export default function ResourceOptimizationPage() {
     }
 
     try {
-      const response = await api.get("/risk-predictions");
+      const response = await getRiskPredictionsShared();
       loadedRiskPredictions = toArray<RiskPredictionSummary>(
         unwrapApiData(response)
       );
@@ -2625,7 +2628,7 @@ export default function ResourceOptimizationPage() {
       setAssessmentError("");
 
       try {
-        const response = await api.get("/vulnerability-impact");
+        const response = await getVulnerabilityImpactShared();
         const data = toArray<VulnerabilityAssessmentSummary>(
           unwrapApiData(response)
         );
@@ -3057,7 +3060,7 @@ export default function ResourceOptimizationPage() {
       // Always refresh the real Agent 01 prediction context first so the
       // prediction result is visible together with Agent 02/03 results.
       try {
-        const predictionResponse = await api.get("/risk-predictions");
+        const predictionResponse = await getRiskPredictionsShared();
         const latestPredictions = toArray<RiskPredictionSummary>(
           unwrapApiData(predictionResponse)
         );
@@ -3124,7 +3127,7 @@ export default function ResourceOptimizationPage() {
     // before the user starts the Agent 03 analysis.
     void (async () => {
       try {
-        const predictionResponse = await api.get("/risk-predictions");
+        const predictionResponse = await getRiskPredictionsShared();
         setRiskPredictions(
           toArray<RiskPredictionSummary>(unwrapApiData(predictionResponse))
         );
@@ -6056,4 +6059,5 @@ function MiniMetric({
     </div>
   );
 }
+
 

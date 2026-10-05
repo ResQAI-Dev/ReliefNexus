@@ -1,4 +1,4 @@
-/* =========================================================
+﻿/* =========================================================
    RELIEFNEXUS  PROFESSIONAL LANDING PAGE
    SKY BLUE / NAVY THEME
 ========================================================= */
@@ -3238,8 +3238,7 @@ select {
       rgba(3, 24, 38, .94) 0%,
       rgba(3, 42, 61, .83) 48%,
       rgba(4, 73, 94, .67) 100%
-    ),
-    url("./assets/img1.png");
+    );
 
   background-size: cover;
   background-position: center;
@@ -4883,3 +4882,4 @@ select {
     grid-template-columns: 1fr;
   }
 }
+

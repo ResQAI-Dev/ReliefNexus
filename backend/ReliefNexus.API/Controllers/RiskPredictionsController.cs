@@ -437,7 +437,8 @@ public RiskPredictionsController(
         Guid id,
         AgentExecutionApprovalRequest request)
     {
-        var allowedStatuses = new[] { "Approved", "Rejected", "NeedsRevision" };
+        var allowedStatuses =
+            new[] { "Approved", "Rejected", "NeedsRevision" };
 
         if (!allowedStatuses.Contains(request.Status))
             return BadRequest(new
@@ -445,8 +446,9 @@ public RiskPredictionsController(
                 message = "Invalid approval status."
             });
 
-        var execution = await _context.RiskAgentExecutions
-            .FirstOrDefaultAsync(x => x.Id == id);
+        var execution =
+            await _context.RiskAgentExecutions
+                .FirstOrDefaultAsync(x => x.Id == id);
 
         if (execution == null)
             return NotFound(new
@@ -477,9 +479,85 @@ public RiskPredictionsController(
                 request.Status,
                 approvalUser);
 
+        if (updated == null)
+            return NotFound(new
+            {
+                message = "Agent execution could not be updated."
+            });
+
+        if (
+            request.Status == "Approved" &&
+            execution.AgentName ==
+                "Early Warning & Coordination Agent")
+        {
+            const string marker =
+                "VulnerabilityAssessmentId:";
+
+            var inputSummary =
+                execution.InputSummary ?? string.Empty;
+
+            var markerIndex =
+                inputSummary.IndexOf(
+                    marker,
+                    StringComparison.OrdinalIgnoreCase);
+
+            if (markerIndex < 0)
+                return BadRequest(new
+                {
+                    message =
+                        "Vulnerability assessment reference was not found in the Agent 04 execution."
+                });
+
+            var idStart =
+                markerIndex + marker.Length;
+
+            var idEnd =
+                inputSummary.IndexOf(";", idStart);
+
+            if (idEnd < 0)
+                idEnd = inputSummary.Length;
+
+            var vulnerabilityAssessmentText =
+                inputSummary
+                    .Substring(
+                        idStart,
+                        idEnd - idStart)
+                    .Trim();
+
+            if (!Guid.TryParse(
+                    vulnerabilityAssessmentText,
+                    out var vulnerabilityAssessmentId))
+            {
+                return BadRequest(new
+                {
+                    message =
+                        "Invalid vulnerability assessment reference for Agent 04 execution."
+                });
+            }
+
+            var alert =
+                await _earlyWarningCoordinationAgent.CreateAlertAsync(
+                    vulnerabilityAssessmentId,
+                    execution.Id);
+
+            if (alert == null)
+            {
+                return BadRequest(new
+                {
+                    message =
+                        "Agent 04 was approved, but the emergency warning could not be executed."
+                });
+            }
+
+            updated =
+                await _context.RiskAgentExecutions
+                    .FirstOrDefaultAsync(
+                        x => x.Id == execution.Id);
+        }
+
         return Ok(updated);
     }
-    [HttpGet("agent-executions")]
+[HttpGet("agent-executions")]
     public async Task<ActionResult<List<RiskAgentExecution>>>
         GetAgentExecutions()
     {
@@ -574,175 +652,187 @@ public RiskPredictionsController(
     // ============================================================
 
     [HttpPut("{id:guid}/approve")]
-    public async Task<ActionResult<RiskPredictionDto>>
-        Approve(Guid id)
+public async Task<ActionResult<RiskPredictionDto>>
+    Approve(Guid id)
+{
+    // --------------------------------------------------------
+    // STEP 1 - APPROVE RISK PREDICTION
+    // --------------------------------------------------------
+
+    var result =
+        await _service.ApproveAsync(id);
+
+    if (result == null)
+        return NotFound();
+
+    // --------------------------------------------------------
+    // STEP 2 - RECORD HUMAN APPROVAL
+    // --------------------------------------------------------
+
+    var executions =
+        await _agentExecutionService
+            .GetByPredictionIdAsync(id);
+
+    var execution =
+        executions.FirstOrDefault();
+
+    if (execution == null)
     {
-        // --------------------------------------------------------
-        // STEP 1 - APPROVE RISK PREDICTION
-        // --------------------------------------------------------
-
-        var result =
-            await _service.ApproveAsync(id);
-
-        if (result == null)
-            return NotFound();
-
-        // --------------------------------------------------------
-        // STEP 2 - RECORD HUMAN APPROVAL
-        // --------------------------------------------------------
-
-        var executions =
-            await _agentExecutionService
-                .GetByPredictionIdAsync(id);
-
-        var execution =
-            executions.FirstOrDefault();
-
-        if (execution != null)
+        return Conflict(new
         {
-            var approvalUser =
-                User.Identity?.Name
-                ?? "Authenticated User";
-
-            await _agentExecutionService.RecordApprovalAsync(
-                execution.Id,
-                "Approved",
-                approvalUser);
-        }
-
-        // --------------------------------------------------------
-        // STEP 3 - AGENT 02
-        // VULNERABILITY & IMPACT ASSESSMENT
-        // --------------------------------------------------------
-
-        var vulnerabilityAssessment =
-            await _vulnerabilityImpactService
-                .AssessAsync(id);
-
-        if (vulnerabilityAssessment != null)
-        {
-            // ----------------------------------------------------
-            // STEP 4 - AGENT 03
-            // RESOURCE OPTIMIZATION
-            // ----------------------------------------------------
-
-            await _resourceService.OptimizeAsync(
-                vulnerabilityAssessment.Id);
-
-            // ----------------------------------------------------
-            // STEP 5 - AGENT 04
-            // EARLY WARNING & COORDINATION
-            // ----------------------------------------------------
-
-            await _earlyWarningCoordinationAgent
-                .CreateAlertAsync(
-                    vulnerabilityAssessment.Id);
-        }
-
-        // --------------------------------------------------------
-        // STEP 6 - FIND DISASTER REPORT
-        // CONNECTED TO THIS RISK PREDICTION
-        // --------------------------------------------------------
-
-        var report =
-            await _context.DisasterReports
-                .FirstOrDefaultAsync(
-                    x => x.RiskPredictionId == id);
-
-        if (report == null)
-        {
-            var currentUserId = GetCurrentUserId();
-
-            if (currentUserId == null)
-                return Unauthorized();
-
-            var reportRequest = new DisasterReportDto
-            {
-                DisasterType = result.DisasterType,
-                Description =
-                    $"Operational incident created from Agent 01 risk prediction {id}.",
-                Location = result.Location,
-                Latitude = result.Latitude,
-                Longitude = result.Longitude,
-                Severity = result.RiskLevel,
-                RiskPredictionId = id
-            };
-
-            var createdReport =
-                await _disasterReportService.CreateFromPredictionAsync(
-                    currentUserId.Value,
-                    id,
-                    reportRequest);
-
-            if (createdReport != null)
-            {
-                report =
-                    await _context.DisasterReports
-                        .FirstOrDefaultAsync(
-                            x => x.Id == createdReport.Id);
-            }
-        }
-
-        if (report != null)
-        {
-            // ----------------------------------------------------
-            // STEP 7 - VOLUNTEER ASSIGNMENT AGENT
-            // ----------------------------------------------------
-
-            var volunteerRecommendation =
-                await _volunteerAssignmentService
-                    .RecommendAsync(report.Id);
-
-            if (volunteerRecommendation
-                    ?.RecommendedVolunteer != null)
-            {
-                // ----------------------------------------------
-                // STEP 8 - SAVE ASSIGNED VOLUNTEER
-                // ----------------------------------------------
-
-                report.AssignedVolunteerUserId =
-                    volunteerRecommendation
-                        .RecommendedVolunteer
-                        .VolunteerUserId;
-
-                report.AssignedAt =
-                    DateTime.UtcNow;
-
-                report.Status =
-                    "Assigned";
-
-                report.UpdatedAt =
-                    DateTime.UtcNow;
-
-                await _context.SaveChangesAsync();
-            }
-            else
-            {
-                // No eligible volunteer.
-                // Keep report available for coordinator assignment.
-
-                report.Status =
-                    "VolunteerQueue";
-
-                report.UpdatedAt =
-                    DateTime.UtcNow;
-
-                await _context.SaveChangesAsync();
-            }
-        }
-
-        // --------------------------------------------------------
-        // STEP 9 - RETURN APPROVED PREDICTION
-        // --------------------------------------------------------
-
-        return Ok(result);
+            message =
+                "Approval could not continue because no agent execution was found for this risk prediction.",
+            riskPredictionId = id
+        });
     }
 
-    // ============================================================
-    // REJECT
-    // ============================================================
+    var approvalUser =
+        User.Identity?.Name
+        ?? "Authenticated User";
 
-    [HttpPut("{id:guid}/reject")]
+    await _agentExecutionService.RecordApprovalAsync(
+        execution.Id,
+        "Approved",
+        approvalUser);
+
+    // --------------------------------------------------------
+    // IMPORTANT
+    //
+    // Agent 02 and Agent 03 are NOT executed here.
+    //
+    // They were already handled by the Agentic Orchestrator
+    // before the human approval gate.
+    //
+    // Approval only unlocks the actions that were blocked:
+    // Agent 04 and Agent 05.
+    // --------------------------------------------------------
+
+    // --------------------------------------------------------
+    // STEP 3 - FIND EXISTING AGENT 02 RESULT
+    // --------------------------------------------------------
+
+    var vulnerabilityAssessment =
+        await _context.VulnerabilityAssessments
+            .Where(x => x.RiskPredictionId == id)
+            .OrderByDescending(x => x.CreatedAt)
+            .FirstOrDefaultAsync();
+
+    if (vulnerabilityAssessment == null)
+    {
+        return Conflict(new
+        {
+            message =
+                "Approval was recorded, but the existing Agent 02 vulnerability assessment could not be found. No downstream action was executed.",
+            riskPredictionId = id
+        });
+    }
+
+    // --------------------------------------------------------
+    // STEP 4 - AGENT 04
+    // EARLY WARNING & COORDINATION
+    //
+    // This is the first real-world action after approval.
+    // --------------------------------------------------------
+
+    var emergencyAlert =
+        await _earlyWarningCoordinationAgent
+            .CreateAlertAsync(
+                vulnerabilityAssessment.Id);
+
+    // --------------------------------------------------------
+    // STEP 5 - FIND DISASTER REPORT
+    // --------------------------------------------------------
+
+    var report =
+        await _context.DisasterReports
+            .FirstOrDefaultAsync(
+                x => x.RiskPredictionId == id);
+
+    if (report == null)
+    {
+        var currentUserId = GetCurrentUserId();
+
+        if (currentUserId == null)
+            return Unauthorized();
+
+        var reportRequest = new DisasterReportDto
+        {
+            DisasterType = result.DisasterType,
+            Description =
+                $"Operational incident created from Agent 01 risk prediction {id}.",
+            Location = result.Location,
+            Latitude = result.Latitude,
+            Longitude = result.Longitude,
+            Severity = result.RiskLevel,
+            RiskPredictionId = id
+        };
+
+        var createdReport =
+            await _disasterReportService.CreateFromPredictionAsync(
+                currentUserId.Value,
+                id,
+                reportRequest);
+
+        if (createdReport != null)
+        {
+            report =
+                await _context.DisasterReports
+                    .FirstOrDefaultAsync(
+                        x => x.Id == createdReport.Id);
+        }
+    }
+
+    // --------------------------------------------------------
+    // STEP 6 - AGENT 05
+    // VOLUNTEER ASSIGNMENT
+    //
+    // This executes only after human approval.
+    // --------------------------------------------------------
+
+    if (report != null)
+    {
+        var volunteerRecommendation =
+            await _volunteerAssignmentService
+                .RecommendAsync(report.Id);
+
+        if (volunteerRecommendation
+                ?.RecommendedVolunteer != null)
+        {
+            report.AssignedVolunteerUserId =
+                volunteerRecommendation
+                    .RecommendedVolunteer
+                    .VolunteerUserId;
+
+            report.AssignedAt =
+                DateTime.UtcNow;
+
+            report.Status =
+                "Assigned";
+
+            report.UpdatedAt =
+                DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+        }
+        else
+        {
+            report.Status =
+                "VolunteerQueue";
+
+            report.UpdatedAt =
+                DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    // --------------------------------------------------------
+    // STEP 7 - RETURN AUTHORIZED RESULT
+    // --------------------------------------------------------
+
+    return Ok(result);
+}
+[HttpPut("{id:guid}/reject")]
     public async Task<ActionResult<RiskPredictionDto>>
         Reject(Guid id)
     {
@@ -806,6 +896,9 @@ public RiskPredictionsController(
         return Ok(result);
     }
 }
+
+
+
 
 
 

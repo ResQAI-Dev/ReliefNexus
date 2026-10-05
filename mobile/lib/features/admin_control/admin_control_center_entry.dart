@@ -18,4 +18,3 @@ class AdminControlCenterEntry extends StatelessWidget {
     );
   }
 }
-

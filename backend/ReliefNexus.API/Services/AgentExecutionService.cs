@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using ReliefNexus.API.Data;
 using ReliefNexus.API.Interfaces;
 using ReliefNexus.API.Models;
@@ -33,10 +33,12 @@ public class AgentExecutionService : IAgentExecutionService
             ToolResults = string.Empty,
             ValidationResults = string.Empty,
             ApprovalStatus =
-    agentName is "Vulnerability & Impact Agent"
-        or "Resource Optimization Agent"
-        ? "Pending"
-        : "NotRequired",
+                agentName is "Vulnerability & Impact Agent"
+                    or "Resource Optimization Agent"
+                    or "Early Warning & Coordination Agent"
+                    or "Volunteer Assignment Agent"
+                    ? "Pending"
+                    : "NotRequired",
             FinalOutcome = string.Empty,
             StartedAt = DateTime.UtcNow
         };
@@ -96,11 +98,10 @@ public class AgentExecutionService : IAgentExecutionService
         execution.OutputSummary = outputSummary;
         execution.ValidationResults = validationResults;
         execution.FinalOutcome = finalOutcome;
-        if (execution.AgentName != "Vulnerability & Impact Agent" &&
-    execution.AgentName != "Resource Optimization Agent")
-{
-    execution.ApprovalStatus = approvalStatus;
-}
+        if (execution.ApprovalStatus != "Approved")
+        {
+            execution.ApprovalStatus = approvalStatus;
+        }
         if (inputTokens != 0 || outputTokens != 0 || totalTokens != 0 || !string.IsNullOrWhiteSpace(modelName))
         {
             execution.InputTokens = inputTokens;
@@ -177,12 +178,10 @@ public class AgentExecutionService : IAgentExecutionService
 
         if (execution == null)
             return null;
-
-        if (execution.AgentName != "Vulnerability & Impact Agent" &&
-    execution.AgentName != "Resource Optimization Agent")
-{
-    execution.ApprovalStatus = approvalStatus;
-}
+        if (execution.ApprovalStatus != "Approved")
+        {
+            execution.ApprovalStatus = approvalStatus;
+        }
         execution.ApprovalUser = approvalUser;
         execution.ApprovalTimestamp = DateTime.UtcNow;
 
@@ -207,6 +206,9 @@ public class AgentExecutionService : IAgentExecutionService
             .ToListAsync();
     }
 }
+
+
+
 
 
 

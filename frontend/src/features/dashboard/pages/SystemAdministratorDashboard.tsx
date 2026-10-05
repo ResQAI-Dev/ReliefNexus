@@ -1,4 +1,6 @@
-﻿import L from "leaflet";
+﻿import AdvancedAIAgentWorkspace from "../../ai-assistant/pages/AdvancedAIAgentWorkspace";
+import "../../ai-assistant/styles/agent-experience.css";
+import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import NotificationBell from "../../../components/notifications/NotificationBell";
 import {
@@ -13,15 +15,24 @@ import {
   type LocationSharingData,
   type AdminProfile,
 } from "../components/SystemAdminSupportModules";
-import EmergencyAlertsPage from "../../emergency-alerts/pages/EmergencyAlertsPage";
-import RiskPredictionPage from "../../risk-prediction/pages/RiskPredictionPage";
-import VulnerabilityImpactPage from "../../vulnerability-impact/pages/VulnerabilityImpactPage";
-import ResourceOptimizationPage from "../../resource-optimization/pages/ResourceOptimizationPage";
-import DisasterReportsPage from "../../disaster-reports/pages/DisasterReportsPage";
-import { Fragment, useEffect, useMemo, useState, type ReactNode, type Dispatch, type SetStateAction } from "react";
+const DisasterReportsPage = lazy(() => import("../../disaster-reports/pages/DisasterReportsPage"));
+const EmergencyAlertsPage = lazy(() => import("../../emergency-alerts/pages/EmergencyAlertsPage"));
+const RiskPredictionPage = lazy(() => import("../../risk-prediction/pages/RiskPredictionPage"));
+const VulnerabilityImpactPage = lazy(() => import("../../vulnerability-impact/pages/VulnerabilityImpactPage"));
+const ResourceOptimizationPage = lazy(() => import("../../resource-optimization/pages/ResourceOptimizationPage"));
+import { Fragment, lazy, Suspense, useEffect, useMemo, useState, type ReactNode, type Dispatch, type SetStateAction } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import api from "../../../lib/api/apiClient";
+
+const PageLoadingFallback = () => (
+  <div className="flex min-h-[420px] items-center justify-center">
+    <div className="flex flex-col items-center gap-3 text-slate-500">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-blue-600" />
+      <span className="text-sm font-medium">Loading module...</span>
+    </div>
+  </div>
+);
 const LogoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
     <path d="M5 20V10" />
@@ -162,7 +173,11 @@ type Section =
   | "relief-resources"  | "role-requests"
   | "permissions"
   | "ai-agents"
-  | "monitoring"
+  | "ai-risk-prediction"
+  | "ai-vulnerability-impact"
+  | "ai-resource-optimization"
+  | "ai-early-warning"
+  | "ai-volunteer-assignment"  | "monitoring"
   | "audit-logs"
   | "reports"
   | "settings"
@@ -252,7 +267,7 @@ const menuItems: Array<{
   { id: "users", label: "User Management", icon: <UsersIcon /> },
   { id: "role-requests", label: "Role Requests", icon: <RequestIcon /> },
   { id: "permissions", label: "Permissions", icon: <ShieldIcon /> },
-  { id: "ai-agents", label: "AI Agent Management", icon: <SparkIcon /> },
+  { id: "ai-agents", label: "AI Operations Center", icon: <SparkIcon /> },
   { id: "monitoring", label: "System Monitoring", icon: <MonitorIcon /> },
   { id: "audit-logs", label: "Audit Logs", icon: <AuditIcon /> },
   { id: "reports", label: "Reports", icon: <ReportIcon /> },
@@ -278,6 +293,7 @@ const aiAgentManagementItems = [
   "Vulnerability & Impact",
   "Resource Optimization",
   "Early Warning & Coordination",
+  "Volunteer Assignment",
 ];
 const agentDefinitions = [
   {
@@ -299,6 +315,11 @@ const agentDefinitions = [
     name: "Early Warning & Coordination Agent",
     description: "Warnings and response coordination",
     icon: <AlertIcon />,
+  },
+  {
+    name: "Volunteer Assignment Agent",
+    description: "Volunteer response planning and assignment recommendations",
+    icon: <UsersIcon />,
   },
 ];
 const roleLabel = (role?: string) => {
@@ -538,10 +559,10 @@ const SystemAdministratorDashboard = () => {
 
   const [disasterReports, setDisasterReports] =
     useState<DisasterReportRecord[]>([]);
-  const [reliefResources, setReliefResources] = useState<any[]>([]);
-  const [riskPredictions, setRiskPredictions] = useState<any[]>([]);
-  const [vulnerabilityAssessments, setVulnerabilityAssessments] = useState<any[]>([]);
-  const [emergencyAlerts, setEmergencyAlerts] = useState<any[]>([]);
+  const [reliefResources] = useState<any[]>([]);
+  const [riskPredictions] = useState<any[]>([]);
+  const [vulnerabilityAssessments] = useState<any[]>([]);
+  const [emergencyAlerts] = useState<any[]>([]);
   const [reliefRequests, setReliefRequests] = useState<any[]>([]);
   const [reliefRequestsLoading, setReliefRequestsLoading] = useState(false);
   const [reliefRequestsError, setReliefRequestsError] = useState("");
@@ -577,10 +598,29 @@ const SystemAdministratorDashboard = () => {
   useEffect(() => {
     const path = location.pathname;
 
-    if (path.includes("/disaster-reports")) {
+    // Dedicated Agentic AI pages MUST be checked before
+    // generic operational routes because /ai-risk-prediction
+    // also contains /risk-prediction.
+    if (path.includes("/ai-risk-prediction")) {
+      setSection("ai-risk-prediction");
+      setSelectedAiModule("Risk Prediction");
+    } else if (path.includes("/ai-vulnerability-impact")) {
+      setSection("ai-vulnerability-impact");
+      setSelectedAiModule("Vulnerability & Impact");
+    } else if (path.includes("/ai-resource-optimization")) {
+      setSection("ai-resource-optimization");
+      setSelectedAiModule("Resource Optimization");
+    } else if (path.includes("/ai-early-warning")) {
+      setSection("ai-early-warning");
+      setSelectedAiModule("Early Warning & Coordination");
+    } else if (path.includes("/ai-volunteer-assignment")) {
+      setSection("ai-volunteer-assignment");
+      setSelectedAiModule("Volunteer Assignment");
+    } else if (path.includes("/disaster-reports")) {
       setSection("disaster-reports");
     } else if (path.includes("/relief-requests")) {
-      setSection("relief-requests");    } else if (path.includes("/risk-prediction")) {
+      setSection("relief-requests");
+    } else if (path.includes("/risk-prediction")) {
       setSection("risk-prediction");
     } else if (path.includes("/vulnerability-impact")) {
       setSection("vulnerability-impact");
@@ -624,7 +664,6 @@ const SystemAdministratorDashboard = () => {
       setAiAgentManagementOpen(true);
     }
   }, [section]);
-
   const loadAdminData = async () => {
     setLoading(true);
     setError("");
@@ -635,20 +674,12 @@ const SystemAdministratorDashboard = () => {
       auditResult,
       agentsResult,
       healthResult,
-      resourcesResult,
-      riskPredictionsResult,
-      vulnerabilityAssessmentsResult,
-      emergencyAlertsResult,
     ] = await Promise.allSettled([
       api.get("/users"),
       api.get("/users/pending-role-requests"),
       api.get("/audit-logs"),
       api.get("/risk-predictions/agent-executions"),
       api.get("/auth/system-health"),
-      api.get("/resource-optimization/resources"),
-      api.get("/risk-predictions"),
-      api.get("/vulnerability-impact"),
-      api.get("/emergency-alerts"),
     ]);
 
     if (usersResult.status === "fulfilled") {
@@ -745,59 +776,41 @@ const SystemAdministratorDashboard = () => {
       }
     }
 
-    if (resourcesResult.status === "fulfilled") {
-      const payload = resourcesResult.value.data;
-      const data = Array.isArray(payload)
-        ? payload
-        : Array.isArray(payload?.items)
-          ? payload.items
-          : Array.isArray(payload?.data)
-            ? payload.data
-            : [];
-      setReliefResources(data);
-    }
 
-    if (riskPredictionsResult.status === "fulfilled") {
-      const payload = riskPredictionsResult.value.data;
-      const data = Array.isArray(payload)
-        ? payload
-        : Array.isArray(payload?.items)
-          ? payload.items
-          : Array.isArray(payload?.data)
-            ? payload.data
-            : [];
-      setRiskPredictions(data);
-    }
 
-    if (vulnerabilityAssessmentsResult.status === "fulfilled") {
-      const payload = vulnerabilityAssessmentsResult.value.data;
-      const data = Array.isArray(payload)
-        ? payload
-        : Array.isArray(payload?.items)
-          ? payload.items
-          : Array.isArray(payload?.data)
-            ? payload.data
-            : [];
-      setVulnerabilityAssessments(data);
-    }
 
-    if (emergencyAlertsResult.status === "fulfilled") {
-      const payload = emergencyAlertsResult.value.data;
-      const data = Array.isArray(payload)
-        ? payload
-        : Array.isArray(payload?.items)
-          ? payload.items
-          : Array.isArray(payload?.data)
-            ? payload.data
-            : [];
-      setEmergencyAlerts(data);
-    }
 
     setLoading(false);
+
+    window.setTimeout(() => {
+      const currentPath = window.location.pathname;
+
+      const isOperationalOrAiPage =
+        currentPath.includes("/risk-prediction") ||
+        currentPath.includes("/vulnerability-impact") ||
+        currentPath.includes("/resource-optimization") ||
+        currentPath.includes("/emergency-alerts") ||
+        currentPath.includes("/ai-risk-prediction") ||
+        currentPath.includes("/ai-vulnerability-impact") ||
+        currentPath.includes("/ai-resource-optimization") ||
+        currentPath.includes("/ai-early-warning") ||
+        currentPath.includes("/ai-volunteer-assignment") ||
+        currentPath.includes("/ai-agents");
+
+      if (!isOperationalOrAiPage) {
+}
+    }, 300);
   };
 
   useEffect(() => {
-    void loadAdminData();
+    // Render the dashboard shell first, then load admin data in the background.
+    const timer = window.setTimeout(() => {
+      void loadAdminData();
+    }, 150);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, []);
 
   const loadDisasterReports = async () => {
@@ -871,6 +884,17 @@ const SystemAdministratorDashboard = () => {
   const goToSection = (nextSection: Section) => {
     setNotice("");
     setError("");
+    // Close AI workspace when navigating back to normal dashboard sections.
+    if (
+      nextSection !== "ai-agents" &&
+      nextSection !== "ai-risk-prediction" &&
+      nextSection !== "ai-vulnerability-impact" &&
+      nextSection !== "ai-resource-optimization" &&
+      nextSection !== "ai-early-warning" &&
+      nextSection !== "ai-volunteer-assignment"
+    ) {
+      setAiAgentManagementOpen(false);
+    }
     setSection(nextSection);
 
     navigate(
@@ -900,6 +924,8 @@ const SystemAdministratorDashboard = () => {
       "Relief Resources": "relief-resources",
       "Location Sharing": "location-sharing",
       "User Profiles": "user-profiles",
+
+      // Existing operational pages
       "Risk Prediction": "risk-prediction",
       "Vulnerability & Impact": "vulnerability-impact",
       "Resource Optimization": "resource-optimization",
@@ -939,11 +965,26 @@ const SystemAdministratorDashboard = () => {
     setSelectedAiModule(child);
     setNotice("");
     setError("");
-    setSection("ai-agents");
 
-    navigate("/dashboard/system-administrator/ai-agents");
+    const aiRoutes: Record<string, Section> = {
+      "Risk Prediction": "ai-risk-prediction",
+      "Vulnerability & Impact": "ai-vulnerability-impact",
+      "Resource Optimization": "ai-resource-optimization",
+      "Early Warning & Coordination": "ai-early-warning",
+      "Volunteer Assignment": "ai-volunteer-assignment",
+    };
+
+    const targetSection = aiRoutes[child];
+
+    if (targetSection) {
+      setSection(targetSection);
+      navigate(`/dashboard/system-administrator/${targetSection}`);
+      return;
+    }
+
+    setSection("ai-risk-prediction");
+    navigate("/dashboard/system-administrator/ai-risk-prediction");
   };
-
   const showMessage = (message: string) => {
     setNotice(message);
     setError("");
@@ -1119,8 +1160,13 @@ const SystemAdministratorDashboard = () => {
     if (user?.role === "SystemAdministrator") return true;
 
     const permissionMap: Record<Section, string | null> = {
+      "ai-risk-prediction": null,
+      "ai-vulnerability-impact": null,
+      "ai-resource-optimization": null,
+      "ai-early-warning": null,
+      "ai-volunteer-assignment": null,
       dashboard: null,
-      users: "Manage Users",
+      users: null,
       "disaster-reports": "Report Disaster",
       "emergency-alerts": "View Emergency Alerts",
       "risk-information": "View Risk Information",
@@ -1130,7 +1176,7 @@ const SystemAdministratorDashboard = () => {
       "user-profiles": "Manage Users",
       "role-requests": "Manage Role Requests",
       permissions: "Configure Permissions",
-      "ai-agents": "AI Agent Monitoring",
+      "ai-agents": null,
       monitoring: null,
       "audit-logs": "View Audit Logs",
       reports: "View Reports",
@@ -1301,6 +1347,24 @@ const SystemAdministratorDashboard = () => {
   };
 
   const renderContent = () => {
+    if (aiAgentManagementOpen) {
+      const aiAgentMap: Record<string, "risk" | "vulnerability" | "resource" | "warning" | "volunteer"> = {
+        "Risk Prediction": "risk",
+        "Vulnerability & Impact": "vulnerability",
+        "Resource Optimization": "resource",
+        "Early Warning & Coordination": "warning",
+        "Volunteer Assignment": "volunteer",
+      };
+
+      const selectedAgent =
+        aiAgentMap[selectedAiModule] || "risk";
+
+      return (
+        <AdvancedAIAgentWorkspace
+          agent={selectedAgent}
+        />
+      );
+    }
     switch (section) {
       case "disaster-reports":
         return <DisasterReportsPage users={users} />;
@@ -1323,16 +1387,16 @@ const SystemAdministratorDashboard = () => {
         );
 
             case "emergency-alerts":
-              return <EmergencyAlertsPage />;
+              return <Suspense fallback={<PageLoadingFallback />}><EmergencyAlertsPage /></Suspense>;
 
             case "risk-prediction":
-              return <RiskPredictionPage />;
+              return <Suspense fallback={<PageLoadingFallback />}><RiskPredictionPage /></Suspense>;
 
             case "vulnerability-impact":
-              return <VulnerabilityImpactPage />;
+              return <Suspense fallback={<PageLoadingFallback />}><VulnerabilityImpactPage /></Suspense>;
 
             case "resource-optimization":
-              return <ResourceOptimizationPage />;
+              return <Suspense fallback={<PageLoadingFallback />}><ResourceOptimizationPage /></Suspense>;
 
       case "risk-information":
 
@@ -1514,32 +1578,59 @@ const SystemAdministratorDashboard = () => {
           />
         );
 
-      case "ai-agents":
+    
+case "ai-risk-prediction":
+  return <AdvancedAIAgentWorkspace agent="risk" />;
 
-  return (
-            <AIAgentsSection
-              selectedModule={selectedAiModule}
+case "ai-vulnerability-impact":
+  return <AdvancedAIAgentWorkspace agent="vulnerability" />;
+
+case "ai-resource-optimization":
+  return <AdvancedAIAgentWorkspace agent="resource" />;
+
+case "ai-early-warning":
+  return <AdvancedAIAgentWorkspace agent="warning" />;
+
+case "ai-volunteer-assignment":
+  return <AdvancedAIAgentWorkspace agent="volunteer" />;
+
+        case "ai-agents":
+      return (
+        <AdvancedAIAgentWorkspace
+          agent={
+            selectedAiModule === "Vulnerability & Impact"
+              ? "vulnerability"
+              : selectedAiModule === "Resource Optimization"
+                ? "resource"
+                : selectedAiModule === "Early Warning & Coordination"
+                  ? "warning"
+                  : selectedAiModule === "Volunteer Assignment"
+                    ? "volunteer"
+                    : "risk"
+          }
+        />
+      );
+
+
+
+      
+case "monitoring":
+        return (
+          <div className="space-y-8">
+            <MonitoringSection
+              systemHealth={systemHealth}
+            />
+
+            <AIAgentMonitoringSection
+              executions={agentExecutions}
               agentStatuses={agentStatuses}
             />
-          );
-case "monitoring":
 
-  return (
-            <div className="space-y-8">
-              <MonitoringSection
-                systemHealth={systemHealth}
-              />
-
-              <AIAgentMonitoringSection
-                executions={agentExecutions}
-                agentStatuses={agentStatuses}
-              />
-
-              <AIAuditTrailSection
-                executions={agentExecutions}
-              />
-            </div>
-          );
+            <AIAuditTrailSection
+              executions={agentExecutions}
+            />
+          </div>
+        );
 case "audit-logs":
         return <AuditLogsSection logs={auditLogs} />;
 
@@ -1598,10 +1689,10 @@ case "audit-logs":
       <div className="flex min-h-screen">
         <aside
           className="
-            fixed inset-y-0 left-0 z-50 hidden
+            fixed inset-y-0 left-0 z-[9999] hidden
             h-screen w-[238px]
             overflow-hidden
-            bg-[#0b1d38] text-white
+            bg-[#0b1d38] text-white pointer-events-auto
             lg:flex lg:flex-col
           "
         >
@@ -4974,7 +5065,7 @@ const AIAgentMonitoringSection = ({
                   <td className="px-4 py-4 font-mono text-slate-700">
                     {agent.runs > 0
                       ? formatNumber(agent.averageTokens)
-                      : "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}
+                      : "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÂ¢ÃƒÆ’Â¢ÃƒÂ¢Ã¢â‚¬Å¡Â¬Ãƒâ€¦Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÂ¬ÃƒÆ’Ã†â€™Ãƒâ€šÂ¢ÃƒÆ’Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÂ¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÂ"}
                   </td>
 
                   <td className="px-4 py-4 font-mono text-slate-700">
@@ -5602,562 +5693,6 @@ const AIAuditTrailSection = ({
     </div>
   );
 };
-const AIAgentsSection = ({
-  selectedModule,
-  agentStatuses,
-}: {
-  selectedModule: string;
-  agentStatuses: AgentStatus[];
-}) => {
-  const agentNameMap: Record<string, string> = {
-    "Risk Prediction": "Risk Prediction Agent",
-    "Vulnerability & Impact": "Vulnerability & Impact Agent",
-    "Resource Optimization": "Resource Optimization Agent",
-    "Early Warning & Coordination": "Early Warning & Coordination Agent",
-  };
-
-  const selectedAgentName =
-    agentNameMap[selectedModule] || "Risk Prediction Agent";
-
-  const selectedAgent = agentStatuses.find(
-    (agent) => agent.name === selectedAgentName
-  );
-
-  const execution = selectedAgent?.execution;
-
-  const executionStatus = String(execution?.status || "No Execution");
-
-  const workflowSteps = String(execution?.completedSteps || "")
-    .split(/\s*(?:\?|->)\s*/)
-    .map((step: string) => step.trim())
-    .filter(Boolean);
-
-  const statusStyle =
-    selectedAgent?.status === "Running"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-      : selectedAgent?.status === "Offline"
-        ? "border-red-200 bg-red-50 text-red-700"
-        : "border-blue-200 bg-blue-50 text-blue-700";
-
-  const statusDot =
-    selectedAgent?.status === "Running"
-      ? "bg-emerald-500"
-      : selectedAgent?.status === "Offline"
-        ? "bg-red-500"
-        : "bg-blue-500";
-
-  const hasTokenUsage =
-    execution &&
-    (
-      Number(execution.inputTokens || 0) > 0 ||
-      Number(execution.outputTokens || 0) > 0 ||
-      Number(execution.totalTokens || 0) > 0 ||
-      Boolean(execution.modelName)
-    );
-
-  const formatTokens = (value: unknown) => {
-    const tokens = Number(value || 0);
-    return tokens > 0 ? tokens.toLocaleString() : "Not available";
-  };
-
-  const formatCost = (value: unknown) => {
-    if (value === null || value === undefined || value === "") {
-      return "Not available";
-    }
-
-    const cost = Number(value);
-
-    return Number.isFinite(cost)
-      ? cost.toFixed(4)
-      : "Not available";
-  };
-
-  const metricCards = [
-    {
-      label: "Execution Status",
-      value: executionStatus,
-      icon: "•",
-      style:
-        executionStatus.toLowerCase() === "completed"
-          ? "bg-emerald-50 text-emerald-700"
-          : "bg-blue-50 text-blue-700",
-    },
-    {
-      label: "Workflow ID",
-      value: execution?.workflowId || "Not recorded",
-      icon: "•",
-      style: "bg-blue-50 text-blue-700",
-    },
-    {
-      label: "Approval Status",
-      value: execution?.approvalStatus || "NotRequired",
-      icon: "•",
-      style: "bg-slate-50 text-slate-700",
-    },
-    {
-      label: "Completed At",
-      value: execution?.completedAt
-        ? new Date(execution.completedAt).toLocaleString()
-        : "Still running",
-      icon: "•",
-      style: "bg-slate-50 text-slate-700",
-    },
-    {
-      label: "Input Tokens",
-      value: hasTokenUsage
-        ? formatTokens(execution?.inputTokens)
-        : "Not available",
-      icon: "•",
-      style: "bg-violet-50 text-violet-700",
-    },
-    {
-      label: "Output Tokens",
-      value: hasTokenUsage
-        ? formatTokens(execution?.outputTokens)
-        : "Not available",
-      icon: "•",
-      style: "bg-indigo-50 text-indigo-700",
-    },
-    {
-      label: "Total Tokens",
-      value: hasTokenUsage
-        ? formatTokens(execution?.totalTokens)
-        : "Not available",
-      icon: "•",
-      style: "bg-purple-50 text-purple-700",
-    },
-    {
-      label: "Model / Cost",
-      value: hasTokenUsage
-        ? `${execution?.modelName || "Model not recorded"} | ${
-            execution?.estimatedCost !== null &&
-            execution?.estimatedCost !== undefined
-              ? formatCost(execution.estimatedCost)
-              : "Cost not available"
-          }`
-        : "Not available",
-      icon: "•",
-      style: "bg-amber-50 text-amber-700",
-    },
-  ];
-
-  return (
-    <div className="min-w-0 space-y-5">
-      {/* PAGE HEADER */}
-      <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-blue-600">
-            <span>AI AGENT MANAGEMENT</span>
-            <span className="text-slate-300">/</span>
-            <span>{selectedModule}</span>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-blue-600">
-              {selectedAgent?.icon}
-            </div>
-
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight text-slate-950">
-                {selectedAgent?.name || selectedModule}
-              </h2>
-
-              <p className="mt-1 text-sm text-slate-500">
-                {selectedAgent?.description ||
-                  "Monitor AI agent execution and workflow activity."}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div
-            className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold ${statusStyle}`}
-          >
-            <span className={`h-2 w-2 rounded-full ${statusDot}`} />
-            {selectedAgent?.status || "Unknown"}
-            <span className="ml-1 text-[10px] font-medium opacity-70">
-              Agent Status
-            </span>
-          </div>
-
-          <button
-            type="button"
-            className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700"
-          >
-            ?&nbsp; Run Agent
-          </button>
-        </div>
-      </div>
-
-      {/* LATEST EXECUTION */}
-      <div className="flex flex-col justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm sm:flex-row sm:items-center">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
-            Latest Execution
-          </p>
-
-          <p className="mt-1 text-sm font-bold text-slate-900">
-            {execution?.startedAt
-              ? new Date(execution.startedAt).toLocaleString()
-              : "No execution recorded"}
-          </p>
-        </div>
-
-        <div className="text-right">
-          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
-            Current Step
-          </p>
-
-          <p className="mt-1 text-sm font-semibold text-slate-700">
-            {execution?.currentStep || "No current step"}
-          </p>
-        </div>
-      </div>
-
-      {/* METRICS */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {metricCards.map((metric) => (
-          <div
-            key={metric.label}
-            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
-                  {metric.label}
-                </p>
-
-                <p
-                  className="mt-2 truncate text-sm font-bold text-slate-900"
-                  title={metric.value}
-                >
-                  {metric.value}
-                </p>
-              </div>
-
-              <span
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-bold ${metric.style}`}
-              >
-                {metric.icon}
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-{!execution ? (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
-          <p className="font-semibold text-slate-700">
-            No execution has been recorded for this agent yet.
-          </p>
-        </div>
-      ) : (
-        <>
-          {/* WORKFLOW + EXECUTION DETAILS */}
-          <div className="grid min-w-0 gap-5 xl:grid-cols-[1fr_1.25fr]">
-            {/* WORKFLOW */}
-            <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="mb-5 flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-blue-600">
-                    Execution Workflow
-                  </p>
-
-                  <h3 className="mt-1 text-base font-bold text-slate-900">
-                    Workflow Progress
-                  </h3>
-                </div>
-
-                <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold text-emerald-700">
-                  {executionStatus}
-                </span>
-              </div>
-
-              <div className="space-y-0">
-                {workflowSteps.length > 0 ? (
-                  workflowSteps.map((step: string, index: number) => (
-                    <div
-                      key={`${step}-${index}`}
-                      className="flex min-w-0 gap-3"
-                    >
-                      <div className="flex flex-col items-center">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700 ring-4 ring-white">
-                          ✓
-                        </div>
-
-                        {index < workflowSteps.length - 1 && (
-                          <div className="h-9 w-px bg-slate-200" />
-                        )}
-                      </div>
-
-                      <div className="min-w-0 pb-4">
-                        <p className="break-words text-sm font-semibold leading-5 text-slate-800">
-                          {step}
-                        </p>
-
-                        <p className="mt-1 text-[10px] font-medium text-slate-400">
-                          Step {index + 1} N/A Completed
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">
-                    No workflow steps recorded.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* EXECUTION DETAILS */}
-            <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="mb-5">
-                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-blue-600">
-                  Execution Details
-                </p>
-
-                <h3 className="mt-1 text-base font-bold text-slate-900">
-                  Agent Execution
-                </h3>
-              </div>
-
-              <div className="space-y-4">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-xl bg-slate-50 p-4">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Current Step
-                    </p>
-                    <p className="mt-2 text-sm font-semibold text-slate-800">
-                      {execution.currentStep || "Not recorded"}
-                    </p>
-                  </div>
-
-                  <div className="rounded-xl bg-slate-50 p-4">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Execution Duration
-                    </p>
-                    <p className="mt-2 text-sm font-semibold text-slate-800">
-                      {execution.startedAt && execution.completedAt
-                        ? (() => {
-                            const durationMs =
-                              new Date(execution.completedAt).getTime() -
-                              new Date(execution.startedAt).getTime();
-
-                            const totalSeconds = Math.max(
-                              0,
-                              Math.floor(durationMs / 1000)
-                            );
-
-                            const minutes = Math.floor(totalSeconds / 60);
-                            const seconds = totalSeconds % 60;
-
-                            return minutes > 0
-                              ? `${minutes}m ${seconds}s`
-                              : `${seconds}s`;
-                          })()
-                        : "In progress"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-slate-100 p-4">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    Objective
-                  </p>
-
-                  <p className="mt-2 text-sm leading-6 text-slate-700">
-                    {execution.objective || "No objective recorded."}
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-slate-100 p-4">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    Execution Plan
-                  </p>
-
-                  <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
-                    {execution.plan || "No execution plan recorded."}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* INPUT / OUTPUT / VALIDATION */}
-          <div className="grid min-w-0 gap-5 xl:grid-cols-3">
-            <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-sm">
-              <div className="flex items-center justify-between border-b border-white/10 px-5 py-3">
-                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-blue-300">
-                  Input Data
-                </p>
-
-                <span className="rounded bg-white/10 px-2 py-1 text-[9px] font-bold text-slate-300">
-                  REAL INPUT
-                </span>
-              </div>
-
-              <pre className="max-h-60 overflow-auto whitespace-pre-wrap break-words p-5 text-xs leading-5 text-slate-200">
-                {execution.inputSummary || "No input summary recorded."}
-              </pre>
-            </div>
-
-            <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-sm">
-              <div className="flex items-center justify-between border-b border-white/10 px-5 py-3">
-                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-emerald-300">
-                  Output Result
-                </p>
-
-                <span className="rounded bg-white/10 px-2 py-1 text-[9px] font-bold text-slate-300">
-                  REAL OUTPUT
-                </span>
-              </div>
-
-              <pre className="max-h-60 overflow-auto whitespace-pre-wrap break-words p-5 text-xs leading-5 text-slate-200">
-                {execution.outputSummary || "No output summary recorded."}
-              </pre>
-            </div>
-
-            <div className="min-w-0 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 shadow-sm">
-              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-emerald-700">
-                Validation
-              </p>
-
-              <div className="mt-4 space-y-3">
-                {(execution.validationResults ||
-                  "No validation results recorded.")
-                  .split(";")
-                  .map((item: string, index: number) => (
-                    <div
-                      key={`${item}-${index}`}
-                      className="flex gap-2 text-sm leading-5 text-emerald-900"
-                    >
-                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">
-                        ✓
-                      </span>
-
-                      <span>{item.trim()}</span>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          </div>
-
-          {/* EXECUTION TRACE */}
-          <div className="grid min-w-0 gap-5 xl:grid-cols-2">
-            <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-blue-600">
-                Completed Steps
-              </p>
-
-              <pre className="mt-4 max-h-60 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-slate-50 p-4 text-xs leading-5 text-slate-700">
-                {execution.completedSteps || "No completed steps recorded."}
-              </pre>
-            </div>
-
-            <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-blue-600">
-                Tool Results
-              </p>
-
-              <pre className="mt-4 max-h-60 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-slate-50 p-4 text-xs leading-5 text-slate-700">
-                {execution.toolResults || "No tool results recorded."}
-              </pre>
-            </div>
-          </div>
-
-          <div className="grid min-w-0 gap-5 md:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500">
-                Risk Prediction ID
-              </p>
-
-              <p className="mt-3 break-all font-mono text-xs leading-5 text-slate-700">
-                {execution.riskPredictionId || "Not linked"}
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-red-200 bg-red-50/60 p-5 shadow-sm">
-              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-red-700">
-                Error Message
-              </p>
-
-              <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-red-800">
-                {execution.errorMessage || "No errors recorded."}
-              </p>
-            </div>
-          </div>
-
-          {/* GOVERNANCE */}
-          <div className="grid gap-5 md:grid-cols-2">
-            <div className="rounded-2xl border border-blue-200 bg-blue-50/60 p-5 shadow-sm">
-              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-blue-700">
-                Human Approval
-              </p>
-
-              <div className="mt-3 flex flex-wrap items-center gap-3">
-                <span className="rounded-full bg-white px-3 py-1.5 text-sm font-bold text-blue-900 shadow-sm">
-                  {execution.approvalStatus || "NotRequired"}
-                </span>
-
-                {execution.approvalUser && (
-                  <span className="text-sm text-blue-700">
-                    By: {execution.approvalUser}
-                  </span>
-                )}
-              </div>
-
-              {execution.approvalTimestamp && (
-                <p className="mt-2 text-xs text-blue-600">
-                  {new Date(
-                    execution.approvalTimestamp
-                  ).toLocaleString()}
-                </p>
-              )}
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500">
-                Current Step
-              </p>
-
-              <p className="mt-3 text-sm font-bold text-slate-900">
-                {execution.currentStep || "No current step recorded"}
-              </p>
-            </div>
-          </div>
-
-          {/* FINAL OUTCOME */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500">
-                  Final Outcome
-                </p>
-
-                <p className="mt-2 text-sm leading-6 text-slate-700">
-                  {execution.finalOutcome ||
-                    "No final outcome recorded."}
-                </p>
-              </div>
-
-              <span
-                className={`shrink-0 rounded-full border px-4 py-1.5 text-xs font-bold ${
-                  executionStatus.toLowerCase() === "completed"
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                    : executionStatus.toLowerCase() === "failed"
-                      ? "border-red-200 bg-red-50 text-red-700"
-                      : "border-blue-200 bg-blue-50 text-blue-700"
-                }`}
-              >
-                {executionStatus}
-              </span>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
-};
 const MonitoringSection = ({ systemHealth }: { systemHealth: SystemHealth | null }) => (
   <SystemMonitoringModule
     data={systemHealth}
@@ -6310,136 +5845,6 @@ const EmptyState = ({ text }: { text: string }) => (
 );
 
 export default SystemAdministratorDashboard;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
