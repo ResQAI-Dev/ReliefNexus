@@ -1,33 +1,12 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'theme/app_theme.dart';
-import 'views/dashboard_screen.dart';
-import 'features/auth/providers/auth_provider.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:reliefnexus_mobile/main.dart';
 
-/// Main entry point for the ReliefNexus Flutter application.
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
+  testWidgets('ReliefNexus initial app smoke test', (WidgetTester tester) async {
+    // Build our app and trigger a frame.
+    await tester.pumpWidget(const ReliefNexusApp());
 
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => AuthProvider(),
-      child: const ReliefNexusApp(),
-    ),
-  );
-}
-
-/// Root application widget.
-class ReliefNexusApp extends StatelessWidget {
-  const ReliefNexusApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'ReliefNexus - Disaster Relief & Risk Management',
-      debugShowCheckedModeBanner: false,
-      // Enforces the clean Material 3 White / Light Theme.
-      theme: AppTheme.lightTheme,
-      home: const DashboardScreen(),
-    );
-  }
+    // Verify that the title text is rendered.
+    expect(find.text('ReliefNexus - Disaster Relief & Risk Management'), findsOneWidget);
+  });
 }
