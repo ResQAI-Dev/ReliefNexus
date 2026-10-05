@@ -3,6 +3,11 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+<<<<<<< HEAD
+)
+
+list(APPEND FLUTTER_FFI_PLUGIN_LIST
+=======
   file_selector_windows
   flutter_secure_storage_windows
   printing
@@ -10,6 +15,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
   jni
+>>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)

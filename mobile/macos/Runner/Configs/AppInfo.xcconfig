@@ -5,6 +5,15 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
+<<<<<<< HEAD
+PRODUCT_NAME = relief_nexus
+
+// The application's bundle identifier
+PRODUCT_BUNDLE_IDENTIFIER = com.reliefnexus.reliefNexus
+
+// The copyright displayed in application information
+PRODUCT_COPYRIGHT = Copyright © 2026 com.reliefnexus. All rights reserved.
+=======
 PRODUCT_NAME = reliefnexus_mobile
 
 // The application's bundle identifier
@@ -12,3 +21,4 @@ PRODUCT_BUNDLE_IDENTIFIER = com.example.reliefnexusMobile
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
+>>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef

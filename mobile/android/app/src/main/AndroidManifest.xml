@@ -1,6 +1,12 @@
+<<<<<<< HEAD
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application
+        android:label="relief_nexus"
+=======
 ﻿<manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application android:usesCleartextTraffic="true"
         android:label="reliefnexus_mobile"
+>>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -43,4 +49,7 @@
         </intent>
     </queries>
 </manifest>
+<<<<<<< HEAD
+=======
 
+>>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef

@@ -1,10 +1,18 @@
 # Project-level configuration.
 cmake_minimum_required(VERSION 3.14)
+<<<<<<< HEAD
+project(relief_nexus LANGUAGES CXX)
+
+# The name of the executable created for the application. Change this to change
+# the on-disk name of your application.
+set(BINARY_NAME "relief_nexus")
+=======
 project(reliefnexus_mobile LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
 set(BINARY_NAME "reliefnexus_mobile")
+>>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.

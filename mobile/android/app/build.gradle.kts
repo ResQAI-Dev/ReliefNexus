@@ -5,7 +5,11 @@ plugins {
 }
 
 android {
+<<<<<<< HEAD
+    namespace = "com.reliefnexus.relief_nexus"
+=======
     namespace = "com.example.reliefnexus_mobile"
+>>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -16,7 +20,11 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+<<<<<<< HEAD
+        applicationId = "com.reliefnexus.relief_nexus"
+=======
         applicationId = "com.example.reliefnexus_mobile"
+>>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
