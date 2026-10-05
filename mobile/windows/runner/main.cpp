@@ -27,7 +27,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
+<<<<<<< HEAD
   if (!window.Create(L"relief_nexus", origin, size)) {
+=======
+  if (!window.Create(L"reliefnexus_mobile", origin, size)) {
+>>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);

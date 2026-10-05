@@ -1,8 +1,27 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import NotificationBell from "../../../components/notifications/NotificationBell";
+import {
+  SystemMonitoringModule,
+  AuditLogsModule,
+  SystemReportsModule,
+  SystemSettingsModule,
+  LocationSharingModule,
+  AdminProfileModule,
+  type ReportSummary,
+  type SystemSettingsValue,
+  type LocationSharingData,
+  type AdminProfile,
+} from "../components/SystemAdminSupportModules";
+import EmergencyAlertsPage from "../../emergency-alerts/pages/EmergencyAlertsPage";
+import RiskPredictionPage from "../../risk-prediction/pages/RiskPredictionPage";
+import VulnerabilityImpactPage from "../../vulnerability-impact/pages/VulnerabilityImpactPage";
+import ResourceOptimizationPage from "../../resource-optimization/pages/ResourceOptimizationPage";
+import DisasterReportsPage from "../../disaster-reports/pages/DisasterReportsPage";
+import { Fragment, useEffect, useMemo, useState, type ReactNode, type Dispatch, type SetStateAction } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import api from "../../../lib/api/apiClient";
-
 const LogoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
     <path d="M5 20V10" />
@@ -11,7 +30,6 @@ const LogoIcon = () => (
     <path d="M20 20V8" />
   </svg>
 );
-
 const DashboardIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <rect x="3" y="3" width="7" height="7" rx="1.5" />
@@ -20,7 +38,6 @@ const DashboardIcon = () => (
     <rect x="14" y="14" width="7" height="7" rx="1.5" />
   </svg>
 );
-
 const UsersIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <circle cx="9" cy="8" r="3" />
@@ -29,7 +46,6 @@ const UsersIcon = () => (
     <path d="M17 15c2.2.5 3.5 2.1 4 5" />
   </svg>
 );
-
 const VolunteerIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <circle cx="12" cy="8" r="3" />
@@ -37,122 +53,94 @@ const VolunteerIcon = () => (
     <path d="M5 11H3M21 11h-2" />
   </svg>
 );
-
 const RequestIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <rect x="5" y="3" width="14" height="18" rx="2" />
     <path d="M8 8h8M8 12h8M8 16h5" />
   </svg>
 );
-
 const ShieldIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <path d="M12 3 20 6v5c0 5-3.2 8.2-8 10-4.8-1.8-8-5-8-10V6l8-3Z" />
     <path d="m9 12 2 2 4-4" />
   </svg>
 );
-
 const SparkIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <path d="m12 3 1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z" />
     <path d="m19 15 .7 2.3L22 18l-2.3.7L19 21l-.7-2.3L16 18l2.3-.7L19 15Z" />
   </svg>
 );
-
 const MonitorIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <rect x="3" y="4" width="18" height="13" rx="2" />
     <path d="M8 21h8M12 17v4" />
   </svg>
 );
-
 const AuditIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <path d="M5 4h14v16H5z" />
     <path d="M8 8h8M8 12h8M8 16h5" />
   </svg>
 );
-
 const ReportIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <path d="M4 19V5M4 19h16" />
     <path d="m7 15 3-4 3 2 5-6" />
   </svg>
 );
-
 const SettingsIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z" />
     <path d="m19 13 2 1-2 3-2-1a7.6 7.6 0 0 1-2 1l-.3 2h-3.5l-.3-2a7.6 7.6 0 0 1-2-1l-2 1-2-3 2-1a7.6 7.6 0 0 1 0-2l-2-1 2-3 2 1a7.6 7.6 0 0 1 2-1l.3-2h3.5l.3 2a7.6 7.6 0 0 1 2 1l2-1 2 3-2 1a7.6 7.6 0 0 1 0 2Z" />
   </svg>
 );
-
 const UserIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <circle cx="12" cy="8" r="3" />
     <path d="M5 21c.8-4.3 3.1-6.5 7-6.5s6.2 2.2 7 6.5" />
   </svg>
 );
-
 const RiskIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <path d="M12 3 2.8 19h18.4L12 3Z" />
     <path d="M12 9v5M12 17h.01" />
   </svg>
 );
-
 const ImpactIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <circle cx="12" cy="12" r="8" />
     <path d="M12 8v4l3 2" />
   </svg>
 );
-
 const ResourceIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <path d="m12 3 8 4-8 4-8-4 8-4Z" />
     <path d="m4 12 8 4 8-4M4 17l8 4 8-4" />
   </svg>
 );
-
 const AlertIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <path d="M10.3 3.3 2.2 17a2 2 0 0 0 1.7 3h16.2a2 2 0 0 0 1.7-3L13.7 3.3a2 2 0 0 0-3.4 0Z" />
     <path d="M12 9v4M12 17h.01" />
   </svg>
 );
-
 const SearchIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <circle cx="11" cy="11" r="6.5" />
     <path d="m16 16 4 4" />
   </svg>
 );
-
-const BellIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4" />
-  </svg>
-);
-
 const ChevronDownIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="m6 9 6 6 6-6" />
   </svg>
 );
-
-const ArrowUpRightIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <path d="M7 17 17 7M9 7h8v8" />
-  </svg>
-);
-
 const CheckIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
     <path d="m5 12 4 4L19 6" />
   </svg>
 );
-
 const LogoutIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <path d="M10 17l5-5-5-5M15 12H3M21 4v16" />
@@ -162,7 +150,16 @@ const LogoutIcon = () => (
 type Section =
   | "dashboard"
   | "users"
-  | "role-requests"
+  | "relief-requests"
+  | "location-sharing"
+  | "user-profiles"
+  | "disaster-reports"
+  | "emergency-alerts"
+  | "risk-prediction"
+  | "vulnerability-impact"
+  | "resource-optimization"
+  | "risk-information"
+  | "relief-resources"  | "role-requests"
   | "permissions"
   | "ai-agents"
   | "monitoring"
@@ -186,7 +183,17 @@ type RoleRequest = {
   email?: string;
   role?: string;
   roleRequestStatus?: string;
+  profileImageUrl?: string;
+  isActive?: boolean;
+  permissions?: string[];
   createdAt?: string;
+  phoneNumber?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  address?: string;
+  district?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
 };
 
 type SystemHealth = {
@@ -214,17 +221,14 @@ type AgentStatus = {
   status: "Running" | "Idle" | "Offline" | "Unknown";
   confidence: number | null;
   icon: ReactNode;
+  execution: any | null;
 };
-
-const agentStatuses: AgentStatus[] = [];
-
 const roles = [
   "AffectedUser",
   "FieldVolunteer",
   "ReliefCoordinator",
   "SystemAdministrator",
 ];
-
 const permissionList = [
   "View Risk Information",
   "Report Disaster",
@@ -239,7 +243,6 @@ const permissionList = [
   "View Audit Logs",
   "View Reports",
 ];
-
 const menuItems: Array<{
   id: Section;
   label: string;
@@ -256,27 +259,26 @@ const menuItems: Array<{
   { id: "settings", label: "System Settings", icon: <SettingsIcon /> },
   { id: "profile", label: "Profile", icon: <UserIcon /> },
 ];
-
 const userManagementItems = [
   "Affected Users",
   "Field Volunteers",
   "Relief Coordinators",
   "Disaster Reports",
   "Relief Requests",
-  "Emergency Alerts",
   "Risk Information",
-  "Relief Resources",
   "Location Sharing",
   "User Profiles",
+  "Risk Prediction",
+  "Vulnerability & Impact",
+  "Resource Optimization",
+  "Early Warning & Coordination",
 ];
-
 const aiAgentManagementItems = [
   "Risk Prediction",
   "Vulnerability & Impact",
   "Resource Optimization",
   "Early Warning & Coordination",
 ];
-
 const agentDefinitions = [
   {
     name: "Risk Prediction Agent",
@@ -299,8 +301,6 @@ const agentDefinitions = [
     icon: <AlertIcon />,
   },
 ];
-
-
 const roleLabel = (role?: string) => {
   switch (role) {
     case "AffectedUser":
@@ -315,12 +315,202 @@ const roleLabel = (role?: string) => {
       return role || "Unknown";
   }
 };
-
 const formatDate = (value?: string) => {
   if (!value) return "No date";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString();
+};
+type DisasterReportRecord = {
+  id?: string;
+  reporterUserId?: string;
+  reporterName?: string;
+  reporterEmail?: string;
+  disasterType?: string;
+  description?: string;
+  location?: string;
+  latitude?: number;
+  longitude?: number;
+  severity?: string;
+  status?: string;
+  riskPredictionId?: string | null;
+  assignedVolunteerUserId?: string;
+  assignedVolunteerName?: string;
+  fieldUpdateNotes?: string | null;
+  fieldSituation?: string | null;
+  fieldUpdateLatitude?: number | null;
+  fieldUpdateLongitude?: number | null;
+  fieldUpdatedAt?: string | null;
+  riskScore?: number | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+const AdminLiveApiSection = ({
+  title,
+  description,
+  endpoint,
+}: {
+  title: string;
+  description: string;
+  endpoint: string;
+}) => {
+  const [rows, setRows] = useState<Record<string, unknown>[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    const load = async () => {
+      setLoading(true);
+      setError("");
+
+      try {
+        const response = await api.get(endpoint);
+        const payload = response.data;
+
+        const data = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.items)
+            ? payload.items
+            : Array.isArray(payload?.data)
+              ? payload.data
+              : [];
+
+        if (active) {
+          setRows(data);
+        }
+      } catch (err) {
+        console.error(`${title} load failed:`, err);
+
+        if (active) {
+          setError(`${title} could not be loaded from the API.`);
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void load();
+
+    return () => {
+      active = false;
+    };
+  }, [endpoint, title]);
+
+  const getValue = (
+    row: Record<string, unknown>,
+    keys: string[]
+  ) => {
+    for (const key of keys) {
+      if (
+        row[key] !== undefined &&
+        row[key] !== null &&
+        String(row[key]).trim() !== ""
+      ) {
+        return String(row[key]);
+      }
+    }
+
+    return "N/A";
+  };
+
+  return (
+    <div className="space-y-6">
+      <PageHeading
+        eyebrow="User Management"
+        title={title}
+        description={description}
+      />
+
+      <DashboardCard
+        title={title}
+        subtitle={`${rows.length} records shown`}
+      >
+        {loading ? (
+          <div className="py-12 text-center text-sm text-slate-500">
+            Loading {title.toLowerCase()}...
+          </div>
+        ) : error ? (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            {error}
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="py-12 text-center text-sm text-slate-500">
+            No {title.toLowerCase()} records are available.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1000px] text-left">
+              <thead>
+                <tr className="border-b border-slate-200 text-[10px] uppercase tracking-wider text-slate-400">
+                  <th className="px-4 py-3">Type</th>
+                  <th className="px-4 py-3">Location</th>
+                  <th className="px-4 py-3">Status / Level</th>
+                  <th className="px-4 py-3">Score / Quantity</th>
+                  <th className="px-4 py-3">Created</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {rows.map((row, index) => (
+                  <tr
+                    key={getValue(row, ["id"]) + index}
+                    className="border-b border-slate-100 last:border-0"
+                  >
+                    <td className="px-4 py-4 text-sm font-medium text-slate-700">
+                      {getValue(row, [
+                        "disasterType",
+                        "resourceType",
+                        "title",
+                        "name",
+                        "eventType",
+                      ])}
+                    </td>
+
+                    <td className="px-4 py-4 text-sm text-slate-600">
+                      {getValue(row, [
+                        "location",
+                        "resourceLocation",
+                      ])}
+                    </td>
+
+                    <td className="px-4 py-4 text-sm text-slate-600">
+                      {getValue(row, [
+                        "status",
+                        "riskLevel",
+                        "severity",
+                        "approvalStatus",
+                      ])}
+                    </td>
+
+                    <td className="px-4 py-4 text-sm text-slate-600">
+                      {getValue(row, [
+                        "riskScore",
+                        "availableQuantity",
+                        "allocatedQuantity",
+                        "recommendedQuantity",
+                      ])}
+                    </td>
+
+                    <td className="px-4 py-4 text-xs text-slate-500">
+                      {getValue(row, [
+                        "createdAt",
+                        "updatedAt",
+                      ])}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </DashboardCard>
+    </div>
+  );
 };
 
 const SystemAdministratorDashboard = () => {
@@ -333,20 +523,38 @@ const SystemAdministratorDashboard = () => {
   const [selectedUserModule, setSelectedUserModule] = useState("Affected Users");
   const [aiAgentManagementOpen, setAiAgentManagementOpen] = useState(false);
   const [selectedAiModule, setSelectedAiModule] = useState("Risk Prediction");
+
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [roleRequests, setRoleRequests] = useState<RoleRequest[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [agentStatuses, setAgentStatuses] = useState<AgentStatus[]>([]);
   const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null);
+
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState("");
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
 
+  const [disasterReports, setDisasterReports] =
+    useState<DisasterReportRecord[]>([]);
+  const [reliefResources, setReliefResources] = useState<any[]>([]);
+  const [riskPredictions, setRiskPredictions] = useState<any[]>([]);
+  const [vulnerabilityAssessments, setVulnerabilityAssessments] = useState<any[]>([]);
+  const [emergencyAlerts, setEmergencyAlerts] = useState<any[]>([]);
+  const [reliefRequests, setReliefRequests] = useState<any[]>([]);
+  const [reliefRequestsLoading, setReliefRequestsLoading] = useState(false);
+  const [reliefRequestsError, setReliefRequestsError] = useState("");
+
+  const [locationShares, setLocationShares] = useState<any[]>([]);
+  const [locationSharesLoading, setLocationSharesLoading] = useState(false);
+  const [locationSharesError, setLocationSharesError] = useState("");
+
   const [userSearch, setUserSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("All");
+
   const [selectedPermissionRole, setSelectedPermissionRole] =
     useState("FieldVolunteer");
+
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([
     "View Risk Information",
     "Report Disaster",
@@ -361,23 +569,60 @@ const SystemAdministratorDashboard = () => {
     auditLogging: true,
   });
 
+  const hasPermission = (permission: string) =>
+    user?.role === "SystemAdministrator" ||
+    (user?.permissions ?? []).includes(permission);
+
   useEffect(() => {
     const path = location.pathname;
-    if (path.includes("/users")) setSection("users");
-    else if (path.includes("/role-requests")) setSection("role-requests");
-    else if (path.includes("/permissions")) setSection("permissions");
-    else if (path.includes("/ai-agents")) setSection("ai-agents");
-    else if (path.includes("/monitoring")) setSection("monitoring");
-    else if (path.includes("/audit-logs")) setSection("audit-logs");
-    else if (path.includes("/reports")) setSection("reports");
-    else if (path.includes("/settings")) setSection("settings");
-    else if (path.includes("/profile")) setSection("profile");
-    else setSection("dashboard");
+
+    if (path.includes("/disaster-reports")) {
+      setSection("disaster-reports");
+    } else if (path.includes("/relief-requests")) {
+      setSection("relief-requests");    } else if (path.includes("/risk-prediction")) {
+      setSection("risk-prediction");
+    } else if (path.includes("/vulnerability-impact")) {
+      setSection("vulnerability-impact");
+    } else if (path.includes("/resource-optimization")) {
+      setSection("resource-optimization");
+    } else if (path.includes("/emergency-alerts")) {
+      setSection("emergency-alerts");
+    } else if (path.includes("/risk-information")) {
+      setSection("risk-information");
+    } else if (path.includes("/relief-resources")) {
+      setSection("relief-resources");
+    } else if (path.includes("/location-sharing")) {
+      setSection("location-sharing");
+    } else if (path.includes("/user-profiles")) {
+      setSection("user-profiles");
+    } else if (path.includes("/users")) {
+      setSection("users");
+    } else if (path.includes("/role-requests")) {
+      setSection("role-requests");
+    } else if (path.includes("/permissions")) {
+      setSection("permissions");
+    } else if (path.includes("/ai-agents")) {
+      setSection("ai-agents");
+    } else if (path.includes("/monitoring")) {
+      setSection("monitoring");
+    } else if (path.includes("/audit-logs")) {
+      setSection("audit-logs");
+    } else if (path.includes("/reports")) {
+      setSection("reports");
+    } else if (path.includes("/settings")) {
+      setSection("settings");
+    } else if (path.includes("/profile")) {
+      setSection("profile");
+    } else {
+      setSection("dashboard");
+    }
   }, [location.pathname]);
 
   useEffect(() => {
-    loadAdminData();
-  }, []);
+    if (section === "ai-agents") {
+      setAiAgentManagementOpen(true);
+    }
+  }, [section]);
 
   const loadAdminData = async () => {
     setLoading(true);
@@ -389,12 +634,20 @@ const SystemAdministratorDashboard = () => {
       auditResult,
       agentsResult,
       healthResult,
+      resourcesResult,
+      riskPredictionsResult,
+      vulnerabilityAssessmentsResult,
+      emergencyAlertsResult,
     ] = await Promise.allSettled([
       api.get("/users"),
       api.get("/users/pending-role-requests"),
       api.get("/audit-logs"),
-      api.get("/ai-agents"),
-      api.get("/system-monitoring/health"),
+      api.get("/risk-predictions/agent-executions"),
+      api.get("/auth/system-health"),
+      api.get("/resource-optimization/resources"),
+      api.get("/risk-predictions"),
+      api.get("/vulnerability-impact"),
+      api.get("/emergency-alerts"),
     ]);
 
     if (usersResult.status === "fulfilled") {
@@ -421,29 +674,58 @@ const SystemAdministratorDashboard = () => {
     if (agentsResult.status === "fulfilled") {
       const raw = Array.isArray(agentsResult.value.data)
         ? agentsResult.value.data
-        : agentsResult.value.data?.data || agentsResult.value.data?.agents || [];
+        : agentsResult.value.data?.data ||
+          agentsResult.value.data?.agents ||
+          [];
 
       const mapped = agentDefinitions.map((definition) => {
-        const match = raw.find((item: any) =>
-          String(item.name || item.agentName || item.type || "")
-            .toLowerCase()
-            .includes(definition.name.split(" Agent")[0].toLowerCase())
+        const expectedAgentName = definition.name;
+
+        const executions = raw.filter((item: any) =>
+          String(item.agentName || item.name || item.type || "")
+            .trim()
+            .toLowerCase() === expectedAgentName.toLowerCase()
         );
+
+        const latestExecution = executions
+          .slice()
+          .sort((a: any, b: any) => {
+            const dateA = new Date(
+              a.startedAt || a.createdAt || 0
+            ).getTime();
+
+            const dateB = new Date(
+              b.startedAt || b.createdAt || 0
+            ).getTime();
+
+            return dateB - dateA;
+          })[0];
+
+        const executionStatus = String(
+          latestExecution?.status || ""
+        ).toLowerCase();
+
+        const displayStatus: AgentStatus["status"] =
+          executionStatus === "running"
+            ? "Running"
+            : executionStatus === "completed"
+              ? "Idle"
+              : executionStatus === "failed"
+                ? "Offline"
+                : latestExecution
+                  ? "Idle"
+                  : "Unknown";
 
         return {
           ...definition,
-          status:
-            match?.status === "Running" ||
-            match?.status === "Idle" ||
-            match?.status === "Offline"
-              ? match.status
-              : "Unknown",
+          status: displayStatus,
           confidence:
-            typeof match?.confidence === "number"
-              ? match.confidence
-              : typeof match?.confidenceScore === "number"
-                ? match.confidenceScore
+            typeof latestExecution?.confidence === "number"
+              ? latestExecution.confidence
+              : typeof latestExecution?.confidenceScore === "number"
+                ? latestExecution.confidenceScore
                 : null,
+          execution: latestExecution || null,
         };
       });
 
@@ -452,18 +734,140 @@ const SystemAdministratorDashboard = () => {
 
     if (healthResult.status === "fulfilled") {
       const raw = healthResult.value.data?.data || healthResult.value.data;
+
       if (raw && typeof raw === "object") {
         setSystemHealth(raw);
       }
     }
 
+    if (resourcesResult.status === "fulfilled") {
+      const payload = resourcesResult.value.data;
+      const data = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.items)
+          ? payload.items
+          : Array.isArray(payload?.data)
+            ? payload.data
+            : [];
+      setReliefResources(data);
+    }
+
+    if (riskPredictionsResult.status === "fulfilled") {
+      const payload = riskPredictionsResult.value.data;
+      const data = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.items)
+          ? payload.items
+          : Array.isArray(payload?.data)
+            ? payload.data
+            : [];
+      setRiskPredictions(data);
+    }
+
+    if (vulnerabilityAssessmentsResult.status === "fulfilled") {
+      const payload = vulnerabilityAssessmentsResult.value.data;
+      const data = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.items)
+          ? payload.items
+          : Array.isArray(payload?.data)
+            ? payload.data
+            : [];
+      setVulnerabilityAssessments(data);
+    }
+
+    if (emergencyAlertsResult.status === "fulfilled") {
+      const payload = emergencyAlertsResult.value.data;
+      const data = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.items)
+          ? payload.items
+          : Array.isArray(payload?.data)
+            ? payload.data
+            : [];
+      setEmergencyAlerts(data);
+    }
+
     setLoading(false);
   };
+
+  useEffect(() => {
+    void loadAdminData();
+  }, []);
+
+  const loadDisasterReports = async () => {
+    try {
+      const response = await api.get("/disaster-reports");
+
+      const data = Array.isArray(response.data)
+        ? response.data
+        : [];
+
+      setDisasterReports(data);
+    } catch (err) {
+      console.error("Disaster reports could not be loaded:", err);
+    }
+  };
+
+  const loadReliefRequests = async () => {
+    setReliefRequestsLoading(true);
+    setReliefRequestsError("");
+
+    try {
+      const response = await api.get("/relief-requests");
+
+      setReliefRequests(
+        Array.isArray(response.data) ? response.data : []
+      );
+    } catch (err) {
+      console.error(err);
+      setReliefRequestsError(
+        "Relief requests could not be loaded from the API."
+      );
+    } finally {
+      setReliefRequestsLoading(false);
+    }
+  };
+
+  const loadLocationShares = async () => {
+    setLocationSharesLoading(true);
+    setLocationSharesError("");
+
+    try {
+      const response = await api.get("/location-sharing");
+
+      setLocationShares(
+        Array.isArray(response.data) ? response.data : []
+      );
+    } catch (err) {
+      console.error(err);
+      setLocationSharesError(
+        "Location-sharing data could not be loaded from the API."
+      );
+    } finally {
+      setLocationSharesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (section === "disaster-reports") {
+      void loadDisasterReports();
+    }
+
+    if (section === "relief-requests") {
+      void loadReliefRequests();
+    }
+
+    if (section === "location-sharing") {
+      void loadLocationShares();
+    }
+  }, [section]);
 
   const goToSection = (nextSection: Section) => {
     setNotice("");
     setError("");
     setSection(nextSection);
+
     navigate(
       nextSection === "dashboard"
         ? "/dashboard/system-administrator"
@@ -483,14 +887,43 @@ const SystemAdministratorDashboard = () => {
     setError("");
     setUserSearch("");
 
+    const routes: Record<string, Section> = {
+      "Disaster Reports": "disaster-reports",
+      "Relief Requests": "relief-requests",
+      "Emergency Alerts": "emergency-alerts",
+      "Risk Information": "risk-information",
+      "Relief Resources": "relief-resources",
+      "Location Sharing": "location-sharing",
+      "User Profiles": "user-profiles",
+      "Risk Prediction": "risk-prediction",
+      "Vulnerability & Impact": "vulnerability-impact",
+      "Resource Optimization": "resource-optimization",
+      "Early Warning & Coordination": "emergency-alerts",
+    };
+
     if (child === "Affected Users") {
       setRoleFilter("AffectedUser");
-    } else if (child === "Field Volunteers") {
+      goToSection("users");
+      return;
+    }
+
+    if (child === "Field Volunteers") {
       setRoleFilter("FieldVolunteer");
-    } else if (child === "Relief Coordinators") {
+      goToSection("users");
+      return;
+    }
+
+    if (child === "Relief Coordinators") {
       setRoleFilter("ReliefCoordinator");
-    } else {
-      setRoleFilter("All");
+      goToSection("users");
+      return;
+    }
+
+    setRoleFilter("All");
+
+    if (routes[child]) {
+      goToSection(routes[child]);
+      return;
     }
 
     goToSection("users");
@@ -501,7 +934,9 @@ const SystemAdministratorDashboard = () => {
     setSelectedAiModule(child);
     setNotice("");
     setError("");
-    goToSection("ai-agents");
+    setSection("ai-agents");
+
+    navigate("/dashboard/system-administrator/ai-agents");
   };
 
   const showMessage = (message: string) => {
@@ -515,6 +950,7 @@ const SystemAdministratorDashboard = () => {
     target: UserRecord
   ) => {
     const key = `${action}-${target.id}`;
+
     setActionLoading(key);
     setError("");
     setNotice("");
@@ -522,9 +958,11 @@ const SystemAdministratorDashboard = () => {
     try {
       if (action === "delete") {
         await api.delete(`/users/${target.id}`);
+
         setUsers((current) =>
           current.filter((item) => item.id !== target.id)
         );
+
         showMessage(`${target.fullName} was deleted successfully.`);
       } else {
         await api.put(`/users/${target.id}`, {
@@ -535,7 +973,10 @@ const SystemAdministratorDashboard = () => {
         setUsers((current) =>
           current.map((item) =>
             item.id === target.id
-              ? { ...item, isActive: action === "activate" }
+              ? {
+                  ...item,
+                  isActive: action === "activate",
+                }
               : item
           )
         );
@@ -554,18 +995,31 @@ const SystemAdministratorDashboard = () => {
     }
   };
 
-  const handleRoleChange = async (target: UserRecord, role: string) => {
+  const handleRoleChange = async (
+    target: UserRecord,
+    role: string
+  ) => {
     const key = `role-${target.id}`;
+
     setActionLoading(key);
     setError("");
 
     try {
-      await api.put(`/users/${target.id}/role`, { role });
+      await api.put(`/users/${target.id}`, {
+        fullName: target.fullName,
+        email: target.email,
+        role,
+        isActive: target.isActive,
+      });
+
       setUsers((current) =>
         current.map((item) =>
-          item.id === target.id ? { ...item, role } : item
+          item.id === target.id
+            ? { ...item, role }
+            : item
         )
       );
+
       showMessage(`${target.fullName}'s role was updated.`);
     } catch (err) {
       console.error(err);
@@ -580,17 +1034,21 @@ const SystemAdministratorDashboard = () => {
     action: "approve" | "reject"
   ) => {
     const key = `${action}-${request.id}`;
+
     setActionLoading(key);
     setError("");
 
     try {
-      await api.put(`/users/${request.id}/${action}`);
+      await api.put(`/users/${request.id}/${action}-role`);
+
       setRoleRequests((current) =>
         current.filter((item) => item.id !== request.id)
       );
+
       showMessage(
         `${request.fullName || request.email || "Request"} was ${action}d.`
       );
+
       await loadAdminData();
     } catch (err) {
       console.error(err);
@@ -617,6 +1075,7 @@ const SystemAdministratorDashboard = () => {
         role: selectedPermissionRole,
         permissions: selectedPermissions,
       });
+
       showMessage(
         `Permissions saved for ${roleLabel(selectedPermissionRole)}.`
       );
@@ -649,12 +1108,198 @@ const SystemAdministratorDashboard = () => {
   const totalUsers = users.length;
   const activeUsers = users.filter((item) => item.isActive).length;
   const pendingRequests = roleRequests.length;
-  const activeAgents = agentStatuses.filter(
-    (item) => item.status === "Running"
-  ).length;
+  const activeAgents = agentStatuses.length;
+
+  const visibleMenuItems = menuItems.filter((item) => {
+    if (user?.role === "SystemAdministrator") return true;
+
+    const permissionMap: Record<Section, string | null> = {
+      dashboard: null,
+      users: "Manage Users",
+      "disaster-reports": "Report Disaster",
+      "emergency-alerts": "View Emergency Alerts",
+      "risk-information": "View Risk Information",
+      "relief-resources": "Manage Relief Resources",
+      "relief-requests": "Manage Relief Requests",
+      "location-sharing": "Share Location",
+      "user-profiles": "Manage Users",
+      "role-requests": "Manage Role Requests",
+      permissions: "Configure Permissions",
+      "ai-agents": "AI Agent Monitoring",
+      monitoring: null,
+      "audit-logs": "View Audit Logs",
+      reports: "View Reports",
+      settings: null,
+      profile: null,
+      "risk-prediction": "Manage Users",
+      "vulnerability-impact": "Manage Users",
+      "resource-optimization": "Manage Users",
+    };
+
+    const permission = permissionMap[item.id];
+
+    return permission === null || hasPermission(permission);
+  });
+
+  const visibleUserManagementItems =
+    userManagementItems.filter((child) => {
+      if (user?.role === "SystemAdministrator") return true;
+
+      const permissionMap: Record<string, string> = {
+        "Disaster Reports": "Report Disaster",
+        "Relief Requests": "Manage Relief Requests",
+        "Emergency Alerts": "View Emergency Alerts",
+        "Risk Information": "View Risk Information",
+        "Relief Resources": "Manage Relief Resources",
+        "Location Sharing": "Share Location",
+        "Affected Users": "Manage Users",
+        "Field Volunteers": "Manage Users",
+        "Relief Coordinators": "Manage Users",
+        "User Profiles": "Manage Users",
+      };
+
+      return hasPermission(
+        permissionMap[child] || "Manage Users"
+      );
+    });
+
+  const visibleAiAgentManagementItems =
+    aiAgentManagementItems.filter(
+      () =>
+        user?.role === "SystemAdministrator" ||
+        hasPermission("AI Agent Monitoring")
+    );
+
+  const reportSummary = useMemo<ReportSummary>(() => {
+    const normalizedStatus = (value?: string) =>
+      String(value || "submitted")
+        .toLowerCase()
+        .replace(/[\s_-]/g, "");
+
+    const totalIncidents = disasterReports.length;
+    const resolved = disasterReports.filter((item) =>
+      ["resolved", "closed", "completed"].includes(
+        normalizedStatus(item.status)
+      )
+    ).length;
+    const active = disasterReports.filter((item) => {
+      const status = normalizedStatus(item.status);
+      return status !== "resolved" && status !== "closed" && status !== "rejected";
+    }).length;
+    const highCritical = disasterReports.filter((item) => {
+      const severity = String(item.severity || "").toLowerCase();
+      return severity === "high" || severity === "critical";
+    }).length;
+    const volunteerAssignments = disasterReports.filter(
+      (item) => Boolean(item.assignedVolunteerUserId)
+    ).length;
+    const fieldResponses = disasterReports.filter((item) => {
+      const status = normalizedStatus(item.status);
+      return status === "fieldcompleted" || status === "resolved";
+    }).length;
+    const riskLinked = disasterReports.filter(
+      (item: any) => Boolean(item.riskPredictionId)
+    ).length;
+
+    const severityNames = ["Critical", "High", "Medium", "Low"];
+    const severity = severityNames.map((name) => ({
+      name,
+      count: disasterReports.filter(
+        (item) => String(item.severity || "").toLowerCase() === name.toLowerCase()
+      ).length,
+    }));
+
+    const stageReached = (item: DisasterReportRecord) => {
+      const status = normalizedStatus(item.status);
+      if (status === "resolved" || status === "closed") return 8;
+      if (status === "fieldcompleted") return 7;
+      if (status === "fieldstarted" || status === "fieldupdated") return 7;
+      if (item.assignedVolunteerUserId) return 6;
+      if (["volunteerqueue", "assigned"].includes(status)) return 6;
+      if (["warninggenerated", "alertgenerated", "earlywarning"].includes(status)) return 5;
+      if (["resourcedoptimized", "resourceoptimized", "resourcesallocated"].includes(status)) return 4;
+      if (riskLinked || status !== "submitted") return 3;
+      return 1;
+    };
+
+    const workflowNames = [
+      "Report Submitted",
+      "Risk Prediction",
+      "Vulnerability",
+      "Resource Optimization",
+      "Early Warning",
+      "Volunteer Assignment",
+      "Field Response",
+      "Resolution",
+    ];
+    const workflow = workflowNames.map((name, index) => ({
+      name,
+      count: disasterReports.filter((item) => stageReached(item) >= index + 1).length,
+    }));
+
+    const monthNames: string[] = [];
+    const now = new Date();
+    for (let offset = 5; offset >= 0; offset -= 1) {
+      const d = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+      monthNames.push(d.toLocaleString([], { month: "short" }));
+    }
+    const monthly = monthNames.map((name, index) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (5 - index), 1);
+      const count = disasterReports.filter((item) => {
+        if (!item.createdAt) return false;
+        const created = new Date(item.createdAt);
+        return created.getFullYear() === d.getFullYear() && created.getMonth() === d.getMonth();
+      }).length;
+      return { name, count };
+    });
+
+    const riskScores = disasterReports
+      .map((item: any) => Number(item.riskScore))
+      .filter((value) => Number.isFinite(value));
+
+    return {
+      totalIncidents,
+      resolved,
+      active,
+      highCritical,
+      aiPredictions: riskLinked,
+      volunteerAssignments,
+      fieldResponses,
+      averageRiskScore: riskScores.length
+        ? riskScores.reduce((sum, value) => sum + value, 0) / riskScores.length
+        : 0,
+      severity,
+      workflow,
+      monthly,
+    };
+  }, [disasterReports]);
+
+  const locationSharingData = useMemo<LocationSharingData>(() => {
+    const first = locationShares[0] || {};
+    return {
+      enabled: Boolean(first.enabled ?? first.isActive ?? false),
+      latitude: first.latitude != null ? Number(first.latitude) : null,
+      longitude: first.longitude != null ? Number(first.longitude) : null,
+      locationLabel: first.locationLabel || first.location || "Location unavailable",
+      accuracyMeters: first.accuracyMeters != null ? Number(first.accuracyMeters) : null,
+      lastSharedAt: first.lastSharedAt || first.updatedAt || first.createdAt || null,
+      sharedWith: [],
+    };
+  }, [locationShares]);
+
+  const adminProfile: AdminProfile = {
+    fullName: user?.fullName,
+    email: user?.email,
+    role: user?.role || "SystemAdministrator",
+    isActive: user?.isActive,
+    createdAt: user?.createdAt,
+  };
 
   const renderContent = () => {
     switch (section) {
+      case "disaster-reports":
+        return <DisasterReportsPage users={users} />;
+
       case "users":
         return (
           <UsersSection
@@ -667,6 +1312,171 @@ const SystemAdministratorDashboard = () => {
             onAction={handleUserAction}
             onRoleChange={handleRoleChange}
             selectedModule={selectedUserModule}
+            onRefresh={loadAdminData}
+          />
+        );
+
+            case "emergency-alerts":
+              return <EmergencyAlertsPage />;
+
+            case "risk-prediction":
+              return <RiskPredictionPage />;
+
+            case "vulnerability-impact":
+              return <VulnerabilityImpactPage />;
+
+            case "resource-optimization":
+              return <ResourceOptimizationPage />;
+
+      case "risk-information":
+        return (
+          <AdminLiveApiSection
+            title="Risk Information"
+            description="Review real risk predictions generated by the multi-hazard risk engine."
+            endpoint="/risk-predictions"
+          />
+        );
+
+      case "relief-resources":
+        return (
+          <AdminLiveApiSection
+            title="Relief Resources"
+            description="Review real relief resources currently stored in the system."
+            endpoint="/resources"
+          />
+        );
+
+      case "relief-requests":
+        return (
+          <div className="space-y-6">
+            <PageHeading
+              eyebrow="User Management"
+              title="Relief Requests"
+              description="Review real emergency assistance and relief requests."
+            />
+
+            <DashboardCard
+              title="Relief Requests"
+              subtitle={`${reliefRequests.length} records shown`}
+            >
+              {reliefRequestsLoading ? (
+                <div className="py-12 text-center text-sm text-slate-500">
+                  Loading relief requests...
+                </div>
+              ) : reliefRequestsError ? (
+                <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                  {reliefRequestsError}
+                </div>
+              ) : reliefRequests.length === 0 ? (
+                <EmptyState text="No relief requests found." />
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full">
+                    <thead>
+                      <tr className="border-b border-slate-100 text-left text-xs font-bold uppercase tracking-wide text-slate-400">
+                        <th className="px-4 py-3">Requester</th>
+                        <th className="px-4 py-3">Type</th>
+                        <th className="px-4 py-3">Location</th>
+                        <th className="px-4 py-3">Status</th>
+                        <th className="px-4 py-3">Created</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reliefRequests.map((request: any, index: number) => (
+                        <tr
+                          key={String(request.id || index)}
+                          className="border-b border-slate-50"
+                        >
+                          <td className="px-4 py-4 text-sm font-semibold text-slate-700">
+                            {String(
+                              request.requesterName ||
+                              request.fullName ||
+                              request.userName ||
+                              request.email ||
+                              "Unknown"
+                            )}
+                          </td>
+                          <td className="px-4 py-4 text-sm text-slate-600">
+                            {String(
+                              request.requestType ||
+                              request.type ||
+                              request.resourceType ||
+                              "N/A"
+                            )}
+                          </td>
+                          <td className="px-4 py-4 text-sm text-slate-600">
+                            {String(
+                              request.location ||
+                              request.address ||
+                              "N/A"
+                            )}
+                          </td>
+                          <td className="px-4 py-4 text-sm text-slate-600">
+                            {String(
+                              request.status ||
+                              request.requestStatus ||
+                              "N/A"
+                            )}
+                          </td>
+                          <td className="px-4 py-4 text-xs text-slate-500">
+                            {String(
+                              request.createdAt ||
+                              request.updatedAt ||
+                              "N/A"
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </DashboardCard>
+          </div>
+        );
+
+      case "location-sharing":
+        return (
+          <div className="space-y-6">
+            {locationSharesLoading ? (
+              <div className="rounded-[28px] border border-slate-200 bg-white p-12 text-center text-sm text-slate-500">
+                Loading live location-sharing dataN/A
+              </div>
+            ) : locationSharesError ? (
+              <div className="rounded-[28px] border border-red-200 bg-red-50 p-6 text-sm font-bold text-red-700">
+                {locationSharesError}
+              </div>
+            ) : (
+              <LocationSharingModule
+                data={locationSharingData}
+                onToggle={async (enabled: boolean) => {
+                  try {
+                    await api.put("/location-sharing", { enabled });
+                    showMessage(`Location sharing ${enabled ? "enabled" : "disabled"}.`);
+                    await loadLocationShares();
+                  } catch (err) {
+                    console.error(err);
+                    setError("Location-sharing settings could not be updated.");
+                  }
+                }}
+              />
+            )}
+          </div>
+        );
+
+      case "user-profiles":
+        return (
+          <UsersSection
+            users={filteredUsers}
+            search={userSearch}
+            setSearch={setUserSearch}
+            roleFilter={roleFilter}
+            setRoleFilter={setRoleFilter}
+            actionLoading={actionLoading}
+            onAction={handleUserAction}
+            onRoleChange={handleRoleChange}
+            selectedModule="User Profiles"
+            onRefresh={loadAdminData}
           />
         );
 
@@ -692,23 +1502,31 @@ const SystemAdministratorDashboard = () => {
         );
 
       case "ai-agents":
-        return <AIAgentsSection selectedModule={selectedAiModule} />;
-
+        return (
+          <AIAgentsSection
+            selectedModule={selectedAiModule}
+            agentStatuses={agentStatuses}
+          />
+        );
       case "monitoring":
-        return <MonitoringSection systemHealth={systemHealth} />;
+        return (
+          <MonitoringSection systemHealth={systemHealth} />
+        );
 
       case "audit-logs":
         return <AuditLogsSection logs={auditLogs} />;
 
       case "reports":
-        return <ReportsSection />;
+        return <ReportsSection summary={reportSummary} />;
 
       case "settings":
         return (
           <SettingsSection
             settings={systemSettings}
             setSettings={setSystemSettings}
-            onSave={() => showMessage("System settings saved locally.")}
+            onSave={() =>
+              showMessage("System settings saved locally.")
+            }
           />
         );
 
@@ -717,6 +1535,7 @@ const SystemAdministratorDashboard = () => {
           <ProfileSection
             user={user}
             onLogout={handleLogout}
+            profile={adminProfile}
           />
         );
 
@@ -727,12 +1546,18 @@ const SystemAdministratorDashboard = () => {
             activeUsers={activeUsers}
             pendingRequests={pendingRequests}
             activeAgents={activeAgents}
+            agentStatuses={agentStatuses}
             users={users}
             roleRequests={roleRequests}
             auditLogs={auditLogs}
             onNavigate={goToSection}
             loading={loading}
             systemHealth={systemHealth}
+            disasterReports={disasterReports}
+            riskPredictions={riskPredictions}
+            vulnerabilityAssessments={vulnerabilityAssessments}
+            reliefResources={reliefResources}
+            emergencyAlerts={emergencyAlerts}
           />
         );
     }
@@ -741,8 +1566,16 @@ const SystemAdministratorDashboard = () => {
   return (
     <div className="min-h-screen bg-[#f5f8fc] text-[#101c35]">
       <div className="flex min-h-screen">
-        <aside className="hidden w-[250px] shrink-0 bg-[#0b1d38] text-white lg:flex lg:flex-col">
-          <div className="border-b border-white/10 px-6 py-6">
+        <aside
+          className="
+            fixed inset-y-0 left-0 z-50 hidden
+            h-screen w-[238px]
+            overflow-hidden
+            bg-[#0b1d38] text-white
+            lg:flex lg:flex-col
+          "
+        >
+          <div className="border-b border-white/10 px-5 py-4">
             <button
               type="button"
               onClick={() => goToSection("dashboard")}
@@ -751,30 +1584,76 @@ const SystemAdministratorDashboard = () => {
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600">
                 <LogoIcon />
               </div>
+
               <div>
                 <div className="text-base font-extrabold">
                   Relief<span className="text-blue-400">Nexus</span>
                 </div>
+
                 <div className="text-[9px] font-medium tracking-wide text-slate-400">
-                  Safer Communities
+                  Disaster Management Platform
                 </div>
               </div>
             </button>
           </div>
 
-          <div className="px-4 py-5">
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             <p className="px-3 pb-3 text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500">
               Administration
             </p>
 
-            <nav className="space-y-1">
-              {menuItems.map((item) => {
+            <nav className="space-y-0.5">
+              {visibleMenuItems.map((item) => {
+                const isSupportItem = ["monitoring", "audit-logs", "reports", "settings", "profile"].includes(item.id);
+                const previousSupport = item.id === "monitoring";
+
+                if (previousSupport) {
+                  return (
+                    <Fragment key={item.id}>
+                      <p className="px-3 pb-2 pt-4 text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                        Support Modules
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => goToSection(item.id)}
+                        className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
+                          section === item.id
+                            ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20"
+                            : "text-slate-300 hover:bg-white/5 hover:text-white"
+                        }`}
+                      >
+                        <span className="flex h-5 w-5 items-center justify-center">{item.icon}</span>
+                        <span>{item.label}</span>
+                      </button>
+                    </Fragment>
+                  );
+                }
+
+                if (isSupportItem) {
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => goToSection(item.id)}
+                      className={`ml-1 flex w-[calc(100%-4px)] items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
+                        section === item.id
+                          ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20"
+                          : "text-slate-300 hover:bg-white/5 hover:text-white"
+                      }`}
+                    >
+                      <span className="flex h-5 w-5 items-center justify-center">{item.icon}</span>
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                }
                 if (item.id === "users") {
                   return (
                     <div key={item.id}>
                       <button
                         type="button"
-                        onClick={() => setUserManagementOpen((open) => !open)}
+                        onClick={() =>
+                          setUserManagementOpen((open) => !open)
+                        }
                         className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
                           section === "users"
                             ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20"
@@ -784,21 +1663,29 @@ const SystemAdministratorDashboard = () => {
                         <span className="flex h-5 w-5 items-center justify-center">
                           {item.icon}
                         </span>
+
                         <span className="flex-1">{item.label}</span>
-                        <span className={`transition-transform ${userManagementOpen ? "rotate-180" : ""}`}>
+
+                        <span
+                          className={`transition-transform ${
+                            userManagementOpen ? "rotate-180" : ""
+                          }`}
+                        >
                           <ChevronDownIcon />
                         </span>
                       </button>
 
                       {userManagementOpen && (
                         <div className="ml-4 mt-1 space-y-0.5 border-l border-white/10 pl-3">
-                          {userManagementItems.map((child) => (
+                          {visibleUserManagementItems.map((child) => (
                             <button
                               key={child}
                               type="button"
-                              onClick={() => handleUserModuleClick(child)}
-                              className={`flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left text-[12px] font-medium transition ${
-                                selectedUserModule === child
+                              onClick={() =>
+                                handleUserModuleClick(child)
+                              }
+                              className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[12px] font-medium transition ${
+                                section === ({ "Risk Information": "risk-information", "Relief Resources": "relief-resources", "Location Sharing": "location-sharing", "Disaster Reports": "disaster-reports", "Relief Requests": "relief-requests", "Emergency Alerts": "emergency-alerts", "User Profiles": "user-profiles", "Risk Prediction": "risk-prediction", "Vulnerability & Impact": "vulnerability-impact", "Resource Optimization": "resource-optimization", "Early Warning & Coordination": "emergency-alerts" } as Record<string, Section>)[child]
                                   ? "bg-white/10 text-white"
                                   : "text-slate-400 hover:bg-white/5 hover:text-white"
                               }`}
@@ -818,7 +1705,9 @@ const SystemAdministratorDashboard = () => {
                     <div key={item.id}>
                       <button
                         type="button"
-                        onClick={() => setAiAgentManagementOpen((open) => !open)}
+                        onClick={() =>
+                          setAiAgentManagementOpen((open) => !open)
+                        }
                         className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
                           section === "ai-agents"
                             ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20"
@@ -828,20 +1717,28 @@ const SystemAdministratorDashboard = () => {
                         <span className="flex h-5 w-5 items-center justify-center">
                           {item.icon}
                         </span>
+
                         <span className="flex-1">{item.label}</span>
-                        <span className={`transition-transform ${aiAgentManagementOpen ? "rotate-180" : ""}`}>
+
+                        <span
+                          className={`transition-transform ${
+                            aiAgentManagementOpen ? "rotate-180" : ""
+                          }`}
+                        >
                           <ChevronDownIcon />
                         </span>
                       </button>
 
                       {aiAgentManagementOpen && (
                         <div className="ml-4 mt-1 space-y-0.5 border-l border-white/10 pl-3">
-                          {aiAgentManagementItems.map((child) => (
+                          {visibleAiAgentManagementItems.map((child) => (
                             <button
                               key={child}
                               type="button"
-                              onClick={() => handleAiModuleClick(child)}
-                              className={`flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left text-[12px] font-medium transition ${
+                              onClick={() =>
+                                handleAiModuleClick(child)
+                              }
+                              className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[12px] font-medium transition ${
                                 selectedAiModule === child
                                   ? "bg-white/10 text-white"
                                   : "text-slate-400 hover:bg-white/5 hover:text-white"
@@ -871,6 +1768,7 @@ const SystemAdministratorDashboard = () => {
                     <span className="flex h-5 w-5 items-center justify-center">
                       {item.icon}
                     </span>
+
                     <span>{item.label}</span>
                   </button>
                 );
@@ -878,21 +1776,7 @@ const SystemAdministratorDashboard = () => {
             </nav>
           </div>
 
-          <div className="mt-auto p-4">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-300">
-                  <ShieldIcon />
-                </div>
-                <div>
-                  <p className="text-xs font-bold">Secure System</p>
-                  <p className="mt-0.5 text-[10px] text-slate-400">
-                    Stronger Communities
-                  </p>
-                </div>
-              </div>
-            </div>
-
+          <div className="shrink-0 p-4">
             <button
               type="button"
               onClick={handleLogout}
@@ -904,36 +1788,35 @@ const SystemAdministratorDashboard = () => {
           </div>
         </aside>
 
-        <main className="min-w-0 flex-1">
-          <header className="sticky top-0 z-20 flex h-[78px] items-center justify-between border-b border-slate-200 bg-white/95 px-5 backdrop-blur sm:px-8">
+        <main className="min-w-0 flex-1 lg:ml-[238px]">
+          <header className="sticky top-0 z-20 flex h-[56px] items-center justify-between border-b border-slate-200 bg-white/95 px-5 backdrop-blur sm:px-8">
             <div className="flex min-w-0 items-center gap-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 lg:hidden">
                 <LogoIcon />
               </div>
 
-              <div className="hidden min-w-0 w-[390px] md:flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <div className="hidden min-w-0 w-[340px] md:flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
                 <SearchIcon />
+
                 <input
                   value={userSearch}
-                  onChange={(event) => setUserSearch(event.target.value)}
-                  placeholder="Search users, logs..."
+                  onChange={(event) =>
+                    setUserSearch(event.target.value)
+                  }
+                  placeholder="Search incidents, users, reports..."
                   className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
                 />
               </div>
 
               <div className="md:hidden">
-                <p className="text-sm font-bold">Admin Control Center</p>
+                <p className="text-sm font-bold">
+                  Admin Control Center
+                </p>
               </div>
             </div>
 
             <div className="flex items-center gap-4">
-              <button
-                type="button"
-                className="relative flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-50"
-              >
-                <BellIcon />
-                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
-              </button>
+              <NotificationBell />
 
               <div className="hidden h-8 w-px bg-slate-200 sm:block" />
 
@@ -950,20 +1833,23 @@ const SystemAdministratorDashboard = () => {
                     .join("")
                     .toUpperCase()}
                 </div>
+
                 <div className="hidden sm:block">
                   <p className="text-xs font-bold text-slate-800">
                     {user?.fullName || "System Administrator"}
                   </p>
+
                   <p className="text-[10px] text-slate-400">
                     System Administrator
                   </p>
                 </div>
+
                 <ChevronDownIcon />
               </button>
             </div>
           </header>
 
-          <div className="px-5 py-7 sm:px-8 lg:px-10">
+          <div className="mx-auto w-full max-w-[2400px] px-4 py-6 sm:px-6 lg:px-8 2xl:px-10">
             {notice && (
               <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
                 {notice}
@@ -984,214 +1870,6 @@ const SystemAdministratorDashboard = () => {
   );
 };
 
-type OverviewProps = {
-  totalUsers: number;
-  activeUsers: number;
-  pendingRequests: number;
-  activeAgents: number;
-  users: UserRecord[];
-  roleRequests: RoleRequest[];
-  auditLogs: AuditLog[];
-  onNavigate: (section: Section) => void;
-  loading: boolean;
-};
-
-const OverviewSection = ({
-  totalUsers,
-  activeUsers,
-  pendingRequests,
-  activeAgents,
-  users,
-  roleRequests,
-  auditLogs,
-  onNavigate,
-  loading,
-  systemHealth,
-}: OverviewProps & { systemHealth: SystemHealth | null }) => {
-  return (
-    <div className="space-y-7">
-      <PageHeading
-        eyebrow="System Administration"
-        title="System Overview"
-        description="Monitor system health, manage users, and keep ReliefNexus secure."
-      />
-
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard
-          label="Total Users"
-          value={loading ? "..." : totalUsers.toString()}
-          detail={`${activeUsers} currently active`}
-          icon={<UsersIcon />}
-          tone="blue"
-        />
-        <MetricCard
-          label="Active Volunteers"
-          value={loading ? "..." : users.filter(
-            (item) => item.role === "FieldVolunteer" && item.isActive
-          ).length.toString()}
-          detail="Field response members"
-          icon={<VolunteerIcon />}
-          tone="green"
-        />
-        <MetricCard
-          label="Pending Requests"
-          value={loading ? "..." : pendingRequests.toString()}
-          detail="Awaiting administrator review"
-          icon={<RequestIcon />}
-          tone="amber"
-        />
-        <MetricCard
-          label="AI Agents"
-          value={activeAgents.toString()}
-          detail={agentStatuses.length > 0 ? "Loaded from API" : "Waiting for API data"}
-          icon={<SparkIcon />}
-          tone="purple"
-        />
-      </div>
-
-      <div className="grid gap-5 xl:grid-cols-[1.35fr_1fr]">
-        <DashboardCard
-          title="AI Agent Status"
-          subtitle="Real-time operational view of the four AI agents"
-          action="View all"
-          onAction={() => onNavigate("ai-agents")}
-        >
-          <div className="space-y-3">
-            {agentStatuses.map((agent) => (
-              <div
-                key={agent.name}
-                className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/70 px-4 py-3"
-              >
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
-                    {agent.icon}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-slate-800">
-                      {agent.name}
-                    </p>
-                    <p className="mt-0.5 truncate text-[11px] text-slate-400">
-                      {agent.description}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="ml-4 flex shrink-0 items-center gap-3">
-                  <span className="hidden text-xs font-bold text-slate-500 sm:block">
-                    {agent.confidence}%
-                  </span>
-                  <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    {agent.status}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </DashboardCard>
-
-        <DashboardCard
-          title="System Health"
-          subtitle="Current infrastructure indicators"
-          action="Monitoring"
-          onAction={() => onNavigate("monitoring")}
-        >
-          <div className="space-y-5">
-            <HealthBar label="API Availability" value={systemHealth?.apiAvailability ?? null} />
-            <HealthBar label="Database Health" value={systemHealth?.databaseHealth ?? null} />
-            <HealthBar label="AI Services" value={systemHealth?.aiServices ?? null} />
-            <HealthBar label="Storage" value={systemHealth?.storage ?? null} />
-
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-emerald-600">
-                  <CheckIcon />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-slate-700">
-                    {systemHealth ? "Live system health available" : "System health data unavailable"}
-                  </p>
-                  <p className="mt-0.5 text-[10px] text-slate-500">
-                    {systemHealth ? "Loaded from monitoring API" : "Connect the monitoring API to display live status"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </DashboardCard>
-      </div>
-
-      <div className="grid gap-5 xl:grid-cols-2">
-        <DashboardCard
-          title="Recent Role Requests"
-          subtitle="Latest user access requests"
-          action="View all"
-          onAction={() => onNavigate("role-requests")}
-        >
-          {roleRequests.length === 0 ? (
-            <EmptyState text="No pending role requests." />
-          ) : (
-            <div className="space-y-2">
-              {roleRequests.slice(0, 5).map((request) => (
-                <div
-                  key={request.id}
-                  className="flex items-center justify-between rounded-xl border border-slate-100 px-4 py-3"
-                >
-                  <div>
-                    <p className="text-sm font-bold text-slate-800">
-                      {request.fullName || "Unknown user"}
-                    </p>
-                    <p className="text-[11px] text-slate-400">
-                      {roleLabel(request.role)} Ã¢â‚¬Â¢ {formatDate(request.createdAt)}
-                    </p>
-                  </div>
-                  <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-700">
-                    Pending
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </DashboardCard>
-
-        <DashboardCard
-          title="Recent Audit Logs"
-          subtitle="Latest security and administration events"
-          action="View all"
-          onAction={() => onNavigate("audit-logs")}
-        >
-          {auditLogs.length === 0 ? (
-            <EmptyState text="No audit logs returned by the API." />
-          ) : (
-            <div className="space-y-2">
-              {auditLogs.slice(0, 5).map((log, index) => (
-                <div
-                  key={log.id || index}
-                  className="flex items-start gap-3 rounded-xl border border-slate-100 px-4 py-3"
-                >
-                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                    <AuditIcon />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-slate-800">
-                      {log.action || "System activity"}
-                    </p>
-                    <p className="mt-0.5 truncate text-[11px] text-slate-400">
-                      {log.description || log.userEmail || "Administration event"}
-                    </p>
-                    <p className="mt-1 text-[10px] text-slate-400">
-                      {formatDate(log.createdAt)}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </DashboardCard>
-      </div>
-    </div>
-  );
-};
 
 const userModuleDescription = (module: string) => {
   const descriptions: Record<string, string> = {
@@ -1206,6 +1884,7 @@ const userModuleDescription = (module: string) => {
     "Location Sharing": "Review location-sharing activity used for disaster response coordination.",
     "User Profiles": "Review user profile information and account details.",
   };
+
   return descriptions[module] || "Manage and monitor this system module.";
 };
 
@@ -1232,6 +1911,7 @@ const UsersSection = ({
   ) => void;
   onRoleChange: (user: UserRecord, role: string) => void;
   selectedModule: string;
+  onRefresh: () => Promise<void>;
 }) => (
   <div className="space-y-6">
     <PageHeading
@@ -1358,7 +2038,6 @@ const UsersSection = ({
     </DashboardCard>
   </div>
 );
-
 const RoleRequestsSection = ({
   requests,
   actionLoading,
@@ -1370,74 +2049,1797 @@ const RoleRequestsSection = ({
     request: RoleRequest,
     action: "approve" | "reject"
   ) => void;
-}) => (
-  <div className="space-y-6">
-    <PageHeading
-      eyebrow="Access Control"
-      title="Role Requests"
-      description="Review registration requests and approve the correct operational role."
-    />
+}) => {
+  const [selectedRequest, setSelectedRequest] = useState<RoleRequest | null>(null);
 
-    <DashboardCard
-      title="Pending Requests"
-      subtitle={`${requests.length} requests awaiting review`}
-    >
-      {requests.length === 0 ? (
-        <EmptyState text="There are no pending role requests." />
-      ) : (
-        <div className="space-y-3">
-          {requests.map((request) => (
-            <div
-              key={request.id}
-              className="flex flex-col gap-4 rounded-2xl border border-slate-100 bg-slate-50/50 p-4 md:flex-row md:items-center md:justify-between"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">
-                  {(request.fullName || "User")
-                    .split(" ")
-                    .map((part: string) => part[0])
-                    .slice(0, 2)
-                    .join("")
-                    .toUpperCase()}
+  const getInitials = (name?: string) =>
+    (name || "User")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((part) => part[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "U";
+
+  const formatDateTime = (value?: string) => {
+    if (!value) return "Not provided";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Not provided";
+    return date.toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  const getRoleDescription = (role?: string) => {
+    const normalized = String(role || "").toLowerCase();
+    if (normalized.includes("field") || normalized.includes("volunteer")) {
+      return "Support field operations, community assistance, and disaster relief activities.";
+    }
+    if (normalized.includes("coordinator")) {
+      return "Coordinate response teams, operational activities, and emergency workflows.";
+    }
+    if (normalized.includes("affected")) {
+      return "Access services and submit information related to disaster impacts and assistance needs.";
+    }
+    return "Operational access for the requested ReliefNexus role.";
+  };
+
+  const InfoIcon = ({
+    type,
+  }: {
+    type: "user" | "mail" | "phone" | "calendar" | "pin";
+  }) => {
+    const paths: Record<string, ReactNode> = {
+      user: (
+        <>
+          <circle cx="12" cy="8" r="3" />
+          <path d="M5 21c.8-4.3 3.1-6.5 7-6.5s6.2 2.2 7 6.5" />
+        </>
+      ),
+      mail: (
+        <>
+          <rect x="3" y="5" width="18" height="14" rx="2" />
+          <path d="m3 7 9 6 9-6" />
+        </>
+      ),
+      phone: (
+        <path d="M6.5 3.5 9 5l-1.5 3-1.2.8a14 14 0 0 0 8.9 8.9l.8-1.2 3-1.5 1.5 2.5-1.5 2.2c-.6.8-1.6 1.2-2.6.9C9.2 18.5 5.5 14.8 3.4 7.6c-.3-1 .1-2 .9-2.6Z" />
+      ),
+      calendar: (
+        <>
+          <rect x="4" y="5" width="16" height="15" rx="2" />
+          <path d="M8 3v4M16 3v4M4 9h16" />
+        </>
+      ),
+      pin: (
+        <>
+          <path d="M12 21s6-5.4 6-11a6 6 0 1 0-12 0c0 5.6 6 11 6 11Z" />
+          <circle cx="12" cy="10" r="2" />
+        </>
+      ),
+    };
+
+    return (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        className="shrink-0"
+      >
+        {paths[type]}
+      </svg>
+    );
+  };
+
+  const DetailItem = ({
+    icon,
+    label,
+    value,
+    wide = false,
+  }: {
+    icon: "user" | "mail" | "phone" | "calendar" | "pin";
+    label: string;
+    value?: string;
+    wide?: boolean;
+  }) => (
+    <div className={`flex min-w-0 gap-3 ${wide ? "md:col-span-2" : ""}`}>
+      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+        <InfoIcon type={icon} />
+      </div>
+      <div className="min-w-0">
+        <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
+          {label}
+        </p>
+        <p className="mt-1 break-words text-sm font-semibold leading-5 text-slate-700">
+          {value || "Not provided"}
+        </p>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <PageHeading
+        eyebrow="Access Control"
+        title="Role Requests"
+        description="Review registration requests and approve the correct operational role."
+      />
+
+      <DashboardCard
+        title="Pending Requests"
+        subtitle={`${requests.length} ${requests.length === 1 ? "request" : "requests"} awaiting review`}
+      >
+        {requests.length === 0 ? (
+          <EmptyState text="There are no pending role requests." />
+        ) : (
+          <div className="space-y-3">
+            {requests.map((request) => {
+              const isApproving = actionLoading === `approve-${request.id}`;
+              const isRejecting = actionLoading === `reject-${request.id}`;
+
+              return (
+                <div
+                  key={request.id}
+                  className="group flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_4px_18px_rgba(15,23,42,0.04)] transition duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_12px_30px_rgba(37,99,235,0.08)] md:flex-row md:items-center md:justify-between"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-blue-100 to-cyan-50 text-sm font-extrabold text-blue-600 ring-1 ring-blue-100">
+                      {getInitials(request.fullName)}
+                      {request.profileImageUrl && (
+                        <img
+                          src={request.profileImageUrl}
+                          alt={`${request.fullName || "User"}'s profile`}
+                          className="absolute inset-0 h-full w-full object-cover"
+                          onError={(event) => {
+                            event.currentTarget.style.display = "none";
+                          }}
+                        />
+                      )}
+                    </div>
+
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="truncate text-sm font-extrabold text-slate-800">
+                          {request.fullName || "Unknown user"}
+                        </p>
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[9px] font-bold text-amber-700">
+                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                          Pending Review
+                        </span>
+                      </div>
+                      <p className="mt-1 truncate text-xs text-slate-400">
+                        {request.email || "No email"}
+                      </p>
+                      <p className="mt-1 text-[10px] font-bold text-blue-600">
+                        {roleLabel(request.role)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedRequest(request)}
+                      className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                    >
+                      View Profile
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isApproving}
+                      onClick={() => onAction(request, "approve")}
+                      className="rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-200 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isApproving ? "Approving..." : "Approve"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isRejecting}
+                      onClick={() => onAction(request, "reject")}
+                      className="rounded-xl border border-red-100 bg-red-50 px-4 py-2.5 text-xs font-bold text-red-600 transition hover:border-red-200 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isRejecting ? "Rejecting..." : "Reject"}
+                    </button>
+                  </div>
                 </div>
+              );
+            })}
+          </div>
+        )}
+      </DashboardCard>
+
+      {selectedRequest && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-[#071326]/70 p-3 backdrop-blur-md sm:p-5"
+          onClick={() => setSelectedRequest(null)}
+        >
+          <div
+            className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] border border-white/60 bg-white shadow-[0_35px_100px_rgba(2,12,32,0.38)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="relative shrink-0 overflow-hidden bg-gradient-to-br from-[#071a35] via-[#0d3770] to-[#1769e8] px-5 pb-5 pt-5 text-white sm:px-7 sm:pb-6">
+              <div className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-cyan-300/15 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-blue-400/15 blur-3xl" />
+              <div className="pointer-events-none absolute inset-0 opacity-10 [background-image:linear-gradient(rgba(255,255,255,.4)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.4)_1px,transparent_1px)] [background-size:32px_32px]" />
+
+              <div className="relative flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm font-bold text-slate-800">
-                    {request.fullName || "Unknown user"}
+                  <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200/20 bg-white/10 px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.18em] text-cyan-100">
+                    <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(103,232,249,.8)]" />
+                    Access Control
+                  </div>
+                  <h2 className="mt-3 text-2xl font-extrabold tracking-tight sm:text-3xl">
+                    Applicant Profile
+                  </h2>
+                  <p className="mt-1 max-w-xl text-xs leading-5 text-blue-100 sm:text-sm">
+                    Review the applicant details before approving this role request.
                   </p>
-                  <p className="text-xs text-slate-400">
-                    {request.email || "No email"}
-                  </p>
-                  <p className="mt-1 text-[10px] font-semibold text-blue-600">
-                    Requested role: {roleLabel(request.role)}
-                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedRequest(null)}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-white transition hover:bg-white/20"
+                  aria-label="Close profile"
+                >
+                  <span className="text-xl leading-none"></span>
+                </button>
+              </div>
+
+              <div className="relative mt-5 flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/[0.08] p-4 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-4">
+                  <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/30 bg-white text-xl font-extrabold text-blue-600 shadow-xl">
+                    {getInitials(selectedRequest.fullName)}
+                    {selectedRequest.profileImageUrl && (
+                      <img
+                        src={selectedRequest.profileImageUrl}
+                        alt={`${selectedRequest.fullName || "User"}'s profile`}
+                        className="absolute inset-0 h-full w-full object-cover"
+                        onError={(event) => {
+                          event.currentTarget.style.display = "none";
+                        }}
+                      />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="truncate text-lg font-extrabold sm:text-xl">
+                        {selectedRequest.fullName || "Unknown user"}
+                      </h3>
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/20 bg-amber-300/15 px-2.5 py-1 text-[9px] font-bold text-amber-100">
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
+                        Pending Review
+                      </span>
+                    </div>
+                    <p className="mt-1 truncate text-xs text-blue-100 sm:text-sm">
+                      {selectedRequest.email || "No email"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 sm:min-w-[250px]">
+                  <div className="rounded-xl border border-white/10 bg-black/10 px-3 py-2.5">
+                    <p className="text-[9px] uppercase tracking-wider text-blue-200">Requested Role</p>
+                    <p className="mt-1 text-xs font-bold text-white">{roleLabel(selectedRequest.role)}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-black/10 px-3 py-2.5">
+                    <p className="text-[9px] uppercase tracking-wider text-blue-200">Submitted</p>
+                    <p className="mt-1 text-xs font-bold text-white">{formatDateTime(selectedRequest.createdAt)}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto bg-[#f7faff] px-4 py-5 sm:px-7 sm:py-6">
+              <div className="grid gap-4 lg:grid-cols-[1.1fr_.9fr]">
+                <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-md shadow-blue-200">
+                      <InfoIcon type="user" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-blue-500">Requested Role</p>
+                      <h4 className="mt-1 text-lg font-extrabold text-slate-900">
+                        {roleLabel(selectedRequest.role)}
+                      </h4>
+                      <p className="mt-1.5 text-xs leading-5 text-slate-500">
+                        {getRoleDescription(selectedRequest.role)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400">Request Information</p>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[9px] font-bold text-amber-700">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                      {selectedRequest.roleRequestStatus || "Pending"}
+                    </span>
+                  </div>
+                  <div className="mt-4">
+                    <p className="text-[10px] font-semibold text-slate-400">Submitted</p>
+                    <p className="mt-1 text-sm font-bold text-slate-700">
+                      {formatDateTime(selectedRequest.createdAt)}
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  disabled={actionLoading === `approve-${request.id}`}
-                  onClick={() => onAction(request, "approve")}
-                  className="rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50"
+              <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                    <InfoIcon type="user" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-extrabold text-slate-900">Registration Information</h4>
+                    <p className="mt-0.5 text-[10px] text-slate-400">Applicant details submitted during registration.</p>
+                  </div>
+                </div>
+
+                <div className="mt-5 grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+                  <DetailItem icon="user" label="Full Name" value={selectedRequest.fullName} />
+                  <DetailItem icon="mail" label="Email Address" value={selectedRequest.email} />
+                  <DetailItem icon="phone" label="Phone Number" value={selectedRequest.phoneNumber} />
+                  <DetailItem
+                    icon="calendar"
+                    label="Date of Birth"
+                    value={selectedRequest.dateOfBirth ? new Date(selectedRequest.dateOfBirth).toLocaleDateString() : undefined}
+                  />
+                  <DetailItem icon="user" label="Gender" value={selectedRequest.gender} />
+                  <DetailItem icon="pin" label="District" value={selectedRequest.district} />
+                  <DetailItem icon="pin" label="Address" value={selectedRequest.address} wide />
+                  <DetailItem icon="user" label="Emergency Contact" value={selectedRequest.emergencyContactName} />
+                  <DetailItem icon="phone" label="Emergency Phone" value={selectedRequest.emergencyContactPhone} />
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600">
+                      <InfoIcon type="calendar" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-extrabold text-slate-900">Application Review</h4>
+                      <p className="text-[10px] text-slate-400">Role request context</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
+                    <p className="text-xs font-bold text-slate-700">
+                      Requested access as a {roleLabel(selectedRequest.role)}
+                    </p>
+                    <p className="mt-2 text-xs leading-5 text-slate-500">
+                      {getRoleDescription(selectedRequest.role)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-extrabold text-slate-900">Profile Image</h4>
+                      <p className="mt-0.5 text-[10px] text-slate-400">
+                        {selectedRequest.profileImageUrl ? "Uploaded by applicant" : "No image uploaded"}
+                      </p>
+                    </div>
+                    <div className="rounded-full bg-slate-100 px-2 py-1 text-[9px] font-bold text-slate-500">
+                      Identity
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex justify-center rounded-2xl border border-slate-100 bg-gradient-to-br from-slate-50 to-blue-50/50 p-4">
+                    <div className="relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-blue-100 to-cyan-50 text-3xl font-extrabold text-blue-600 shadow-inner">
+                      {getInitials(selectedRequest.fullName)}
+                      {selectedRequest.profileImageUrl && (
+                        <img
+                          src={selectedRequest.profileImageUrl}
+                          alt={`${selectedRequest.fullName || "User"}'s profile`}
+                          className="absolute inset-0 h-full w-full object-cover"
+                          onError={(event) => {
+                            event.currentTarget.style.display = "none";
+                          }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-400">Applicant ID</p>
+                  <p className="mt-1 truncate font-mono text-[10px] font-semibold text-slate-600">
+                    {selectedRequest.id}
+                  </p>
+                </div>
+                <div className="shrink-0 sm:text-right">
+                  <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-400">Current Status</p>
+                  <span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-[10px] font-bold text-amber-700">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                    {selectedRequest.roleRequestStatus || "Pending"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="shrink-0 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:px-6">
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-[10px] text-slate-400">
+                  Review the submitted information before changing the request status.
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRequest(null)}
+                    className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="button"
+                    disabled={actionLoading === `reject-${selectedRequest.id}`}
+                    onClick={() => {
+                      onAction(selectedRequest, "reject");
+                      setSelectedRequest(null);
+                    }}
+                    className="rounded-xl border border-red-200 bg-red-50 px-5 py-2.5 text-xs font-bold text-red-600 transition hover:bg-red-100 disabled:opacity-50"
+                  >
+                    {actionLoading === `reject-${selectedRequest.id}` ? "Rejecting..." : "Reject Request"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={actionLoading === `approve-${selectedRequest.id}`}
+                    onClick={() => {
+                      onAction(selectedRequest, "approve");
+                      setSelectedRequest(null);
+                    }}
+                    className="rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-200 transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-200 disabled:opacity-50"
+                  >
+                    {actionLoading === `approve-${selectedRequest.id}` ? "Approving..." : "Approve Request"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+type OverviewProps = {
+  totalUsers: number;
+  activeUsers: number;
+  pendingRequests: number;
+  activeAgents: number;
+  agentStatuses: AgentStatus[];
+  users: UserRecord[];
+  roleRequests: RoleRequest[];
+  auditLogs: AuditLog[];
+  onNavigate: (section: Section) => void;
+  loading: boolean;
+  disasterReports: DisasterReportRecord[];
+  riskPredictions: any[];
+  vulnerabilityAssessments: any[];
+  reliefResources: any[];
+  emergencyAlerts: any[];
+};
+
+const OverviewSection = ({
+  totalUsers,
+  activeUsers,
+  pendingRequests,
+  activeAgents,
+  agentStatuses,
+  users,
+  roleRequests,
+  onNavigate,
+  loading,
+  systemHealth,
+  disasterReports,
+  riskPredictions,
+  vulnerabilityAssessments,
+  reliefResources,
+  emergencyAlerts,
+}: OverviewProps & { systemHealth: SystemHealth | null }) => {
+  const normalize = (value?: string) =>
+    String(value || "unknown").trim().toLowerCase().replace(/[\s_-]+/g, "");
+
+  const activeVolunteers = users.filter(
+    (item) => item.role === "FieldVolunteer" && item.isActive
+  ).length;
+
+  const mappedReports = useMemo(
+    () =>
+      disasterReports.filter((report) => {
+        const latitude = Number(report.latitude);
+        const longitude = Number(report.longitude);
+        return (
+          Number.isFinite(latitude) &&
+          Number.isFinite(longitude) &&
+          latitude >= -90 &&
+          latitude <= 90 &&
+          longitude >= -180 &&
+          longitude <= 180
+        );
+      }),
+    [disasterReports]
+  );
+
+  useEffect(() => {
+    const container = document.getElementById("reliefnexus-risk-map");
+    if (!container) return;
+
+    const map = L.map(container, {
+      center: [7.8731, 80.7718],
+      zoom: 7,
+      zoomControl: false,
+      scrollWheelZoom: true,
+      attributionControl: true,
+      preferCanvas: true,
+    });
+
+    L.control.zoom({ position: "bottomright" }).addTo(map);
+
+    const satelliteLayer = L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      {
+        attribution:
+          "Tiles N/A Esri N/A Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community",
+        maxZoom: 18,
+        maxNativeZoom: 18,
+      }
+    );
+
+    satelliteLayer.addTo(map);
+
+    const severityConfig: Record<
+      string,
+      { color: string; radius: number }
+    > = {
+      critical: { color: "#ef4444", radius: 28000 },
+      high: { color: "#f97316", radius: 23000 },
+      medium: { color: "#eab308", radius: 17000 },
+      low: { color: "#10b981", radius: 12000 },
+    };
+
+    const escapeHtml = (value: unknown) =>
+      String(value ?? "").replace(/[&<>'"]/g, (character) =>
+        ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          "'": "&#39;",
+          '"': "&quot;",
+        })[character] || character
+      );
+
+    mappedReports.forEach((report) => {
+      const latitude = Number(report.latitude);
+      const longitude = Number(report.longitude);
+      const severity = normalize(report.severity);
+      const config =
+        severityConfig[severity] || {
+          color: "#3b82f6",
+          radius: 10000,
+        };
+
+      L.circle([latitude, longitude], {
+        radius: config.radius,
+        color: config.color,
+        fillColor: config.color,
+        fillOpacity: 0.12,
+        opacity: 0.55,
+        weight: 2,
+      }).addTo(map);
+
+      L.circleMarker([latitude, longitude], {
+        radius: severity === "critical" ? 9 : severity === "high" ? 7.5 : 6.5,
+        color: "#ffffff",
+        weight: 2.5,
+        fillColor: config.color,
+        fillOpacity: 1,
+      })
+        .bindPopup(
+          `<div style="min-width:235px;font-family:Inter,Arial,sans-serif;padding:4px">
+            <div style="font-size:13px;font-weight:900;color:#0f172a;margin-bottom:9px">
+              ${escapeHtml(report.disasterType || "Disaster Report")}
+            </div>
+            <div style="display:flex;justify-content:space-between;gap:14px;font-size:11px;margin-bottom:6px">
+              <span style="color:#64748b">Severity</span><b style="color:${config.color}">${escapeHtml(report.severity || "Unknown")}</b>
+            </div>
+            <div style="display:flex;justify-content:space-between;gap:14px;font-size:11px;margin-bottom:6px">
+              <span style="color:#64748b">Status</span><b style="color:#0f172a">${escapeHtml(report.status || "Unknown")}</b>
+            </div>
+            <div style="font-size:11px;color:#475569;margin-bottom:6px"><b>Location:</b> ${escapeHtml(report.location || "Unavailable")}</div>
+            <div style="font-size:11px;color:#475569"><b>Risk score:</b> ${report.riskScore != null ? escapeHtml(report.riskScore) : "Not available"}</div>
+          </div>`
+        )
+        .addTo(map);
+    });
+
+    if (mappedReports.length > 1) {
+      const bounds = L.latLngBounds(
+        mappedReports.map((report) => [
+          Number(report.latitude),
+          Number(report.longitude),
+        ] as [number, number])
+      );
+
+      if (bounds.isValid()) {
+        map.fitBounds(bounds.pad(0.28), {
+          maxZoom: 8,
+          animate: false,
+        });
+      }
+    }
+
+    const timer = window.setTimeout(() => map.invalidateSize(true), 250);
+
+    return () => {
+      window.clearTimeout(timer);
+      map.remove();
+    };
+  }, [mappedReports]);
+
+  const activeIncidents = disasterReports.filter((report) =>
+    [
+      "active",
+      "open",
+      "pending",
+      "inprogress",
+      "monitoring",
+      "assigned",
+      "volunteerqueue",
+    ].includes(normalize(report.status))
+  ).length;
+
+  const resolvedIncidents = disasterReports.filter((report) =>
+    ["resolved", "closed", "complete", "completed"].includes(
+      normalize(report.status)
+    )
+  ).length;
+
+  const highCritical = disasterReports.filter((report) =>
+    ["high", "critical"].includes(normalize(report.severity))
+  ).length;
+
+  const riskValues = disasterReports
+    .map((report) => Number(report.riskScore))
+    .filter((value) => Number.isFinite(value));
+
+  const averageRisk = riskValues.length
+    ? Math.round(
+        riskValues.reduce((sum, value) => sum + value, 0) / riskValues.length
+      )
+    : null;
+
+  const healthValues = [
+    systemHealth?.apiAvailability,
+    systemHealth?.databaseHealth,
+    systemHealth?.aiServices,
+    systemHealth?.storage,
+  ].filter((value): value is number => typeof value === "number");
+
+  const healthAverage = healthValues.length
+    ? Math.round(
+        healthValues.reduce((sum, value) => sum + value, 0) / healthValues.length
+      )
+    : null;
+
+  const severityItems = [
+    { label: "Critical", key: "critical", color: "bg-red-500", text: "text-red-700" },
+    { label: "High", key: "high", color: "bg-orange-500", text: "text-orange-700" },
+    { label: "Medium", key: "medium", color: "bg-amber-400", text: "text-amber-700" },
+    { label: "Low", key: "low", color: "bg-emerald-500", text: "text-emerald-700" },
+  ].map((item) => ({
+    ...item,
+    count: disasterReports.filter(
+      (report) => normalize(report.severity) === item.key
+    ).length,
+  }));
+
+  const severityTotal = severityItems.reduce(
+    (sum, item) => sum + item.count,
+    0
+  );
+
+  const monthBuckets = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 6 }, (_, index) => {
+      const date = new Date(
+        now.getFullYear(),
+        now.getMonth() - (5 - index),
+        1
+      );
+      return {
+        key: `${date.getFullYear()}-${date.getMonth()}`,
+        label: date.toLocaleDateString(undefined, { month: "short" }),
+      };
+    });
+  }, []);
+
+  const riskTrend = useMemo(() => {
+    return monthBuckets.map((month) => {
+      const values = disasterReports
+        .filter((report) => {
+          if (!report.createdAt) return false;
+          const date = new Date(report.createdAt);
+          return (
+            !Number.isNaN(date.getTime()) &&
+            `${date.getFullYear()}-${date.getMonth()}` === month.key
+          );
+        })
+        .map((report) => Number(report.riskScore))
+        .filter((value) => Number.isFinite(value));
+
+      return {
+        label: month.label,
+        average: values.length
+          ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length)
+          : null,
+      };
+    });
+  }, [disasterReports, monthBuckets]);
+
+  const recentIncidents = useMemo(
+    () =>
+      disasterReports
+        .slice()
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt ?? 0).getTime() -
+            new Date(a.createdAt ?? 0).getTime()
+        )
+        .slice(0, 5),
+    [disasterReports]
+  );
+
+  const healthItems = [
+    { label: "API Services", value: systemHealth?.apiAvailability },
+    { label: "Database", value: systemHealth?.databaseHealth },
+    { label: "AI Services", value: systemHealth?.aiServices },
+    { label: "Storage", value: systemHealth?.storage },
+  ];
+
+  const healthState = (value: number | undefined) => {
+    if (typeof value !== "number" || Number.isNaN(value)) {
+      return { label: "No data", ring: "#dbe3ee", percent: 0 };
+    }
+    if (value >= 90) {
+      return {
+        label: "Healthy",
+        ring: "#22c55e",
+        percent: Math.max(0, Math.min(100, value)),
+      };
+    }
+    if (value >= 70) {
+      return {
+        label: "Warning",
+        ring: "#f59e0b",
+        percent: Math.max(0, Math.min(100, value)),
+      };
+    }
+    return {
+      label: "Critical",
+      ring: "#ef4444",
+      percent: Math.max(0, Math.min(100, value)),
+    };
+  };
+
+  const availableAgents = agentStatuses.filter(
+    (agent) => agent.status !== "Offline"
+  ).length;
+
+  const kpis = [
+    {
+      label: "Total Users",
+      value: totalUsers,
+      note: `${activeUsers} active accounts`,
+      meta: totalUsers
+        ? `${Math.round((activeUsers / totalUsers) * 100)}% active`
+        : "No users",
+      icon: <UsersIcon />,
+      iconClass: "bg-blue-50 text-blue-600 ring-blue-100",
+      accent: "from-blue-500 to-cyan-400",
+      valueClass: "text-slate-950",
+    },
+    {
+      label: "Active Incidents",
+      value: activeIncidents,
+      note: `${highCritical} high / critical`,
+      meta: disasterReports.length
+        ? `${Math.round((activeIncidents / disasterReports.length) * 100)}% of reports`
+        : "No incidents",
+      icon: <RiskIcon />,
+      iconClass: "bg-red-50 text-red-600 ring-red-100",
+      accent: "from-red-500 to-orange-400",
+      valueClass: "text-slate-950",
+    },
+    {
+      label: "High / Critical",
+      value: highCritical,
+      note: "Priority incidents",
+      meta: severityTotal ? `${highCritical}/${severityTotal} classified` : "No severity data",
+      icon: <AlertIcon />,
+      iconClass: "bg-orange-50 text-orange-600 ring-orange-100",
+      accent: "from-orange-500 to-amber-400",
+      valueClass: "text-slate-950",
+    },
+    {
+      label: "Pending Requests",
+      value: pendingRequests,
+      note: pendingRequests ? "Needs administrator review" : "Queue clear",
+      meta: pendingRequests ? "Action required" : "All caught up",
+      icon: <RequestIcon />,
+      iconClass: "bg-amber-50 text-amber-600 ring-amber-100",
+      accent: "from-amber-500 to-yellow-400",
+      valueClass: "text-slate-950",
+    },
+    {
+      label: "AI Agents",
+      value: activeAgents,
+      note: `${availableAgents}/4 available`,
+      meta: availableAgents === 4 ? "All systems online" : "Review agent status",
+      icon: <SparkIcon />,
+      iconClass: "bg-violet-50 text-violet-600 ring-violet-100",
+      accent: "from-violet-500 to-indigo-400",
+      valueClass: "text-slate-950",
+    },
+    {
+      label: "Active Volunteers",
+      value: activeVolunteers,
+      note: "Field response network",
+      meta: `${users.filter((item) => item.role === "FieldVolunteer").length} registered`,
+      icon: <VolunteerIcon />,
+      iconClass: "bg-emerald-50 text-emerald-600 ring-emerald-100",
+      accent: "from-emerald-500 to-teal-400",
+      valueClass: "text-slate-950",
+    },
+  ];
+
+  return (
+    <div className="space-y-5 pb-10">
+      {/* ESSENTIAL COMMAND HERO */}
+      <section
+        className="relative overflow-hidden rounded-[24px] border border-slate-800/20 bg-[#06182d] shadow-[0_18px_50px_rgba(15,39,70,.18)]"
+        style={{
+          backgroundImage:
+            "linear-gradient(90deg,rgba(3,15,31,.98) 0%,rgba(4,27,51,.90) 42%,rgba(5,27,52,.52) 72%,rgba(5,27,52,.82) 100%),url('https://images.unsplash.com/photo-1547683905-f686c993aae5?auto=format&fit=crop&w=2400&q=92')",
+          backgroundSize: "cover",
+          backgroundPosition: "center 45%",
+        }}
+      >
+        <div className="relative grid gap-5 px-6 py-6 lg:grid-cols-[1.55fr_.8fr] lg:items-center lg:px-8">
+          <div>
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[8px] font-black uppercase tracking-[.2em] text-blue-100 backdrop-blur-xl">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              System Administrator Command Center
+            </div>
+
+            <h1 className="text-[34px] font-black leading-none tracking-[-.04em] text-white sm:text-[42px]">
+              Disaster Management
+              <span className="block text-blue-300">Control Center</span>
+            </h1>
+
+            <p className="mt-2 max-w-xl text-[11px] leading-5 text-slate-200/90">
+              Monitor live incidents, AI operations, system health and response readiness from one focused control center.
+            </p>
+
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {[
+                ["Incidents", disasterReports.length],
+                ["High / Critical", highCritical],
+                ["Resolved", resolvedIncidents],
+                ["Mapped", mappedReports.length],
+              ].map(([label, value]) => (
+                <div
+                  key={String(label)}
+                  className="rounded-xl border border-white/10 bg-white/[.07] px-3 py-2.5 backdrop-blur-md"
                 >
-                  Approve
-                </button>
-                <button
-                  type="button"
-                  disabled={actionLoading === `reject-${request.id}`}
-                  onClick={() => onAction(request, "reject")}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                  <p className="text-[7px] font-black uppercase tracking-wider text-slate-400">
+                    {label}
+                  </p>
+                  <p className="mt-1 text-xl font-black text-white">{value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-white/15 bg-slate-950/55 p-5 text-white shadow-2xl backdrop-blur-xl">
+            <div className="flex items-center justify-between">
+              <span className="text-[8px] font-black uppercase tracking-[.18em] text-slate-400">
+                Command status
+              </span>
+              <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-2 py-1 text-[7px] font-black text-emerald-300">
+                LIVE
+              </span>
+            </div>
+
+            <div className="mt-5 flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-500/15 text-blue-300 ring-1 ring-white/10">
+                <MonitorIcon />
+              </div>
+              <div>
+                <p className="text-sm font-black">
+                  {loading ? "Synchronizing..." : "System monitoring active"}
+                </p>
+                <p className="mt-1 text-[8px] text-slate-400">
+                  Live API, database and AI indicators
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <p className="text-[7px] font-bold uppercase tracking-wider text-slate-500">Avg risk</p>
+                <p className="mt-1 text-lg font-black">{averageRisk ?? "N/A"}</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <p className="text-[7px] font-bold uppercase tracking-wider text-slate-500">Health</p>
+                <p className="mt-1 text-lg font-black">{healthAverage == null ? "N/A" : `${healthAverage}%`}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CORE KPIs */}
+      <section>
+        <div className="mb-2.5 flex items-center justify-between px-1">
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-[.2em] text-slate-400">
+              Command Metrics
+            </p>
+            <p className="mt-0.5 text-[10px] text-slate-500">
+              Key operational indicators at a glance
+            </p>
+          </div>
+          <span className="hidden rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[8px] font-black uppercase tracking-wider text-slate-400 sm:inline-flex">
+            Live data
+          </span>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+          {kpis.map((item) => (
+            <div
+              key={item.label}
+              className="group relative overflow-hidden rounded-[20px] border border-slate-200/90 bg-white p-4 shadow-[0_10px_32px_rgba(15,23,42,.055)] transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_16px_38px_rgba(15,23,42,.08)]"
+            >
+              <div
+                className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${item.accent}`}
+              />
+
+              <div className="flex items-start justify-between gap-3 pt-0.5">
+                <span
+                  className={`flex h-10 w-10 items-center justify-center rounded-[14px] ring-4 ${item.iconClass}`}
                 >
-                  Reject
-                </button>
+                  {item.icon}
+                </span>
+
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50 px-2 py-1 text-[7px] font-black uppercase tracking-[.12em] text-emerald-600">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  Live
+                </span>
+              </div>
+
+              <div className="mt-4">
+                <p className="text-[8px] font-black uppercase tracking-[.15em] text-slate-400">
+                  {item.label}
+                </p>
+                <div className="mt-1 flex items-end justify-between gap-2">
+                  <p
+                    className={`text-[30px] font-black leading-none tracking-[-.03em] ${item.valueClass}`}
+                  >
+                    {item.value}
+                  </p>
+                  <span className="pb-0.5 text-[8px] font-black text-slate-300">
+                    LIVE
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-3 border-t border-slate-100 pt-3">
+                <p className="truncate text-[9px] font-semibold text-slate-500">
+                  {item.note}
+                </p>
+                <p className="mt-1 truncate text-[8px] text-slate-400">
+                  {item.meta}
+                </p>
               </div>
             </div>
           ))}
         </div>
+      </section>
+
+      {/* MAP + FOUR AI AGENTS */}
+      <div className="grid gap-5 xl:grid-cols-[1.55fr_.95fr]">
+        <DashboardCard
+          title="Disaster Risk Intelligence Map"
+          subtitle="Live geographic overview of reported incidents across Sri Lanka"
+          action={
+            <button
+              type="button"
+              onClick={() => onNavigate("disaster-reports")}
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-[9px] font-black text-slate-700 shadow-sm transition hover:border-blue-200 hover:text-blue-600"
+            >
+              View Reports
+            </button>
+          }
+        >
+          <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-slate-950">
+            <div id="reliefnexus-risk-map" className="h-[350px] w-full" />
+
+            <div className="absolute left-3 top-3 z-[500] rounded-2xl border border-white/10 bg-slate-950/90 p-3 text-white shadow-2xl backdrop-blur-xl">
+              <p className="mb-2 text-[7px] font-black uppercase tracking-[.18em] text-slate-400">
+                Risk level
+              </p>
+              {severityItems.map((item) => (
+                <div
+                  key={item.label}
+                  className="flex items-center gap-2 py-1 text-[8px] font-bold"
+                >
+                  <span className={`h-2.5 w-2.5 rounded-full ${item.color}`} />
+                  {item.label}
+                </div>
+              ))}
+            </div>
+
+            <div className="absolute right-3 top-3 z-[500] rounded-2xl border border-white/10 bg-slate-950/85 px-3 py-2 text-[7px] font-black text-emerald-300 shadow-xl backdrop-blur-xl">
+              <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              LIVE MAP
+            </div>
+
+            <div className="absolute bottom-3 left-3 z-[500] grid grid-cols-3 gap-2">
+              {[
+                ["Mapped", mappedReports.length],
+                ["High+", highCritical],
+                ["Risk", averageRisk ?? "N/A"],
+              ].map(([label, value]) => (
+                <div
+                  key={String(label)}
+                  className="rounded-xl border border-white/10 bg-slate-950/90 px-3 py-2.5 text-white shadow-xl backdrop-blur-xl"
+                >
+                  <p className="text-[7px] uppercase tracking-wider text-slate-500">
+                    {label}
+                  </p>
+                  <p className="mt-1 text-base font-black">{value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </DashboardCard>
+
+        <DashboardCard
+          title="AI Operations Summary"
+          subtitle="Four response agents  live operational metrics"
+          action={
+            <button
+              type="button"
+              onClick={() => onNavigate("ai-agents")}
+              className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-[9px] font-black text-blue-700 transition hover:bg-blue-100"
+            >
+              Manage Agents
+            </button>
+          }
+        >
+          {(() => {
+            const readNumber = (
+              row: Record<string, any>,
+              keys: string[],
+            ): number | null => {
+              for (const key of keys) {
+                const value = row?.[key];
+                if (value !== undefined && value !== null && value !== "") {
+                  const numeric = Number(value);
+                  if (Number.isFinite(numeric)) return numeric;
+                }
+              }
+              return null;
+            };
+
+            const latestByDate = (rows: any[]) =>
+              [...rows]
+                .filter(
+                  (row) =>
+                    row &&
+                    (row.createdAt ||
+                      row.updatedAt ||
+                      row.completedAt ||
+                      row.startedAt),
+                )
+                .sort((a, b) => {
+                  const aTime = new Date(
+                    a.createdAt ||
+                      a.updatedAt ||
+                      a.completedAt ||
+                      a.startedAt ||
+                      0,
+                  ).getTime();
+                  const bTime = new Date(
+                    b.createdAt ||
+                      b.updatedAt ||
+                      b.completedAt ||
+                      b.startedAt ||
+                      0,
+                  ).getTime();
+                  return bTime - aTime;
+                })[0] || null;
+
+            const predictionScores: number[] = riskPredictions
+              .map((row: any) =>
+                readNumber(row, [
+                  "riskScore",
+                  "score",
+                  "overallRiskScore",
+                ]),
+              )
+              .filter(
+                (value: number | null): value is number =>
+                  value !== null,
+              );
+
+            const predictionAverage =
+              predictionScores.length > 0
+                ? predictionScores.reduce(
+                    (sum, value) => sum + value,
+                    0,
+                  ) / predictionScores.length
+                : null;
+
+            const highRiskPredictions = riskPredictions.filter(
+              (row: any) => {
+                const level = String(
+                  row?.riskLevel || row?.risk || row?.severity || "",
+                ).toLowerCase();
+                const score = readNumber(row, [
+                  "riskScore",
+                  "score",
+                  "overallRiskScore",
+                ]);
+
+                return (
+                  level === "high" ||
+                  level === "critical" ||
+                  (score !== null && score >= 70)
+                );
+              },
+            ).length;
+
+            const populations: number[] = vulnerabilityAssessments
+              .map((row: any) =>
+                readNumber(row, [
+                  "affectedPopulation",
+                  "population",
+                  "populationAtRisk",
+                  "exposedPopulation",
+                  "estimatedPopulation",
+                ]),
+              )
+              .filter(
+                (value: number | null): value is number =>
+                  value !== null,
+              );
+
+            const vulnerabilityScores: number[] =
+              vulnerabilityAssessments
+                .map((row: any) =>
+                  readNumber(row, [
+                    "vulnerabilityScore",
+                    "vulnerability",
+                    "vulnerabilityPercentage",
+                    "vulnerabilityPercent",
+                  ]),
+                )
+                .filter(
+                  (value: number | null): value is number =>
+                    value !== null,
+                );
+
+            const impactScores: number[] = vulnerabilityAssessments
+              .map((row: any) =>
+                readNumber(row, [
+                  "impactScore",
+                  "impact",
+                  "impactPercentage",
+                  "impactPercent",
+                ]),
+              )
+              .filter(
+                (value: number | null): value is number =>
+                  value !== null,
+              );
+
+            const totalAffectedPopulation =
+              populations.length > 0
+                ? populations.reduce(
+                    (sum, value) => sum + value,
+                    0,
+                  )
+                : null;
+
+            const avgVulnerability =
+              vulnerabilityScores.length > 0
+                ? vulnerabilityScores.reduce(
+                    (sum, value) => sum + value,
+                    0,
+                  ) / vulnerabilityScores.length
+                : null;
+
+            const avgImpact =
+              impactScores.length > 0
+                ? impactScores.reduce(
+                    (sum, value) => sum + value,
+                    0,
+                  ) / impactScores.length
+                : null;
+
+            const totalResourceStock = reliefResources.reduce(
+              (sum: number, row: any) => {
+                const value = readNumber(row, [
+                  "totalQuantity",
+                  "total",
+                  "quantity",
+                  "stockQuantity",
+                ]);
+                return sum + (value ?? 0);
+              },
+              0,
+            );
+
+            const allocatedResourceStock = reliefResources.reduce(
+              (sum: number, row: any) => {
+                const value = readNumber(row, [
+                  "allocatedQuantity",
+                  "allocated",
+                  "allocatedStock",
+                ]);
+                return sum + (value ?? 0);
+              },
+              0,
+            );
+
+            const availableResourceStock = reliefResources.reduce(
+              (sum: number, row: any) => {
+                const direct = readNumber(row, [
+                  "availableQuantity",
+                  "available",
+                  "availableStock",
+                ]);
+
+                if (direct !== null) return sum + direct;
+
+                const total = readNumber(row, [
+                  "totalQuantity",
+                  "total",
+                  "quantity",
+                  "stockQuantity",
+                ]);
+                const allocated = readNumber(row, [
+                  "allocatedQuantity",
+                  "allocated",
+                  "allocatedStock",
+                ]);
+
+                return (
+                  sum +
+                  Math.max(
+                    (total ?? 0) - (allocated ?? 0),
+                    0,
+                  )
+                );
+              },
+              0,
+            );
+
+            const activeAlertCount = emergencyAlerts.filter(
+              (row: any) => {
+                const status = String(
+                  row?.status || "",
+                ).toLowerCase();
+
+                return (
+                  row?.isActive === true ||
+                  status === "active" ||
+                  !status
+                );
+              },
+            ).length;
+
+            const criticalAlertCount = emergencyAlerts.filter(
+              (row: any) =>
+                String(row?.severity || "").toLowerCase() ===
+                "critical",
+            ).length;
+
+            const highAlertCount = emergencyAlerts.filter(
+              (row: any) =>
+                String(row?.severity || "").toLowerCase() ===
+                "high",
+            ).length;
+
+            const cards = [
+              {
+                id: "agent-01",
+                short: "01",
+                title: "Risk Prediction",
+                subtitle: "Risk intelligence",
+                icon: <RiskIcon />,
+                iconBox: "bg-blue-50 text-blue-600",
+                border: "border-blue-100",
+                soft: "bg-blue-50/45",
+                status:
+                  agentStatuses.find(
+                    (agent) =>
+                      agent.name === "Risk Prediction Agent",
+                  )?.status || "Ready",
+                primaryLabel: "Predictions",
+                primaryValue: riskPredictions.length,
+                secondaryLabel: "Avg risk",
+                secondaryValue:
+                  predictionAverage === null
+                    ? "N/A"
+                    : predictionAverage.toFixed(1),
+                foot:
+                  highRiskPredictions > 0
+                    ? `${highRiskPredictions} high / critical`
+                    : "No high-risk predictions",
+                latest: latestByDate(riskPredictions),
+              },
+              {
+                id: "agent-02",
+                short: "02",
+                title: "Vulnerability & Impact",
+                subtitle: "Community exposure",
+                icon: <ImpactIcon />,
+                iconBox: "bg-violet-50 text-violet-600",
+                border: "border-violet-100",
+                soft: "bg-violet-50/45",
+                status:
+                  agentStatuses.find(
+                    (agent) =>
+                      agent.name ===
+                      "Vulnerability & Impact Agent",
+                  )?.status || "Ready",
+                primaryLabel: "Assessments",
+                primaryValue:
+                  vulnerabilityAssessments.length,
+                secondaryLabel: "Population",
+                secondaryValue:
+                  totalAffectedPopulation === null
+                    ? "N/A"
+                    : totalAffectedPopulation.toLocaleString(),
+                foot:
+                  avgVulnerability !== null ||
+                  avgImpact !== null
+                    ? `${avgVulnerability === null ? "N/A" : `${avgVulnerability.toFixed(1)}%`} vulnerability  ${avgImpact === null ? "N/A" : `${avgImpact.toFixed(1)}%`} impact`
+                    : "No impact summary",
+                latest: latestByDate(
+                  vulnerabilityAssessments,
+                ),
+              },
+              {
+                id: "agent-03",
+                short: "03",
+                title: "Resource Optimization",
+                subtitle: "Relief capacity",
+                icon: <ResourceIcon />,
+                iconBox: "bg-emerald-50 text-emerald-600",
+                border: "border-emerald-100",
+                soft: "bg-emerald-50/45",
+                status:
+                  agentStatuses.find(
+                    (agent) =>
+                      agent.name ===
+                      "Resource Optimization Agent",
+                  )?.status || "Ready",
+                primaryLabel: "Resource records",
+                primaryValue: reliefResources.length,
+                secondaryLabel: "Available",
+                secondaryValue:
+                  reliefResources.length === 0
+                    ? "N/A"
+                    : availableResourceStock.toLocaleString(),
+                foot:
+                  reliefResources.length > 0
+                    ? `${allocatedResourceStock.toLocaleString()} allocated  ${totalResourceStock.toLocaleString()} total`
+                    : "No resource inventory",
+                latest: latestByDate(
+                  reliefResources,
+                ),
+              },
+              {
+                id: "agent-04",
+                short: "04",
+                title: "Early Warning & Coordination",
+                subtitle: "Coordination operations",
+                icon: <AlertIcon />,
+                iconBox: "bg-red-50 text-red-600",
+                border: "border-red-100",
+                soft: "bg-red-50/45",
+                status:
+                  agentStatuses.find(
+                    (agent) =>
+                      agent.name ===
+                      "Early Warning & Coordination Agent",
+                  )?.status || "Ready",
+                primaryLabel: "Active alerts",
+                primaryValue: activeAlertCount,
+                secondaryLabel: "Total alerts",
+                secondaryValue: emergencyAlerts.length,
+                foot:
+                  criticalAlertCount || highAlertCount
+                    ? `${criticalAlertCount} critical  ${highAlertCount} high`
+                    : "No high-priority alerts",
+                latest: latestByDate(
+                  emergencyAlerts,
+                ),
+              },
+            ];
+
+            return (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {cards.map((card) => {
+                  const normalizedStatus =
+                    String(card.status).toLowerCase();
+
+                  const statusClass =
+                    normalizedStatus === "offline"
+                      ? "border-red-200 bg-red-50 text-red-700"
+                      : normalizedStatus === "running"
+                        ? "border-amber-200 bg-amber-50 text-amber-700"
+                        : "border-emerald-200 bg-emerald-50 text-emerald-700";
+
+                  const latestDate =
+                    card.latest?.createdAt ||
+                    card.latest?.updatedAt ||
+                    card.latest?.completedAt ||
+                    card.latest?.startedAt;
+
+                  return (
+                    <article
+                      key={card.id}
+                      className={`min-h-[164px] rounded-[20px] border bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,.045)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(15,23,42,.07)] ${card.border}`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div
+                          className={`flex h-9 w-9 items-center justify-center rounded-xl ${card.iconBox}`}
+                        >
+                          {card.icon}
+                        </div>
+
+                        <span className="rounded-full bg-slate-50 px-2 py-1 text-[6px] font-black uppercase tracking-[.12em] text-slate-400">
+                          Agent {card.short}
+                        </span>
+                      </div>
+
+                      <div className="mt-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-black leading-4 text-slate-900">
+                              {card.title}
+                            </p>
+                            <p className="mt-1 text-[7px] font-medium text-slate-400">
+                              {card.subtitle}
+                            </p>
+                          </div>
+
+                          <span
+                            className={`shrink-0 rounded-full border px-2 py-1 text-[6px] font-black uppercase ${statusClass}`}
+                          >
+                            {card.status}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-2 gap-2">
+                        <div
+                          className={`rounded-xl px-2.5 py-2.5 ${card.soft}`}
+                        >
+                          <p className="text-[6px] font-black uppercase tracking-wider text-slate-400">
+                            {card.primaryLabel}
+                          </p>
+                          <p className="mt-1 text-[18px] font-black leading-none text-slate-900">
+                            {card.primaryValue}
+                          </p>
+                        </div>
+
+                        <div className="rounded-xl bg-slate-50 px-2.5 py-2.5">
+                          <p className="text-[6px] font-black uppercase tracking-wider text-slate-400">
+                            {card.secondaryLabel}
+                          </p>
+                          <p className="mt-1 truncate text-[15px] font-black leading-none text-slate-900">
+                            {card.secondaryValue}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-3">
+                        <p className="truncate text-[7px] font-bold text-slate-600">
+                          {card.foot}
+                        </p>
+
+                        <p className="mt-1 truncate text-[6px] font-medium text-slate-400">
+                          {latestDate
+                            ? `Latest ${formatDate(latestDate)}`
+                            : "No recent record"}
+                        </p>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            );
+          })()}
+        </DashboardCard>
+
+      </div>
+
+      {/* INCIDENTS + SYSTEM HEALTH */}
+      <div className="grid gap-5 xl:grid-cols-[1.25fr_1fr]">
+        <DashboardCard
+          title="Recent Incidents"
+          subtitle="Latest disaster reports requiring administrator awareness"
+          action={
+            <button
+              type="button"
+              onClick={() => onNavigate("disaster-reports")}
+              className="text-[9px] font-black text-blue-600"
+            >
+              Open Reports
+            </button>
+          }
+        >
+          {recentIncidents.length === 0 ? (
+            <EmptyState text="No disaster reports are available yet." />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px] text-left">
+                <thead>
+                  <tr className="border-b border-slate-100 text-[7px] font-black uppercase tracking-wider text-slate-400">
+                    <th className="px-3 py-3">Location</th>
+                    <th className="px-3 py-3">Type</th>
+                    <th className="px-3 py-3">Severity</th>
+                    <th className="px-3 py-3">Status</th>
+                    <th className="px-3 py-3">Risk</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentIncidents.map((report, index) => {
+                    const severity = normalize(report.severity);
+                    const severityClass =
+                      severity === "critical"
+                        ? "bg-red-50 text-red-700"
+                        : severity === "high"
+                          ? "bg-orange-50 text-orange-700"
+                          : severity === "medium"
+                            ? "bg-amber-50 text-amber-700"
+                            : "bg-emerald-50 text-emerald-700";
+                    const normalizedStatus = normalize(report.status);
+                    const statusClass = [
+                      "resolved",
+                      "closed",
+                      "completed",
+                      "complete",
+                    ].includes(normalizedStatus)
+                      ? "bg-emerald-50 text-emerald-700"
+                      : ["active", "open", "critical"].includes(normalizedStatus)
+                        ? "bg-red-50 text-red-700"
+                        : "bg-amber-50 text-amber-700";
+
+                    return (
+                      <tr key={report.id || `incident-${index}`} className="border-b border-slate-50 last:border-0">
+                        <td className="px-3 py-3">
+                          <p className="max-w-[180px] truncate text-[9px] font-black text-slate-700">{report.location || "Unknown location"}</p>
+                          <p className="mt-0.5 text-[7px] text-slate-400">{formatDate(report.createdAt)}</p>
+                        </td>
+                        <td className="px-3 py-3 text-[8px] font-semibold text-slate-500">{report.disasterType || "N/A"}</td>
+                        <td className="px-3 py-3"><span className={`rounded-full px-2.5 py-1 text-[7px] font-black capitalize ${severityClass}`}>{report.severity || "Unknown"}</span></td>
+                        <td className="px-3 py-3"><span className={`rounded-full px-2.5 py-1 text-[7px] font-black capitalize ${statusClass}`}>{report.status || "Unknown"}</span></td>
+                        <td className="px-3 py-3 text-[9px] font-black text-slate-700">{report.riskScore != null ? report.riskScore : "N/A"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </DashboardCard>
+
+        <DashboardCard
+          title="System Health"
+          subtitle="Core platform service readiness"
+          action={
+            <button
+              type="button"
+              onClick={() => onNavigate("monitoring")}
+              className="text-[9px] font-black text-blue-600"
+            >
+              View Details
+            </button>
+          }
+        >
+          <div className="grid grid-cols-2 gap-3">
+            {healthItems.map((item) => {
+              const state = healthState(item.value);
+              const circumference = 2 * Math.PI * 26;
+              const dash = (state.percent / 100) * circumference;
+
+              return (
+                <div key={item.label} className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 text-center">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[8px] font-black text-slate-500">{item.label}</span>
+                    <span className={`h-2 w-2 rounded-full ${state.label === "Healthy" ? "bg-emerald-400" : state.label === "Warning" ? "bg-amber-400" : state.label === "Critical" ? "bg-red-400" : "bg-slate-300"}`} />
+                  </div>
+                  <div className="relative mx-auto mt-3 h-16 w-16">
+                    <svg viewBox="0 0 64 64" className="h-full w-full -rotate-90">
+                      <circle cx="32" cy="32" r="26" fill="none" stroke="#e5ebf2" strokeWidth="6" />
+                      <circle cx="32" cy="32" r="26" fill="none" stroke={state.ring} strokeWidth="6" strokeLinecap="round" strokeDasharray={`${dash} ${circumference}`} />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-slate-900">
+                      {typeof item.value === "number" ? `${Math.round(item.value)}%` : "N/A"}
+                    </div>
+                  </div>
+                  <span className={`mt-2 inline-flex rounded-full px-2 py-1 text-[6px] font-black ${state.label === "Healthy" ? "bg-emerald-50 text-emerald-700" : state.label === "Warning" ? "bg-amber-50 text-amber-700" : state.label === "Critical" ? "bg-red-50 text-red-700" : "bg-slate-100 text-slate-500"}`}>
+                    {state.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </DashboardCard>
+      </div>
+
+      {/* ONLY THE MOST USEFUL ANALYTICS */}
+      <div className="grid gap-5 xl:grid-cols-2">
+        <DashboardCard
+          title="Risk Score Trend"
+          subtitle="Average reported risk score over the last six months"
+        >
+          {riskTrend.every((item) => item.average === null) ? (
+            <EmptyState text="Risk-score history is not available yet." />
+          ) : (
+            <div className="rounded-2xl bg-slate-50/70 p-3">
+              <svg viewBox="0 0 620 250" className="h-[235px] w-full" role="img" aria-label="Average risk score trend">
+                {[0, 25, 50, 75, 100].map((tick) => {
+                  const y = 205 - (tick / 100) * 165;
+                  return (
+                    <g key={tick}>
+                      <line x1="48" x2="590" y1={y} y2={y} stroke="#e2e8f0" strokeDasharray="4 5" />
+                      <text x="37" y={y + 4} textAnchor="end" fontSize="10" fontWeight="700" fill="#94a3b8">{tick}</text>
+                    </g>
+                  );
+                })}
+                {riskTrend.map((item, index) => {
+                  const x = 65 + (index / Math.max(riskTrend.length - 1, 1)) * 500;
+                  const y = item.average == null ? null : 205 - (item.average / 100) * 165;
+                  const previous = riskTrend[index - 1];
+                  const previousY = previous?.average == null ? null : 205 - (previous.average / 100) * 165;
+                  return (
+                    <g key={`${item.label}-${index}`}>
+                      {previousY !== null && y !== null && (
+                        <line
+                          x1={65 + ((index - 1) / Math.max(riskTrend.length - 1, 1)) * 500}
+                          y1={previousY}
+                          x2={x}
+                          y2={y}
+                          stroke="#2563eb"
+                          strokeWidth="4"
+                          strokeLinecap="round"
+                        />
+                      )}
+                      {y !== null && (
+                        <>
+                          <circle cx={x} cy={y} r="8" fill="#dbeafe" />
+                          <circle cx={x} cy={y} r="4.5" fill="#2563eb" stroke="#fff" strokeWidth="2" />
+                          <text x={x} y={y - 15} textAnchor="middle" fontSize="10" fontWeight="900" fill="#1d4ed8">{item.average}</text>
+                        </>
+                      )}
+                      <text x={x} y="232" textAnchor="middle" fontSize="10" fontWeight="800" fill="#94a3b8">{item.label}</text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+          )}
+        </DashboardCard>
+
+        <DashboardCard
+          title="Incident Severity"
+          subtitle="Current distribution of reported incidents"
+        >
+          {severityTotal === 0 ? (
+            <EmptyState text="No severity data is available yet." />
+          ) : (
+            <div className="grid min-h-[235px] grid-cols-2 gap-5 sm:grid-cols-[180px_1fr] sm:items-center">
+              <div
+                className="relative mx-auto h-40 w-40 rounded-full"
+                style={{
+                  background: (() => {
+                    let cursor = 0;
+                    const colors: Record<string, string> = {
+                      critical: "#ef4444",
+                      high: "#f97316",
+                      medium: "#facc15",
+                      low: "#10b981",
+                    };
+                    const parts = severityItems.map((item) => {
+                      const start = cursor;
+                      cursor += (item.count / severityTotal) * 360;
+                      return `${colors[item.key]} ${start}deg ${cursor}deg`;
+                    });
+                    return `conic-gradient(${parts.join(",")})`;
+                  })(),
+                }}
+              >
+                <div className="absolute inset-[23px] flex flex-col items-center justify-center rounded-full bg-white shadow-sm">
+                  <span className="text-3xl font-black text-slate-950">{severityTotal}</span>
+                  <span className="text-[7px] font-black uppercase tracking-[.16em] text-slate-400">Incidents</span>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {severityItems.map((item) => (
+                  <div key={item.key} className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className={`h-2.5 w-2.5 rounded-full ${item.color}`} />
+                      <span className="text-[9px] font-bold text-slate-600">{item.label}</span>
+                    </div>
+                    <span className="text-[9px] font-black text-slate-800">
+                      {item.count}
+                      <span className="ml-1 font-medium text-slate-400">({Math.round((item.count / severityTotal) * 100)}%)</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </DashboardCard>
+      </div>
+
+      {/* PENDING ADMIN WORK  SHOWN ONLY WHEN IT EXISTS */}
+      {roleRequests.length > 0 && (
+        <DashboardCard
+          title="Pending Role Requests"
+          subtitle="Administrative approvals currently waiting for action"
+          action={
+            <button
+              type="button"
+              onClick={() => onNavigate("role-requests")}
+              className="text-[9px] font-black text-blue-600"
+            >
+              Review All
+            </button>
+          }
+        >
+          <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
+            {roleRequests.slice(0, 4).map((request) => (
+              <div key={request.id} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-[9px] font-black text-amber-700">
+                  {(request.fullName || request.email || "U").slice(0, 1).toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[8px] font-black text-slate-700">{request.fullName || request.email || "Unknown user"}</p>
+                  <p className="mt-0.5 truncate text-[7px] text-slate-400">{roleLabel(request.role)}</p>
+                </div>
+                <span className="rounded-full bg-amber-50 px-2 py-1 text-[6px] font-black text-amber-700">{request.roleRequestStatus || "Pending"}</span>
+              </div>
+            ))}
+          </div>
+        </DashboardCard>
       )}
-    </DashboardCard>
-  </div>
-);
+    </div>
+  );
+};
 
 const PermissionsSection = ({
   selectedRole,
@@ -1453,256 +3855,988 @@ const PermissionsSection = ({
   onToggle: (permission: string) => void;
   onSave: () => void;
   actionLoading: string;
-}) => (
-  <div className="space-y-6">
-    <PageHeading
-      eyebrow="Authorization"
-      title="Permissions"
-      description="Configure which capabilities each operational role can access."
-    />
-
-    <div className="grid gap-5 xl:grid-cols-[1fr_1.5fr]">
-      <DashboardCard
-        title="Select Role"
-        subtitle="Permissions are configured per role"
-      >
-        <div className="space-y-2">
-          {roles.filter((role) => role !== "SystemAdministrator").map((role) => (
-            <button
-              type="button"
-              key={role}
-              onClick={() => setSelectedRole(role)}
-              className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition ${
-                selectedRole === role
-                  ? "border-blue-200 bg-blue-50 text-blue-700"
-                  : "border-slate-100 bg-white text-slate-600 hover:bg-slate-50"
-              }`}
-            >
-              <span className="text-sm font-bold">{roleLabel(role)}</span>
-              {selectedRole === role && <CheckIcon />}
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-5 rounded-xl border border-blue-100 bg-blue-50 p-4">
-          <div className="flex gap-3">
-            <ShieldIcon />
-            <p className="text-xs leading-5 text-blue-700">
-              Permission changes should be enforced by the backend API as
-              well as the dashboard UI.
-            </p>
-          </div>
-        </div>
-      </DashboardCard>
-
-      <DashboardCard
-        title={`${roleLabel(selectedRole)} Permissions`}
-        subtitle="Enable or disable capabilities"
-        action={actionLoading === "permissions" ? "Saving..." : "Save Changes"}
-        onAction={onSave}
-      >
-        <div className="grid gap-2 sm:grid-cols-2">
-          {permissionList.map((permission) => {
-            const enabled = permissions.includes(permission);
-
-            return (
-              <button
-                type="button"
-                key={permission}
-                onClick={() => onToggle(permission)}
-                className={`flex items-center justify-between rounded-xl border px-4 py-3 text-left transition ${
-                  enabled
-                    ? "border-blue-100 bg-blue-50"
-                    : "border-slate-100 bg-white hover:bg-slate-50"
-                }`}
-              >
-                <span
-                  className={`text-xs font-semibold ${
-                    enabled ? "text-blue-700" : "text-slate-600"
-                  }`}
-                >
-                  {permission}
-                </span>
-                <span
-                  className={`flex h-5 w-5 items-center justify-center rounded-md border ${
-                    enabled
-                      ? "border-blue-600 bg-blue-600 text-white"
-                      : "border-slate-300"
-                  }`}
-                >
-                  {enabled && <CheckIcon />}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </DashboardCard>
-    </div>
-  </div>
-);
-
-const aiModuleDescription = (module: string) => {
-  const descriptions: Record<string, string> = {
-    "Risk Prediction": "Monitor AI-generated disaster risk scores, confidence, and risk factors.",
-    "Vulnerability & Impact": "Monitor vulnerability and potential disaster impact assessments.",
-    "Resource Optimization": "Monitor AI recommendations for relief resource allocation and optimization.",
-    "Early Warning & Coordination": "Monitor early-warning decisions and response coordination workflows.",
+}) => {
+  const roleDescriptions: Record<string, string> = {
+    AffectedUser: "View information, report incidents, receive alerts",
+    FieldVolunteer: "Field operations, reporting, location sharing",
+    ReliefCoordinator: "Manage resources, coordinate teams, approve requests",
+    SystemAdministrator: "Full system access and configuration",
   };
-  return descriptions[module] || "Monitor and manage this AI agent.";
-};
 
-const AIAgentsSection = ({ selectedModule }: { selectedModule: string }) => (
-  <div className="space-y-6">
-    <PageHeading
-      eyebrow="AI Agent Management"
-      title={selectedModule}
-      description={aiModuleDescription(selectedModule)}
-    />
+  const permissionMeta: Record<
+    string,
+    { description: string; icon: ReactNode; category: string }
+  > = {
+    "View Risk Information": {
+      description: "Access disaster risk maps and risk predictions for assigned areas.",
+      icon: <RiskIcon />,
+      category: "Disaster Response",
+    },
+    "Report Disaster": {
+      description: "Create and submit disaster reports from the field.",
+      icon: <AlertIcon />,
+      category: "Disaster Response",
+    },
+    "View Emergency Alerts": {
+      description: "Receive and view real-time emergency alerts and notifications.",
+      icon: <AlertIcon />,
+      category: "Location & Alerts",
+    },
+    "Share Location": {
+      description: "Share real-time location with coordinators during field operations.",
+      icon: <RiskIcon />,
+      category: "Location & Alerts",
+    },
+    "Manage Relief Requests": {
+      description: "Create and track relief requests for affected communities.",
+      icon: <RequestIcon />,
+      category: "Relief Operations",
+    },
+    "Manage Relief Resources": {
+      description: "View and manage available relief resources and supply locations.",
+      icon: <ResourceIcon />,
+      category: "Relief Operations",
+    },
+    "Manage Users": {
+      description: "Manage registered users and operational accounts.",
+      icon: <UsersIcon />,
+      category: "Administration & Monitoring",
+    },
+    "Manage Role Requests": {
+      description: "Review and manage requests for operational roles.",
+      icon: <RequestIcon />,
+      category: "Administration & Monitoring",
+    },
+    "AI Agent Monitoring": {
+      description: "View AI agent status, activity and operational intelligence.",
+      icon: <SparkIcon />,
+      category: "Administration & Monitoring",
+    },
+    "Configure Permissions": {
+      description: "Configure role-based access and authorization capabilities.",
+      icon: <ShieldIcon />,
+      category: "Administration & Monitoring",
+    },
+    "View Audit Logs": {
+      description: "Access system audit logs for transparency and accountability.",
+      icon: <AuditIcon />,
+      category: "Administration & Monitoring",
+    },
+    "View Reports": {
+      description: "Generate and review operational reports and analytics.",
+      icon: <ReportIcon />,
+      category: "Administration & Monitoring",
+    },
+  };
 
-    <div className="grid gap-4 md:grid-cols-2">
-      {agentStatuses.map((agent) => (
-        <DashboardCard key={agent.name} title={agent.name}>
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                {agent.icon}
-              </div>
-              <div>
-                <p className="text-xs text-slate-500">{agent.description}</p>
-                <div className="mt-3 flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  <span className="text-xs font-bold text-emerald-700">
-                    {agent.status}
+  const categoryDefinitions = [
+    {
+      name: "Disaster Response",
+      description: "Core disaster reporting and field response capabilities",
+      permissions: ["View Risk Information", "Report Disaster"],
+      icon: <RiskIcon />,
+    },
+    {
+      name: "Location & Alerts",
+      description: "Location sharing and emergency communication",
+      permissions: ["Share Location", "View Emergency Alerts"],
+      icon: <AlertIcon />,
+    },
+    {
+      name: "Relief Operations",
+      description: "Resource management and operational capabilities",
+      permissions: ["Manage Relief Resources", "Manage Relief Requests"],
+      icon: <ResourceIcon />,
+    },
+    {
+      name: "Administration & Monitoring",
+      description: "System access, monitoring and governance capabilities",
+      permissions: [
+        "Manage Users",
+        "Manage Role Requests",
+        "AI Agent Monitoring",
+        "Configure Permissions",
+        "View Audit Logs",
+        "View Reports",
+      ],
+      icon: <ShieldIcon />,
+    },
+  ];
+
+  const enabledCount = permissionList.filter((permission) =>
+    permissions.includes(permission)
+  ).length;
+  const availableCount = permissionList.length - enabledCount;
+  const selectedRoleLabel = roleLabel(selectedRole);
+
+  return (
+    <div className="space-y-6">
+      <PageHeading
+        eyebrow="Authorization"
+        title="Permissions & Access Control"
+        description="Configure role-based capabilities across the ReliefNexus response network."
+      />
+
+      <div className="grid gap-4 xl:grid-cols-[minmax(300px,0.8fr)_minmax(0,2fr)_minmax(250px,0.72fr)]">
+        {/* ROLE SELECTOR */}
+        <DashboardCard
+          title="Select Role"
+          subtitle="Choose a role to configure permissions"
+        >
+          <div className="space-y-2.5">
+            {roles.map((role) => {
+              const selected = selectedRole === role;
+              const isAdmin = role === "SystemAdministrator";
+
+              return (
+                <button
+                  type="button"
+                  key={role}
+                  onClick={() => setSelectedRole(role)}
+                  className={`group flex w-full items-center gap-3 rounded-2xl border p-3.5 text-left transition duration-200 ${
+                    selected
+                      ? "border-blue-300 bg-blue-50/90 shadow-sm ring-1 ring-blue-100"
+                      : "border-slate-100 bg-white hover:-translate-y-0.5 hover:border-blue-200 hover:bg-slate-50 hover:shadow-sm"
+                  }`}
+                >
+                  <span
+                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+                      selected
+                        ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                        : isAdmin
+                          ? "bg-slate-100 text-slate-600"
+                          : "bg-blue-50 text-blue-600"
+                    }`}
+                  >
+                    {isAdmin ? <ShieldIcon /> : <UsersIcon />}
                   </span>
-                </div>
+
+                  <span className="min-w-0 flex-1">
+                    <span
+                      className={`block text-[12px] font-black ${
+                        selected ? "text-blue-800" : "text-slate-800"
+                      }`}
+                    >
+                      {roleLabel(role)}
+                    </span>
+                    <span className="mt-1 block text-[9px] leading-4 text-slate-400">
+                      {roleDescriptions[role]}
+                    </span>
+                  </span>
+
+                  <span
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
+                      selected
+                        ? "border-blue-600 bg-blue-600 text-white"
+                        : "border-slate-300 bg-white"
+                    }`}
+                  >
+                    {selected && <CheckIcon />}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-5 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-slate-50 p-4">
+            <div className="flex gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
+                <ShieldIcon />
+              </span>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-blue-700">
+                  Backend enforced
+                </p>
+                <p className="mt-1 text-[9px] leading-4 text-blue-700/80">
+                  Permission changes should be enforced by the backend authorization APIs as well as the dashboard UI.
+                </p>
               </div>
             </div>
-            <span className="text-xl font-extrabold text-slate-800">
-              {agent.confidence}%
+          </div>
+        </DashboardCard>
+
+        {/* PERMISSION CONTROL */}
+        <div className="rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_12px_35px_rgba(15,23,42,0.06)] sm:p-5">
+          <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                <ShieldIcon />
+              </div>
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.15em] text-blue-600">
+                  Access configuration
+                </p>
+                <h2 className="mt-1 text-[18px] font-black tracking-tight text-slate-900">
+                  {selectedRoleLabel} Permissions
+                </h2>
+                <p className="mt-1 text-[9px] text-slate-400">
+                  Enable or disable capabilities for this operational role.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 sm:min-w-[270px]">
+              <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3">
+                <p className="text-[8px] font-black uppercase tracking-wider text-emerald-600">
+                  Assigned
+                </p>
+                <p className="mt-1 text-xl font-black text-emerald-700">{enabledCount}</p>
+                <p className="text-[8px] text-emerald-600/70">Active permissions</p>
+              </div>
+              <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3">
+                <p className="text-[8px] font-black uppercase tracking-wider text-blue-600">
+                  Available
+                </p>
+                <p className="mt-1 text-xl font-black text-blue-700">{availableCount}</p>
+                <p className="text-[8px] text-blue-600/70">Additional permissions</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            {categoryDefinitions.map((category) => {
+              const categoryEnabled = category.permissions.filter((permission) =>
+                permissions.includes(permission)
+              ).length;
+
+              return (
+                <section
+                  key={category.name}
+                  className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3.5"
+                >
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
+                        {category.icon}
+                      </span>
+                      <div>
+                        <h3 className="text-[11px] font-black text-slate-800">
+                          {category.name}
+                        </h3>
+                        <p className="text-[8px] text-slate-400">
+                          {category.description}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="rounded-full bg-white px-2.5 py-1 text-[7px] font-black text-slate-500 ring-1 ring-slate-200">
+                      {categoryEnabled}/{category.permissions.length} enabled
+                    </span>
+                  </div>
+
+                  <div className="grid gap-2 md:grid-cols-2">
+                    {category.permissions.map((permission) => {
+                      const enabled = permissions.includes(permission);
+                      const meta = permissionMeta[permission];
+
+                      return (
+                        <button
+                          type="button"
+                          key={permission}
+                          onClick={() => onToggle(permission)}
+                          className={`group flex min-h-[76px] items-center gap-3 rounded-xl border p-3 text-left transition duration-200 ${
+                            enabled
+                              ? "border-blue-200 bg-white shadow-sm"
+                              : "border-slate-200 bg-white hover:border-blue-200 hover:shadow-sm"
+                          }`}
+                        >
+                          <span
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                              enabled
+                                ? "bg-blue-50 text-blue-600"
+                                : "bg-slate-100 text-slate-500 group-hover:bg-blue-50 group-hover:text-blue-600"
+                            }`}
+                          >
+                            {meta.icon}
+                          </span>
+
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-[10px] font-black text-slate-800">
+                              {permission}
+                            </span>
+                            <span className="mt-1 block text-[8px] leading-4 text-slate-400">
+                              {meta.description}
+                            </span>
+                          </span>
+
+                          <span
+                            className={`relative h-6 w-11 shrink-0 rounded-full p-0.5 transition ${
+                              enabled ? "bg-blue-600" : "bg-slate-300"
+                            }`}
+                          >
+                            <span
+                              className={`block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                                enabled ? "translate-x-5" : "translate-x-0"
+                              }`}
+                            />
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+
+          <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
+                <ShieldIcon />
+              </span>
+              <div>
+                <p className="text-[10px] font-black text-blue-800">
+                  Authorization changes are backend controlled
+                </p>
+                <p className="mt-1 text-[8px] leading-4 text-blue-700/70">
+                  Saving these permissions updates the configured role access through the existing API integration.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={actionLoading === "permissions"}
+              className="inline-flex min-w-[145px] items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-[10px] font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {actionLoading === "permissions" ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        </div>
+
+        {/* ACCESS SUMMARY */}
+        <DashboardCard
+          title="Access Summary"
+          subtitle={`What ${selectedRoleLabel} can currently do`}
+        >
+          <div className="space-y-2">
+            {permissionList.map((permission) => {
+              const enabled = permissions.includes(permission);
+              const meta = permissionMeta[permission];
+
+              return (
+                <div
+                  key={permission}
+                  className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 ${
+                    enabled
+                      ? "border-emerald-100 bg-emerald-50/70"
+                      : "border-slate-100 bg-slate-50/60"
+                  }`}
+                >
+                  <span
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
+                      enabled
+                        ? "bg-emerald-100 text-emerald-600"
+                        : "bg-slate-200 text-slate-400"
+                    }`}
+                  >
+                    {enabled ? <CheckIcon /> : meta.icon}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className={`truncate text-[9px] font-black ${
+                        enabled ? "text-slate-800" : "text-slate-500"
+                      }`}
+                    >
+                      {permission}
+                    </p>
+                    <p className="truncate text-[7px] text-slate-400">
+                      {enabled ? "Access enabled for this role" : "Not enabled for this role"}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-4">
+            <div className="flex gap-3">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-blue-600">
+                <SparkIcon />
+              </span>
+              <div>
+                <p className="text-[9px] font-black text-blue-800">Operational access note</p>
+                <p className="mt-1 text-[8px] leading-4 text-blue-700/70">
+                  Changes are enforced by backend authorization APIs and take effect for users assigned to this role.
+                </p>
+              </div>
+            </div>
+          </div>
+        </DashboardCard>
+      </div>
+    </div>
+  );
+};
+const AIAgentsSection = ({
+  selectedModule,
+  agentStatuses,
+}: {
+  selectedModule: string;
+  agentStatuses: AgentStatus[];
+}) => {
+  const agentNameMap: Record<string, string> = {
+    "Risk Prediction": "Risk Prediction Agent",
+    "Vulnerability & Impact": "Vulnerability & Impact Agent",
+    "Resource Optimization": "Resource Optimization Agent",
+    "Early Warning & Coordination": "Early Warning & Coordination Agent",
+  };
+
+  const selectedAgentName =
+    agentNameMap[selectedModule] || "Risk Prediction Agent";
+
+  const selectedAgent = agentStatuses.find(
+    (agent) => agent.name === selectedAgentName
+  );
+
+  const execution = selectedAgent?.execution;
+
+  const executionStatus = String(execution?.status || "No Execution");
+
+  const workflowSteps = String(execution?.completedSteps || "")
+    .split(/\s*(?:\?|->)\s*/)
+    .map((step: string) => step.trim())
+    .filter(Boolean);
+
+  const statusStyle =
+    selectedAgent?.status === "Running"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+      : selectedAgent?.status === "Offline"
+        ? "border-red-200 bg-red-50 text-red-700"
+        : "border-blue-200 bg-blue-50 text-blue-700";
+
+  const statusDot =
+    selectedAgent?.status === "Running"
+      ? "bg-emerald-500"
+      : selectedAgent?.status === "Offline"
+        ? "bg-red-500"
+        : "bg-blue-500";
+
+  const hasTokenUsage =
+    execution &&
+    (
+      Number(execution.inputTokens || 0) > 0 ||
+      Number(execution.outputTokens || 0) > 0 ||
+      Number(execution.totalTokens || 0) > 0 ||
+      Boolean(execution.modelName)
+    );
+
+  const formatTokens = (value: unknown) => {
+    const tokens = Number(value || 0);
+    return tokens > 0 ? tokens.toLocaleString() : "Not available";
+  };
+
+  const formatCost = (value: unknown) => {
+    if (value === null || value === undefined || value === "") {
+      return "Not available";
+    }
+
+    const cost = Number(value);
+
+    return Number.isFinite(cost)
+      ? cost.toFixed(4)
+      : "Not available";
+  };
+
+  const metricCards = [
+    {
+      label: "Execution Status",
+      value: executionStatus,
+      icon: "•",
+      style:
+        executionStatus.toLowerCase() === "completed"
+          ? "bg-emerald-50 text-emerald-700"
+          : "bg-blue-50 text-blue-700",
+    },
+    {
+      label: "Workflow ID",
+      value: execution?.workflowId || "Not recorded",
+      icon: "•",
+      style: "bg-blue-50 text-blue-700",
+    },
+    {
+      label: "Approval Status",
+      value: execution?.approvalStatus || "NotRequired",
+      icon: "•",
+      style: "bg-slate-50 text-slate-700",
+    },
+    {
+      label: "Completed At",
+      value: execution?.completedAt
+        ? new Date(execution.completedAt).toLocaleString()
+        : "Still running",
+      icon: "•",
+      style: "bg-slate-50 text-slate-700",
+    },
+    {
+      label: "Input Tokens",
+      value: hasTokenUsage
+        ? formatTokens(execution?.inputTokens)
+        : "Not available",
+      icon: "•",
+      style: "bg-violet-50 text-violet-700",
+    },
+    {
+      label: "Output Tokens",
+      value: hasTokenUsage
+        ? formatTokens(execution?.outputTokens)
+        : "Not available",
+      icon: "•",
+      style: "bg-indigo-50 text-indigo-700",
+    },
+    {
+      label: "Total Tokens",
+      value: hasTokenUsage
+        ? formatTokens(execution?.totalTokens)
+        : "Not available",
+      icon: "•",
+      style: "bg-purple-50 text-purple-700",
+    },
+    {
+      label: "Model / Cost",
+      value: hasTokenUsage
+        ? `${execution?.modelName || "Model not recorded"} ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· ${
+            execution?.estimatedCost !== null &&
+            execution?.estimatedCost !== undefined
+              ? formatCost(execution.estimatedCost)
+              : "Cost not available"
+          }`
+        : "Not available",
+      icon: "$",
+      style: "bg-amber-50 text-amber-700",
+    },
+  ];
+
+  return (
+    <div className="min-w-0 space-y-5">
+      {/* PAGE HEADER */}
+      <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-blue-600">
+            <span>AI AGENT MANAGEMENT</span>
+            <span className="text-slate-300">/</span>
+            <span>{selectedModule}</span>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-blue-600">
+              {selectedAgent?.icon}
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight text-slate-950">
+                {selectedAgent?.name || selectedModule}
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                {selectedAgent?.description ||
+                  "Monitor AI agent execution and workflow activity."}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div
+            className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold ${statusStyle}`}
+          >
+            <span className={`h-2 w-2 rounded-full ${statusDot}`} />
+            {selectedAgent?.status || "Unknown"}
+            <span className="ml-1 text-[10px] font-medium opacity-70">
+              Agent Status
             </span>
           </div>
 
-          <div className="mt-5 h-2 overflow-hidden rounded-full bg-slate-100">
-            <div
-              className="h-full rounded-full bg-blue-600"
-              style={{ width: `${agent.confidence}%` }}
-            />
-          </div>
-
-          <div className="mt-5 flex justify-between text-[10px] text-slate-400">
-            <span>Operational confidence</span>
-            <span>Human approval supported</span>
-          </div>
-        </DashboardCard>
-      ))}
-    </div>
-  </div>
-);
-
-const healthDisplay = (value?: number) =>
-  typeof value === "number" ? `${value}%` : "â€”";
-
-const healthStatus = (value?: number) => {
-  if (typeof value !== "number") return "No data";
-  if (value >= 90) return "Operational";
-  if (value >= 70) return "Degraded";
-  return "Critical";
-};
-
-const MonitoringSection = ({ systemHealth }: { systemHealth: SystemHealth | null }) => (
-  <div className="space-y-6">
-    <PageHeading
-      eyebrow="Infrastructure"
-      title="System Monitoring"
-      description="Monitor API, database, AI services and platform availability."
-    />
-
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <HealthMetric label="API" value={healthDisplay(systemHealth?.apiAvailability)} status={healthStatus(systemHealth?.apiAvailability)} />
-      <HealthMetric label="Database" value={healthDisplay(systemHealth?.databaseHealth)} status={healthStatus(systemHealth?.databaseHealth)} />
-      <HealthMetric label="AI Services" value={healthDisplay(systemHealth?.aiServices)} status={healthStatus(systemHealth?.aiServices)} />
-      <HealthMetric label="Storage" value={healthDisplay(systemHealth?.storage)} status={healthStatus(systemHealth?.storage)} />
-    </div>
-
-    <DashboardCard title="Service Health" subtitle="Current platform health indicators">
-      <div className="grid gap-4 md:grid-cols-2">
-        <HealthBar label="CPU Utilization" value={systemHealth?.cpuUtilization ?? null} />
-        <HealthBar label="Memory Utilization" value={systemHealth?.memoryUtilization ?? null} />
-        <HealthBar label="Disk Utilization" value={systemHealth?.diskUtilization ?? null} />
-        <HealthBar label="API Response Health" value={systemHealth?.apiResponseHealth ?? null} />
+          <button
+            type="button"
+            className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700"
+          >
+            ?&nbsp; Run Agent
+          </button>
+        </div>
       </div>
-    </DashboardCard>
-  </div>
+
+      {/* LATEST EXECUTION */}
+      <div className="flex flex-col justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm sm:flex-row sm:items-center">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
+            Latest Execution
+          </p>
+
+          <p className="mt-1 text-sm font-bold text-slate-900">
+            {execution?.startedAt
+              ? new Date(execution.startedAt).toLocaleString()
+              : "No execution recorded"}
+          </p>
+        </div>
+
+        <div className="text-right">
+          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
+            Current Step
+          </p>
+
+          <p className="mt-1 text-sm font-semibold text-slate-700">
+            {execution?.currentStep || "No current step"}
+          </p>
+        </div>
+      </div>
+
+      {/* METRICS */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {metricCards.map((metric) => (
+          <div
+            key={metric.label}
+            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                  {metric.label}
+                </p>
+
+                <p
+                  className="mt-2 truncate text-sm font-bold text-slate-900"
+                  title={metric.value}
+                >
+                  {metric.value}
+                </p>
+              </div>
+
+              <span
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-bold ${metric.style}`}
+              >
+                {metric.icon}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {!execution ? (
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
+          <p className="font-semibold text-slate-700">
+            No execution has been recorded for this agent yet.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* WORKFLOW + EXECUTION DETAILS */}
+          <div className="grid min-w-0 gap-5 xl:grid-cols-[1fr_1.25fr]">
+            {/* WORKFLOW */}
+            <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="mb-5 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-blue-600">
+                    Execution Workflow
+                  </p>
+
+                  <h3 className="mt-1 text-base font-bold text-slate-900">
+                    Workflow Progress
+                  </h3>
+                </div>
+
+                <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold text-emerald-700">
+                  {executionStatus}
+                </span>
+              </div>
+
+              <div className="space-y-0">
+                {workflowSteps.length > 0 ? (
+                  workflowSteps.map((step: string, index: number) => (
+                    <div
+                      key={`${step}-${index}`}
+                      className="flex min-w-0 gap-3"
+                    >
+                      <div className="flex flex-col items-center">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700 ring-4 ring-white">
+                          ?
+                        </div>
+
+                        {index < workflowSteps.length - 1 && (
+                          <div className="h-9 w-px bg-slate-200" />
+                        )}
+                      </div>
+
+                      <div className="min-w-0 pb-4">
+                        <p className="break-words text-sm font-semibold leading-5 text-slate-800">
+                          {step}
+                        </p>
+
+                        <p className="mt-1 text-[10px] font-medium text-slate-400">
+                          Step {index + 1} N/A Completed
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">
+                    No workflow steps recorded.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* EXECUTION DETAILS */}
+            <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="mb-5">
+                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-blue-600">
+                  Execution Details
+                </p>
+
+                <h3 className="mt-1 text-base font-bold text-slate-900">
+                  Agent Execution
+                </h3>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl bg-slate-50 p-4">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      Current Step
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-slate-800">
+                      {execution.currentStep || "Not recorded"}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl bg-slate-50 p-4">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      Execution Duration
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-slate-800">
+                      {execution.startedAt && execution.completedAt
+                        ? (() => {
+                            const durationMs =
+                              new Date(execution.completedAt).getTime() -
+                              new Date(execution.startedAt).getTime();
+
+                            const totalSeconds = Math.max(
+                              0,
+                              Math.floor(durationMs / 1000)
+                            );
+
+                            const minutes = Math.floor(totalSeconds / 60);
+                            const seconds = totalSeconds % 60;
+
+                            return minutes > 0
+                              ? `${minutes}m ${seconds}s`
+                              : `${seconds}s`;
+                          })()
+                        : "In progress"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-slate-100 p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    Objective
+                  </p>
+
+                  <p className="mt-2 text-sm leading-6 text-slate-700">
+                    {execution.objective || "No objective recorded."}
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-slate-100 p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    Execution Plan
+                  </p>
+
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                    {execution.plan || "No execution plan recorded."}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* INPUT / OUTPUT / VALIDATION */}
+          <div className="grid min-w-0 gap-5 xl:grid-cols-3">
+            <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-sm">
+              <div className="flex items-center justify-between border-b border-white/10 px-5 py-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-blue-300">
+                  Input Data
+                </p>
+
+                <span className="rounded bg-white/10 px-2 py-1 text-[9px] font-bold text-slate-300">
+                  REAL INPUT
+                </span>
+              </div>
+
+              <pre className="max-h-60 overflow-auto whitespace-pre-wrap break-words p-5 text-xs leading-5 text-slate-200">
+                {execution.inputSummary || "No input summary recorded."}
+              </pre>
+            </div>
+
+            <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-sm">
+              <div className="flex items-center justify-between border-b border-white/10 px-5 py-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-emerald-300">
+                  Output Result
+                </p>
+
+                <span className="rounded bg-white/10 px-2 py-1 text-[9px] font-bold text-slate-300">
+                  REAL OUTPUT
+                </span>
+              </div>
+
+              <pre className="max-h-60 overflow-auto whitespace-pre-wrap break-words p-5 text-xs leading-5 text-slate-200">
+                {execution.outputSummary || "No output summary recorded."}
+              </pre>
+            </div>
+
+            <div className="min-w-0 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-emerald-700">
+                Validation
+              </p>
+
+              <div className="mt-4 space-y-3">
+                {(execution.validationResults ||
+                  "No validation results recorded.")
+                  .split(";")
+                  .map((item: string, index: number) => (
+                    <div
+                      key={`${item}-${index}`}
+                      className="flex gap-2 text-sm leading-5 text-emerald-900"
+                    >
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">
+                        ?
+                      </span>
+
+                      <span>{item.trim()}</span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </div>
+
+          {/* EXECUTION TRACE */}
+          <div className="grid min-w-0 gap-5 xl:grid-cols-2">
+            <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-blue-600">
+                Completed Steps
+              </p>
+
+              <pre className="mt-4 max-h-60 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-slate-50 p-4 text-xs leading-5 text-slate-700">
+                {execution.completedSteps || "No completed steps recorded."}
+              </pre>
+            </div>
+
+            <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-blue-600">
+                Tool Results
+              </p>
+
+              <pre className="mt-4 max-h-60 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-slate-50 p-4 text-xs leading-5 text-slate-700">
+                {execution.toolResults || "No tool results recorded."}
+              </pre>
+            </div>
+          </div>
+
+          <div className="grid min-w-0 gap-5 md:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500">
+                Risk Prediction ID
+              </p>
+
+              <p className="mt-3 break-all font-mono text-xs leading-5 text-slate-700">
+                {execution.riskPredictionId || "Not linked"}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-red-200 bg-red-50/60 p-5 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-red-700">
+                Error Message
+              </p>
+
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-red-800">
+                {execution.errorMessage || "No errors recorded."}
+              </p>
+            </div>
+          </div>
+
+          {/* GOVERNANCE */}
+          <div className="grid gap-5 md:grid-cols-2">
+            <div className="rounded-2xl border border-blue-200 bg-blue-50/60 p-5 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-blue-700">
+                Human Approval
+              </p>
+
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <span className="rounded-full bg-white px-3 py-1.5 text-sm font-bold text-blue-900 shadow-sm">
+                  {execution.approvalStatus || "NotRequired"}
+                </span>
+
+                {execution.approvalUser && (
+                  <span className="text-sm text-blue-700">
+                    By: {execution.approvalUser}
+                  </span>
+                )}
+              </div>
+
+              {execution.approvalTimestamp && (
+                <p className="mt-2 text-xs text-blue-600">
+                  {new Date(
+                    execution.approvalTimestamp
+                  ).toLocaleString()}
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500">
+                Current Step
+              </p>
+
+              <p className="mt-3 text-sm font-bold text-slate-900">
+                {execution.currentStep || "No current step recorded"}
+              </p>
+            </div>
+          </div>
+
+          {/* FINAL OUTCOME */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500">
+                  Final Outcome
+                </p>
+
+                <p className="mt-2 text-sm leading-6 text-slate-700">
+                  {execution.finalOutcome ||
+                    "No final outcome recorded."}
+                </p>
+              </div>
+
+              <span
+                className={`shrink-0 rounded-full border px-4 py-1.5 text-xs font-bold ${
+                  executionStatus.toLowerCase() === "completed"
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : executionStatus.toLowerCase() === "failed"
+                      ? "border-red-200 bg-red-50 text-red-700"
+                      : "border-blue-200 bg-blue-50 text-blue-700"
+                }`}
+              >
+                {executionStatus}
+              </span>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+const MonitoringSection = ({ systemHealth }: { systemHealth: SystemHealth | null }) => (
+  <SystemMonitoringModule
+    data={systemHealth}
+    loading={!systemHealth}
+  />
 );
 
 const AuditLogsSection = ({ logs }: { logs: AuditLog[] }) => (
-  <div className="space-y-6">
-    <PageHeading
-      eyebrow="Security"
-      title="Audit Logs"
-      description="Review administrator, user, permission and system activities."
-    />
-
-    <DashboardCard title="Activity History" subtitle={`${logs.length} records returned`}>
-      {logs.length === 0 ? (
-        <EmptyState text="No audit logs returned by the API." />
-      ) : (
-        <div className="space-y-2">
-          {logs.map((log, index) => (
-            <div
-              key={log.id || index}
-              className="flex gap-3 rounded-xl border border-slate-100 p-4"
-            >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-600">
-                <AuditIcon />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-slate-800">
-                  {log.action || "System activity"}
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  {log.description || "No description available."}
-                </p>
-                <p className="mt-2 text-[10px] text-slate-400">
-                  {log.userEmail || "System"} Ã¢â‚¬Â¢ {formatDate(log.createdAt)}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </DashboardCard>
-  </div>
+  <AuditLogsModule logs={logs} loading={false} />
 );
 
-const ReportsSection = () => (
-  <div className="space-y-6">
-    <PageHeading
-      eyebrow="Analytics"
-      title="System Reports"
-      description="Administrative reporting area for platform and disaster-response metrics."
-    />
-
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <MetricCard label="User Activity" value="Ã¢â‚¬â€" detail="API data required" icon={<UsersIcon />} tone="blue" />
-      <MetricCard label="Incidents" value="Ã¢â‚¬â€" detail="Incident API required" icon={<AlertIcon />} tone="red" />
-      <MetricCard label="AI Decisions" value="Ã¢â‚¬â€" detail="Agent history required" icon={<SparkIcon />} tone="purple" />
-      <MetricCard label="Resources" value="Ã¢â‚¬â€" detail="Resource API required" icon={<ResourceIcon />} tone="green" />
-    </div>
-
-    <DashboardCard title="Report Center" subtitle="Ready for live reporting APIs">
-      <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
-        <ReportIcon />
-        <p className="mt-3 text-sm font-bold text-slate-700">
-          Reporting workspace ready
-        </p>
-        <p className="mx-auto mt-1 max-w-md text-xs leading-5 text-slate-400">
-          Connect incident, resource, AI and user analytics endpoints here
-          without changing the dashboard structure.
-        </p>
-      </div>
-    </DashboardCard>
-  </div>
+const ReportsSection = ({ summary }: { summary: ReportSummary }) => (
+  <SystemReportsModule summary={summary} />
 );
 
 const SettingsSection = ({
@@ -1716,8 +4850,8 @@ const SettingsSection = ({
     aiApprovalRequired: boolean;
     auditLogging: boolean;
   };
-  setSettings: React.Dispatch<
-    React.SetStateAction<{
+  setSettings: Dispatch<
+    SetStateAction<{
       maintenanceMode: boolean;
       emailNotifications: boolean;
       aiApprovalRequired: boolean;
@@ -1726,111 +4860,37 @@ const SettingsSection = ({
   >;
   onSave: () => void;
 }) => (
-  <div className="space-y-6">
-    <PageHeading
-      eyebrow="Configuration"
-      title="System Settings"
-      description="Manage important platform-level operational controls."
-    />
-
-    <DashboardCard
-      title="Platform Controls"
-      subtitle="Administrative settings"
-      action="Save Settings"
-      onAction={onSave}
-    >
-      <div className="space-y-3">
-        <SettingRow
-          title="Maintenance Mode"
-          description="Temporarily place the platform into maintenance mode."
-          checked={settings.maintenanceMode}
-          onChange={(value) =>
-            setSettings((current) => ({
-              ...current,
-              maintenanceMode: value,
-            }))
-          }
-        />
-        <SettingRow
-          title="Email Notifications"
-          description="Enable system notification delivery."
-          checked={settings.emailNotifications}
-          onChange={(value) =>
-            setSettings((current) => ({
-              ...current,
-              emailNotifications: value,
-            }))
-          }
-        />
-        <SettingRow
-          title="AI Human Approval"
-          description="Require human approval for AI-generated operational decisions."
-          checked={settings.aiApprovalRequired}
-          onChange={(value) =>
-            setSettings((current) => ({
-              ...current,
-              aiApprovalRequired: value,
-            }))
-          }
-        />
-        <SettingRow
-          title="Audit Logging"
-          description="Record important administration and security events."
-          checked={settings.auditLogging}
-          onChange={(value) =>
-            setSettings((current) => ({
-              ...current,
-              auditLogging: value,
-            }))
-          }
-        />
-      </div>
-    </DashboardCard>
-  </div>
+  <SystemSettingsModule
+    initial={{
+      ...settings,
+      locationSharing: true,
+      autoBackup: true,
+    } satisfies SystemSettingsValue}
+    onSave={async (next: any) => {
+      const { maintenanceMode, emailNotifications, aiApprovalRequired, auditLogging } = next;
+      setSettings({
+        maintenanceMode,
+        emailNotifications,
+        aiApprovalRequired,
+        auditLogging,
+      });
+      onSave();
+    }}
+  />
 );
 
 const ProfileSection = ({
-  user,
   onLogout,
+  profile,
 }: {
   user: UserRecord | null;
   onLogout: () => void;
+  profile?: AdminProfile;
 }) => (
-  <div className="space-y-6">
-    <PageHeading
-      eyebrow="Account"
-      title="Administrator Profile"
-      description="View your ReliefNexus administrator account information."
-    />
-
-    <DashboardCard title="Profile Information">
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-blue-100 text-2xl font-extrabold text-blue-700">
-          {(user?.fullName || "Admin")
-            .split(" ")
-            .map((part: string) => part[0])
-            .slice(0, 2)
-            .join("")
-            .toUpperCase()}
-        </div>
-
-        <div className="space-y-2">
-          <ProfileItem label="Full Name" value={user?.fullName || "System Administrator"} />
-          <ProfileItem label="Email" value={user?.email || "Ã¢â‚¬â€"} />
-          <ProfileItem label="Role" value="System Administrator" />
-          <ProfileItem label="Account Status" value={user?.isActive ? "Active" : "Inactive"} />
-        </div>
-      </div>
-
-      <button
-        type="button"
-        onClick={onLogout}
-        className="mt-7 rounded-xl bg-[#101c35] px-5 py-3 text-xs font-bold text-white hover:bg-[#172a4b]"
-      >
-        Sign Out
-      </button>
-    </DashboardCard>
-  </div>
+  <AdminProfileModule
+    profile={profile}
+    onLogout={onLogout}
+  />
 );
 
 const PageHeading = ({
@@ -1869,49 +4929,6 @@ const PageHeading = ({
     </div>
   </div>
 );
-
-const MetricCard = ({
-  label,
-  value,
-  detail,
-  icon,
-  tone,
-}: {
-  label: string;
-  value: string;
-  detail: string;
-  icon: ReactNode;
-  tone: "blue" | "green" | "amber" | "purple" | "red";
-}) => {
-  const toneClasses = {
-    blue: "bg-blue-50 text-blue-600",
-    green: "bg-emerald-50 text-emerald-600",
-    amber: "bg-amber-50 text-amber-600",
-    purple: "bg-purple-50 text-purple-600",
-    red: "bg-red-50 text-red-600",
-  };
-
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-start justify-between">
-        <div
-          className={`flex h-11 w-11 items-center justify-center rounded-xl ${toneClasses[tone]}`}
-        >
-          {icon}
-        </div>
-        <span className="text-slate-300">
-          <ArrowUpRightIcon />
-        </span>
-      </div>
-      <p className="mt-5 text-xs font-medium text-slate-500">{label}</p>
-      <p className="mt-1 text-3xl font-extrabold tracking-tight text-[#101c35]">
-        {value}
-      </p>
-      <p className="mt-1 text-[10px] text-slate-400">{detail}</p>
-    </div>
-  );
-};
-
 const DashboardCard = ({
   title,
   subtitle,
@@ -1921,12 +4938,12 @@ const DashboardCard = ({
 }: {
   title: string;
   subtitle?: string;
-  action?: string;
+  action?: ReactNode;
   onAction?: () => void;
   children: ReactNode;
 }) => (
-  <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-    <div className="mb-5 flex items-start justify-between gap-4">
+  <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_5px_18px_rgba(15,39,70,0.045)] sm:p-5">
+    <div className="mb-4 flex items-start justify-between gap-4">
       <div>
         <h2 className="text-base font-extrabold text-[#101c35]">{title}</h2>
         {subtitle && (
@@ -1934,96 +4951,24 @@ const DashboardCard = ({
         )}
       </div>
       {action && (
-        <button
-          type="button"
-          onClick={onAction}
-          className="shrink-0 text-xs font-bold text-blue-600 hover:text-blue-700"
-        >
-          {action}
-        </button>
-      )}
+  typeof action === "string" ? (
+    <button
+      type="button"
+      onClick={onAction}
+      className="shrink-0 text-xs font-bold text-blue-600 hover:text-blue-700"
+    >
+      {action}
+    </button>
+  ) : (
+    <div className="shrink-0">
+      {action}
+    </div>
+  )
+)}
     </div>
     {children}
   </section>
 );
-
-const HealthBar = ({ label, value }: { label: string; value: number | null | undefined }) => (
-  <div>
-    <div className="mb-2 flex items-center justify-between">
-      <span className="text-xs font-semibold text-slate-600">{label}</span>
-      <span className="text-xs font-bold text-slate-700">
-        {typeof value === "number" ? `${value}%` : "â€”"}
-      </span>
-    </div>
-    <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-      <div
-        className="h-full rounded-full bg-blue-600"
-        style={{ width: `${typeof value === "number" ? value : 0}%` }}
-      />
-    </div>
-  </div>
-);
-
-const HealthMetric = ({
-  label,
-  value,
-  status,
-}: {
-  label: string;
-  value: string;
-  status: string;
-}) => (
-  <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-    <div className="flex items-center justify-between">
-      <span className="text-xs font-bold text-slate-500">{label}</span>
-      <span className="h-2 w-2 rounded-full bg-emerald-500" />
-    </div>
-    <p className="mt-3 text-3xl font-extrabold text-[#101c35]">{value}</p>
-    <p className="mt-1 text-[10px] font-semibold text-emerald-600">{status}</p>
-  </div>
-);
-
-const SettingRow = ({
-  title,
-  description,
-  checked,
-  onChange,
-}: {
-  title: string;
-  description: string;
-  checked: boolean;
-  onChange: (value: boolean) => void;
-}) => (
-  <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-100 p-4">
-    <div>
-      <p className="text-sm font-bold text-slate-800">{title}</p>
-      <p className="mt-1 text-xs text-slate-400">{description}</p>
-    </div>
-
-    <button
-      type="button"
-      onClick={() => onChange(!checked)}
-      className={`relative h-6 w-11 shrink-0 rounded-full transition ${
-        checked ? "bg-blue-600" : "bg-slate-200"
-      }`}
-      aria-label={title}
-    >
-      <span
-        className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition ${
-          checked ? "left-6" : "left-1"
-        }`}
-      />
-    </button>
-  </div>
-);
-
-const ProfileItem = ({ label, value }: { label: string; value: string }) => (
-  <div className="flex gap-3 text-xs">
-    <span className="w-28 font-semibold text-slate-400">{label}</span>
-    <span className="font-bold text-slate-700">{value}</span>
-  </div>
-);
-
 const EmptyState = ({ text }: { text: string }) => (
   <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-400">
     {text}
@@ -2031,6 +4976,134 @@ const EmptyState = ({ text }: { text: string }) => (
 );
 
 export default SystemAdministratorDashboard;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -42,21 +42,21 @@ function formatConfidence(
 function getRiskIcon(disasterType?: string): string {
   const type = disasterType?.toLowerCase() ?? "";
 
-  if (type.includes("flood")) return "🌊";
-  if (type.includes("landslide")) return "⛰️";
-  if (type.includes("storm")) return "🌪️";
-  if (type.includes("cyclone")) return "🌀";
-  if (type.includes("drought")) return "☀️";
-  if (type.includes("wildfire")) return "🔥";
-  if (type.includes("earthquake")) return "🌍";
-  if (type.includes("tsunami")) return "🌊";
-  if (type.includes("lightning")) return "⚡";
-  if (type.includes("heatwave")) return "🌡️";
-  if (type.includes("volcanic")) return "🌋";
-  if (type.includes("avalanche")) return "🏔️";
-  if (type.includes("cold")) return "❄️";
+  if (type.includes("flood")) return "";
+  if (type.includes("landslide")) return "";
+  if (type.includes("storm")) return "";
+  if (type.includes("cyclone")) return "";
+  if (type.includes("drought")) return "";
+  if (type.includes("wildfire")) return "";
+  if (type.includes("earthquake")) return "";
+  if (type.includes("tsunami")) return "";
+  if (type.includes("lightning")) return "";
+  if (type.includes("heatwave")) return "";
+  if (type.includes("volcanic")) return "";
+  if (type.includes("avalanche")) return "";
+  if (type.includes("cold")) return "";
 
-  return "🛡️";
+  return "";
 }
 
 export default function PredictionSummary({
@@ -68,7 +68,7 @@ export default function PredictionSummary({
       <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
         <div className="flex min-h-[560px] flex-col items-center justify-center text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-3xl">
-            🛡️
+            
           </div>
 
           <h2 className="mt-5 text-lg font-bold text-slate-900">
@@ -166,7 +166,7 @@ export default function PredictionSummary({
       {!hasScore && (
         <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-3.5">
           <div className="flex items-start gap-2.5">
-            <span className="text-base">ℹ️</span>
+            <span className="text-base"></span>
 
             <div>
               <div className="text-sm font-bold text-amber-800">
@@ -284,8 +284,9 @@ export default function PredictionSummary({
         className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
       >
         View Detailed Analysis
-        <span aria-hidden="true">→</span>
+        <span aria-hidden="true"></span>
       </button>
     </section>
   );
 }
+

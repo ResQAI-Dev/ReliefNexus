@@ -52,7 +52,9 @@ public class AuthService : IAuthService
         if (!validPassword)
             return null;
 
-        var token = GenerateJwtToken(user);
+        var permissions = user.Permissions ?? new List<string>();
+
+        var token = GenerateJwtToken(user, permissions);
 
         return new AuthDto
         {
@@ -65,6 +67,7 @@ public class AuthService : IAuthService
                 Email = user.Email,
                 Role = user.Role,
                 IsActive = user.IsActive,
+                Permissions = user.Permissions ?? new List<string>(),
                 CreatedAt = user.CreatedAt
             }
         };
@@ -105,7 +108,16 @@ public class AuthService : IAuthService
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
             Role = requestedRole,
             RoleRequestStatus = "Pending",
-            IsActive = false
+            IsActive = false,
+            Permissions = new List<string>(),
+
+            PhoneNumber = dto.PhoneNumber?.Trim(),
+            DateOfBirth = dto.DateOfBirth.HasValue ? DateTime.SpecifyKind(dto.DateOfBirth.Value, DateTimeKind.Utc) : null,
+            Gender = dto.Gender?.Trim(),
+            Address = dto.Address?.Trim(),
+            District = dto.District?.Trim(),
+            EmergencyContactName = dto.EmergencyContactName?.Trim(),
+            EmergencyContactPhone = dto.EmergencyContactPhone?.Trim()
         };
 
         _context.Users.Add(user);
@@ -121,6 +133,7 @@ public class AuthService : IAuthService
                 Email = user.Email,
                 Role = user.Role,
                 IsActive = user.IsActive,
+                Permissions = user.Permissions ?? new List<string>(),
                 CreatedAt = user.CreatedAt
             }
         };
@@ -132,9 +145,11 @@ public class AuthService : IAuthService
         return null;
     }
 
-    private string GenerateJwtToken(User user)
+    private string GenerateJwtToken(
+        User user,
+        List<string> permissions)
     {
-        var claims = new[]
+        var claims = new List<Claim>
         {
             new Claim(
                 JwtRegisteredClaimNames.Sub,
@@ -152,6 +167,12 @@ public class AuthService : IAuthService
                 ClaimTypes.Role,
                 user.Role)
         };
+
+        foreach (var permission in permissions)
+        {
+            claims.Add(
+                new Claim("permission", permission));
+        }
 
         var key = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(
@@ -175,3 +196,6 @@ public class AuthService : IAuthService
             .WriteToken(token);
     }
 }
+
+
+

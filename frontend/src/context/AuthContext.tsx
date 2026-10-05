@@ -1,4 +1,4 @@
-﻿import {
+import {
   createContext,
   useContext,
   useEffect,
@@ -24,7 +24,14 @@ interface AuthContextType {
     fullName: string,
     email: string,
     password: string,
-    role: string
+    role: string,
+    phoneNumber: string,
+    dateOfBirth: string,
+    gender: string,
+    address: string,
+    district: string,
+    emergencyContactName: string,
+    emergencyContactPhone: string
   ) => Promise<RegisterResponse>;
   logout: () => void;
   loading: boolean;
@@ -78,13 +85,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     fullName: string,
     email: string,
     password: string,
-    role: string
+    role: string,
+    phoneNumber: string,
+    dateOfBirth: string,
+    gender: string,
+    address: string,
+    district: string,
+    emergencyContactName: string,
+    emergencyContactPhone: string
   ): Promise<RegisterResponse> => {
     return registerUser({
       fullName,
       email,
       password,
       role,
+      phoneNumber,
+      dateOfBirth,
+      gender,
+      address,
+      district,
+      emergencyContactName,
+      emergencyContactPhone,
     });
   };
 
@@ -121,3 +142,5 @@ export const useAuth = () => {
 
   return context;
 };
+
+

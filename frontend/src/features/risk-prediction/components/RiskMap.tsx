@@ -1,505 +1,394 @@
-﻿import { useEffect } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  CircleMarker,
   MapContainer,
   Marker,
   Popup,
   TileLayer,
-  Tooltip,
   useMap,
   useMapEvents,
+  Circle,
 } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-import type { ExternalDisasterEvent } from "../types/riskPrediction.types";
+type RiskEvent = Record<string, any>;
 
-interface Props {
+type RiskMapProps = {
   latitude: number;
   longitude: number;
-  events: ExternalDisasterEvent[];
+  locationLabel?: string;
+  events?: RiskEvent[];
   onLocationChange: (latitude: number, longitude: number) => void;
+};
+
+const SRI_LANKA_CENTER: [number, number] = [7.8731, 80.7718];
+
+const tileLayers = {
+  satellite: {
+    name: "Satellite",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Tiles  Esri",
+  },
+  map: {
+    name: "Map",
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution: " OpenStreetMap contributors",
+  },
+  terrain: {
+    name: "Terrain",
+    url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+    attribution: " OpenStreetMap contributors, SRTM | Map style  OpenTopoMap",
+  },
+} as const;
+
+type LayerName = keyof typeof tileLayers;
+
+function validLat(value: unknown): value is number {
+  const n = Number(value);
+  return Number.isFinite(n) && n >= -90 && n <= 90;
 }
 
-interface ClickHandlerProps {
-  onLocationChange: (latitude: number, longitude: number) => void;
+function validLng(value: unknown): value is number {
+  const n = Number(value);
+  return Number.isFinite(n) && n >= -180 && n <= 180;
 }
 
-function ClickHandler({
-  onLocationChange,
-}: ClickHandlerProps) {
+function eventCoords(event: RiskEvent): [number, number] | null {
+  const lat =
+    event.latitude ??
+    event.lat ??
+    event.coordinates?.latitude ??
+    event.coordinates?.lat ??
+    event.location?.latitude ??
+    event.location?.lat;
+
+  const lng =
+    event.longitude ??
+    event.lng ??
+    event.lon ??
+    event.coordinates?.longitude ??
+    event.coordinates?.lng ??
+    event.coordinates?.lon ??
+    event.location?.longitude ??
+    event.location?.lng;
+
+  const latitude = Number(lat);
+  const longitude = Number(lng);
+
+  if (!validLat(latitude) || !validLng(longitude)) return null;
+  return [latitude, longitude];
+}
+
+function eventLabel(event: RiskEvent) {
+  return (
+    event.title ||
+    event.name ||
+    event.event ||
+    event.disasterType ||
+    event.type ||
+    "External Risk Event"
+  );
+}
+
+function eventLevel(event: RiskEvent) {
+  return String(
+    event.riskLevel ||
+      event.severity ||
+      event.level ||
+      event.alertLevel ||
+      "Moderate"
+  );
+}
+
+function eventColor(level: string) {
+  const value = level.toLowerCase();
+  if (value.includes("critical") || value.includes("red")) return "#ef4444";
+  if (value.includes("high") || value.includes("orange")) return "#f97316";
+  if (value.includes("moderate") || value.includes("yellow")) return "#f59e0b";
+  return "#10b981";
+}
+
+function SelectedPinIcon() {
+  return L.divIcon({
+    className: "reliefnexus-selected-pin",
+    html: `
+      <div style="
+        position:relative;
+        width:44px;
+        height:44px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+      ">
+        <div style="
+          position:absolute;
+          width:44px;
+          height:44px;
+          border-radius:999px;
+          background:rgba(37,99,235,.18);
+          box-shadow:0 0 0 1px rgba(255,255,255,.45),0 0 26px rgba(37,99,235,.55);
+        "></div>
+        <div style="
+          width:24px;
+          height:24px;
+          border-radius:999px;
+          background:#2563eb;
+          border:4px solid white;
+          box-shadow:0 6px 18px rgba(15,23,42,.32);
+          position:relative;
+          z-index:2;
+        "></div>
+      </div>
+    `,
+    iconSize: [44, 44],
+    iconAnchor: [22, 22],
+  });
+}
+
+function EventIcon({ color }: { color: string }) {
+  return L.divIcon({
+    className: "reliefnexus-event-pin",
+    html: `
+      <div style="
+        width:26px;
+        height:26px;
+        border-radius:999px;
+        background:${color};
+        border:3px solid rgba(255,255,255,.96);
+        box-shadow:0 5px 18px rgba(15,23,42,.26),0 0 0 5px ${color}22;
+      "></div>
+    `,
+    iconSize: [26, 26],
+    iconAnchor: [13, 13],
+  });
+}
+
+function MapClickCapture({
+  onSelect,
+}: {
+  onSelect: (latitude: number, longitude: number) => void;
+}) {
   useMapEvents({
     click(event) {
-      const latitude = event.latlng.lat;
-      const longitude = event.latlng.lng;
-
-      if (
-        Number.isFinite(latitude) &&
-        Number.isFinite(longitude)
-      ) {
-        onLocationChange(
-          latitude,
-          longitude
-        );
-      }
+      onSelect(event.latlng.lat, event.latlng.lng);
     },
   });
 
   return null;
 }
 
-interface CenterUpdaterProps {
-  latitude: number;
-  longitude: number;
-}
-
-function CenterUpdater({
+function MapViewportController({
   latitude,
   longitude,
-}: CenterUpdaterProps) {
+}: {
+  latitude: number;
+  longitude: number;
+}) {
   const map = useMap();
+  const lastPosition = useRef<[number, number] | null>(null);
 
+  // Leaflet can initialize before the dashboard grid has its final size.
+  // Keep the map tiles aligned with the real container dimensions.
   useEffect(() => {
-    const valid =
+    const invalidate = () => {
+      map.invalidateSize({
+        animate: false,
+        pan: false,
+      });
+    };
+
+    invalidate();
+
+    const frame = window.requestAnimationFrame(invalidate);
+    const timeout = window.setTimeout(invalidate, 150);
+
+    const observer = new ResizeObserver(invalidate);
+    observer.observe(map.getContainer());
+
+    window.addEventListener("resize", invalidate);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(timeout);
+      observer.disconnect();
+      window.removeEventListener("resize", invalidate);
+    };
+  }, [map]);
+
+  // When the user searches a location or clicks the map, move the viewport
+  // to the new coordinates and zoom into the selected place.
+  useEffect(() => {
+    const hasCoordinates =
       Number.isFinite(latitude) &&
       Number.isFinite(longitude) &&
       !(latitude === 0 && longitude === 0);
 
-    if (!valid) {
-      map.setView(
-        [20, 0],
-        2,
-        {
-          animate: false,
-        }
-      );
+    if (!hasCoordinates) return;
+
+    const next: [number, number] = [latitude, longitude];
+    const previous = lastPosition.current;
+
+    const samePosition =
+      previous &&
+      Math.abs(previous[0] - next[0]) < 0.000001 &&
+      Math.abs(previous[1] - next[1]) < 0.000001;
+
+    if (samePosition) {
+      map.invalidateSize({ animate: false, pan: false });
+      return;
     }
 
-    window.setTimeout(() => {
-      map.invalidateSize();
-    }, 100);
+    lastPosition.current = next;
+
+    // setView is deliberately used instead of flyTo so location search feels
+    // immediate and the final selected point is guaranteed to be visible.
+    map.setView(next, 12, {
+      animate: true,
+    });
+
+    window.requestAnimationFrame(() => {
+      map.invalidateSize({
+        animate: false,
+        pan: false,
+      });
+    });
   }, [latitude, longitude, map]);
 
   return null;
 }
 
-function normalizeAlert(
-  alertLevel?: string
-): string {
-  return (
-    alertLevel
-      ?.trim()
-      .toLowerCase()
-      .replace(/[_-]/g, " ")
-      .replace(/\s+/g, " ")
-      .replace(" alert", "")
-      .trim() ?? ""
-  );
-}
-
-function getAlertColor(
-  alertLevel?: string
-): string {
-  const level =
-    normalizeAlert(alertLevel);
-
-  if (
-    level === "red" ||
-    level === "1"
-  ) {
-    return "#dc2626";
-  }
-
-  if (
-    level === "orange" ||
-    level === "2"
-  ) {
-    return "#f59e0b";
-  }
-
-  if (
-    level === "yellow" ||
-    level === "3"
-  ) {
-    return "#eab308";
-  }
-
-  if (
-    level === "green" ||
-    level === "4"
-  ) {
-    return "#16a34a";
-  }
-
-  return "#64748b";
-}
-
-function getAlertLabel(
-  alertLevel?: string
-): string {
-  if (!alertLevel?.trim()) {
-    return "Unknown";
-  }
-
-  return alertLevel;
-}
-
-function getEventTitle(
-  event: ExternalDisasterEvent
-): string {
-  if (event.name?.trim()) {
-    return event.name;
-  }
-
-  if (event.eventType?.trim()) {
-    return event.eventType;
-  }
-
-  return "External Disaster Event";
-}
-
-function createEventIcon(
-  color: string
-) {
-  return L.divIcon({
-    className: "reliefnexus-event-marker",
-    html: `
-      <div
-        style="
-          width:18px;
-          height:18px;
-          border-radius:50%;
-          background:${color};
-          border:3px solid white;
-          box-shadow:
-            0 0 0 2px ${color},
-            0 3px 8px rgba(0,0,0,.35);
-        "
-      ></div>
-    `,
-    iconSize: [18, 18],
-    iconAnchor: [9, 9],
-    popupAnchor: [0, -9],
-  });
-}
 
 export default function RiskMap({
   latitude,
   longitude,
-  events,
+  locationLabel,
+  events = [],
   onLocationChange,
-}: Props) {
-  const hasValidLocation =
-    Number.isFinite(latitude) &&
-    Number.isFinite(longitude) &&
-    !(latitude === 0 && longitude === 0);
+}: RiskMapProps) {
+  const [layer] = useState<LayerName>("map");
 
-  const visibleEvents =
-    events.filter(
-      (event) =>
-        event.latitude !== null &&
-        event.longitude !== null &&
-        Number.isFinite(
-          event.latitude
-        ) &&
-        Number.isFinite(
-          event.longitude
-        )
-    );
+  const center = useMemo<[number, number]>(() => {
+    const usable =
+      validLat(latitude) &&
+      validLng(longitude) &&
+      !(latitude === 0 && longitude === 0);
 
-  /*
-   * Real GDACS events with valid coordinates are always
-   * available on the map.
-   *
-   * Before a location is selected:
-   *   -> show all real events that have coordinates.
-   *
-   * After a location is selected:
-   *   -> show real events within 500 km of that location.
-   *
-   * No mock/fake events are created.
-   */
-  const nearbyEvents = visibleEvents;
+    return usable
+      ? [latitude, longitude]
+      : SRI_LANKA_CENTER;
+  }, [latitude, longitude]);
+
+  const safeEvents = useMemo(
+    () =>
+      (Array.isArray(events) ? events : [])
+        .map((event, index) => ({
+          event,
+          index,
+          coords: eventCoords(event),
+        }))
+        .filter((item) => item.coords !== null) as Array<{
+        event: RiskEvent;
+        index: number;
+        coords: [number, number];
+      }>,
+    [events]
+  );
 
   return (
-    <div className="relative h-[620px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-sm">
+    <div className="reliefnexus-map-shell relative z-0 isolate h-full min-h-[680px] w-full overflow-hidden rounded-[22px] bg-[#0b2135]">
+
 
       <MapContainer
-        center={[20, 0]}
-        zoom={2}
-        minZoom={2}
-        maxZoom={16}
-        worldCopyJump={false}
-        className="h-full w-full cursor-crosshair"
-        scrollWheelZoom={true}
+        center={center}
+        zoom={9}
+        minZoom={5}
+        maxZoom={18}
+        scrollWheelZoom
+        zoomControl
+        className="!h-full !w-full"
+        style={{ height: "100%", width: "100%" }}
       >
         <TileLayer
-          attribution="&copy; OpenStreetMap contributors"
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          key={layer}
+          url={tileLayers[layer].url}
+          attribution={tileLayers[layer].attribution}
+          maxNativeZoom={18}
+          maxZoom={19}
         />
 
-        <ClickHandler
-          onLocationChange={
-            onLocationChange
-          }
-        />
+        <MapClickCapture onSelect={onLocationChange} />
+        <MapViewportController latitude={latitude} longitude={longitude} />
 
-        <>
-          <CenterUpdater
-            latitude={hasValidLocation ? latitude : 0}
-            longitude={hasValidLocation ? longitude : 0}
-          />
-
-          {hasValidLocation && (
-            <>
-
-            <CircleMarker
-              center={[
-                latitude,
-                longitude,
-              ]}
-              radius={11}
+        {validLat(latitude) && validLng(longitude) && !(latitude === 0 && longitude === 0) && (
+          <>
+            <Circle
+              center={[latitude, longitude]}
+              radius={1800}
               pathOptions={{
-                color: "#1d4ed8",
+                color: "#60a5fa",
+                weight: 1.5,
+                opacity: 0.75,
                 fillColor: "#2563eb",
-                fillOpacity: 0.9,
-                weight: 3,
+                fillOpacity: 0.08,
               }}
-            >
+            />
+            <Circle
+              center={[latitude, longitude]}
+              radius={650}
+              pathOptions={{
+                color: "#bfdbfe",
+                weight: 1,
+                opacity: 0.85,
+                fillColor: "#60a5fa",
+                fillOpacity: 0.08,
+              }}
+            />
+            <Marker position={[latitude, longitude]} icon={SelectedPinIcon()}>
+
               <Popup>
-                <div className="min-w-[180px]">
-                  <div className="font-semibold">
-                    Selected Location
+                <div style={{ minWidth: 180, fontFamily: "Inter, sans-serif" }}>
+                  <div style={{ fontSize: 11, fontWeight: 800, marginBottom: 5 }}>
+                    {locationLabel || "Selected Prediction Location"}
                   </div>
-
-                  <div className="mt-1 text-sm text-slate-600">
-                    Latitude:{" "}
-                    {latitude.toFixed(5)}
-                  </div>
-
-                  <div className="text-sm text-slate-600">
-                    Longitude:{" "}
-                    {longitude.toFixed(5)}
+                  <div style={{ fontSize: 10, color: "#64748b" }}>
+                    {latitude.toFixed(5)}, {longitude.toFixed(5)}
                   </div>
                 </div>
               </Popup>
-              </CircleMarker>
-            </>
-          )}
-
-        </>
-
-        {/* =====================================================
-            REAL LOCAL GDACS ALERTS
-           ===================================================== */}
-
-        {nearbyEvents.map(
-          (event) => {
-            if (
-              event.latitude === null ||
-              event.longitude === null
-            ) {
-              return null;
-            }
-
-            const color =
-              getAlertColor(
-                event.alertLevel
-              );
-
-            return (
-              <Marker
-                key={`${event.eventType}-${event.eventId}`}
-                position={[
-                  event.latitude,
-                  event.longitude,
-                ]}
-                icon={createEventIcon(
-                  color
-                )}
-              >
-                <Tooltip
-                  direction="top"
-                  offset={[0, -8]}
-                >
-                  {getAlertLabel(
-                    event.alertLevel
-                  )}{" "}
-                  alert
-                </Tooltip>
-
-                <Popup>
-                  <div className="min-w-[220px]">
-                    <div className="font-bold text-slate-900">
-                      {getEventTitle(event)}
-                    </div>
-
-                    <div className="mt-2 space-y-1 text-sm">
-                      <div>
-                        <span className="font-medium">
-                          Type:
-                        </span>{" "}
-                        {event.eventType ||
-                          "Unknown"}
-                      </div>
-
-                      <div>
-                        <span className="font-medium">
-                          Alert:
-                        </span>{" "}
-                        <span
-                          style={{
-                            color,
-                            fontWeight: 700,
-                          }}
-                        >
-                          {getAlertLabel(
-                            event.alertLevel
-                          )}
-                        </span>
-                      </div>
-
-                      <div>
-                        <span className="font-medium">
-                          Event ID:
-                        </span>{" "}
-                        {event.eventId ||
-                          "N/A"}
-                      </div>
-
-                      <div>
-                        <span className="font-medium">
-                          Coordinates:
-                        </span>{" "}
-                        {event.latitude.toFixed(
-                          4
-                        )}
-                        ,{" "}
-                        {event.longitude.toFixed(
-                          4
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </Popup>
-              </Marker>
-            );
-          }
+            </Marker>
+          </>
         )}
+
+        {safeEvents.map(({ event, index, coords }) => {
+          const level = eventLevel(event);
+          const color = eventColor(level);
+
+          return (
+            <Marker key={`${event.id ?? event.eventId ?? "event"}-${index}`} position={coords} icon={EventIcon({ color })}>
+              <Popup>
+                <div style={{ minWidth: 190, fontFamily: "Inter, sans-serif" }}>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: "#0f172a" }}>
+                    {eventLabel(event)}
+                  </div>
+                  <div style={{ marginTop: 5, fontSize: 9, color: color, fontWeight: 800 }}>
+                    {level}
+                  </div>
+                  {event.description && (
+                    <div style={{ marginTop: 6, fontSize: 9, lineHeight: 1.45, color: "#64748b" }}>
+                      {String(event.description)}
+                    </div>
+                  )}
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
       </MapContainer>
 
-      {/* =====================================================
-          MAP LEGEND
-         ===================================================== */}
 
-      <div className="pointer-events-none absolute left-4 top-4 z-[1000] rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur">
-
-        <div className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-
-          <div className="text-sm font-bold text-slate-800">
-            Interactive Risk Map
-          </div>
-        </div>
-
-        <div className="mt-1 text-xs text-slate-500">
-          Click anywhere to select a prediction location
-        </div>
-
-        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs">
-
-          <span className="flex items-center gap-1.5 text-blue-700">
-            <span className="h-2 w-2 rounded-full bg-blue-600" />
-            Selected
-          </span>
-
-          <span className="flex items-center gap-1.5 text-red-700">
-            <span className="h-2 w-2 rounded-full bg-red-600" />
-            Red Alert
-          </span>
-
-          <span className="flex items-center gap-1.5 text-amber-700">
-            <span className="h-2 w-2 rounded-full bg-amber-500" />
-            Orange Alert
-          </span>
-        </div>
-      </div>
-
-      {/* =====================================================
-          EVENT COUNTS
-         ===================================================== */}
-
-      <div className="pointer-events-none absolute right-4 top-4 z-[1000] rounded-xl border border-slate-200 bg-white/95 px-3 py-2 shadow-lg backdrop-blur">
-
-        <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-          External Events
-        </div>
-
-        <div className="mt-0.5 text-lg font-black text-slate-800">
-          {visibleEvents.length}
-        </div>
-
-        <div className="mt-1 text-[10px] font-semibold text-red-600">
-          Red:{" "}
-          {nearbyEvents.filter(
-            (event) =>
-              normalizeAlert(event.alertLevel) === "red"
-          ).length}
-          {"  "}
-          <span className="text-amber-600">
-            Orange:{" "}
-            {nearbyEvents.filter(
-              (event) =>
-                normalizeAlert(event.alertLevel) === "orange"
-            ).length}
-          </span>
-        </div>
-      </div>
-
-      {/* =====================================================
-          NO LOCAL ALERT MESSAGE
-         ===================================================== */}
-
-      {hasValidLocation &&
-        nearbyEvents.length === 0 && (
-          <div className="pointer-events-none absolute bottom-16 right-4 z-[1000] rounded-xl border border-slate-200 bg-white/95 px-3 py-2 text-xs text-slate-500 shadow-lg">
-            No external alert within
-            500 km of selected location.
-          </div>
-        )}
-
-      {/* =====================================================
-          SELECTED COORDINATES
-         ===================================================== */}
-
-      <div className="pointer-events-none absolute bottom-4 left-4 z-[1000] rounded-xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur">
-
-        <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-          Selected Coordinates
-        </div>
-
-        {hasValidLocation ? (
-          <div className="mt-1 text-sm font-bold text-slate-700">
-            {latitude.toFixed(5)},{" "}
-            {longitude.toFixed(5)}
-          </div>
-        ) : (
-          <div className="mt-1 text-sm text-slate-500">
-            Select a location on the map
-          </div>
-        )}
-      </div>
-
-      <div className="pointer-events-none absolute bottom-4 right-4 z-[1000] rounded-xl bg-white/90 px-3 py-2 text-[10px] text-slate-400 shadow">
-        OpenStreetMap
-      </div>
     </div>
   );
 }
-
-
-
-
 
 
 

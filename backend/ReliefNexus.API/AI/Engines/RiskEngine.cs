@@ -23,25 +23,47 @@ public class RiskEngine
             CalculateAvalanche(x),
             CalculateColdWave(x)
         };
+        var requestedDisasterType =
+            NormalizeDisasterType(x.DisasterType);
 
-        var availableRisks =
-            risks
-                .Where(x => x.DataAvailable &&
-                            x.RiskScore.HasValue)
-                .OrderByDescending(
-                    x => x.RiskScore!.Value)
-                .ToList();
+        DisasterRiskDto? primary = null;
 
-        var primary =
-            availableRisks.FirstOrDefault();
+        // If the request specifies a disaster type, use that
+        // disaster type only when real data is available.
+        if (!string.IsNullOrWhiteSpace(requestedDisasterType))
+        {
+            primary = risks.FirstOrDefault(r =>
+                string.Equals(
+                    NormalizeDisasterType(r.DisasterType),
+                    requestedDisasterType,
+                    StringComparison.OrdinalIgnoreCase) &&
+                r.DataAvailable &&
+                r.RiskScore.HasValue);
+        }
 
+        // If no disaster type was specified, or the requested
+        // disaster type has no available data, use the highest
+        // available real disaster risk.
+        if (primary == null)
+        {
+            primary = risks
+                .Where(r =>
+                    r.DataAvailable &&
+                    r.RiskScore.HasValue)
+                .OrderByDescending(r =>
+                    r.RiskScore!.Value)
+                .FirstOrDefault();
+        }
+
+        // Only return DataUnavailable when there is genuinely
+        // no usable disaster-risk data at all.
         if (primary == null)
         {
             return CreateNoDataResult(x, risks);
         }
 
         var primaryScore =
-            primary.RiskScore!.Value;
+            primary.RiskScore ?? 0;
 
         return new RiskPredictionDto
         {
@@ -110,7 +132,7 @@ public class RiskEngine
                 BuildPredictionSource(x),
 
             ModelVersion =
-                "v3.0-RealData-MultiDisaster",
+                "v4.0-EvidenceFusion-MultiSource",
 
             RequiresHumanApproval =
                 primaryScore >= 75,
@@ -128,103 +150,64 @@ public class RiskEngine
     // FLOOD
     // =====================================================
 
-    private static DisasterRiskDto CalculateFlood(
-        RiskPredictionDto x)
+    private static DisasterRiskDto CalculateFlood(RiskPredictionDto x)
     {
-        var score =
-            Normalize(x.Rainfall24h, 250) * 35 +
-            Normalize(x.RiverLevel, 6) * 30 +
-            Normalize(x.HistoricalFloodCount, 10) * 15 +
-            Normalize(x.ForecastRainfall, 200) * 10 +
-            Normalize(x.SoilMoisture, 100) * 10;
-
-        return AvailableRisk(
-            "Flood",
-            score,
-            "Open-Meteo + Local Risk Inputs");
+        var parts = new List<(double score, double weight)>();
+        if (x.Rainfall1h > 0) parts.Add((Normalize(x.Rainfall1h, 50) * 100, 15));
+        if (x.Rainfall24h > 0) parts.Add((Normalize(x.Rainfall24h, 250) * 100, 25));
+        if (x.Rainfall72h > 0) parts.Add((Normalize(x.Rainfall72h, 400) * 100, 15));
+        if (x.ForecastRainfall24h > 0) parts.Add((Normalize(x.ForecastRainfall24h, 200) * 100, 15));
+        if (x.RiverLevel > 0) parts.Add((Normalize(x.RiverLevel, 6) * 100, 20));
+        if (x.SoilMoisture > 0) parts.Add((Normalize(x.SoilMoisture, 0.6) * 100, 10));
+        if (parts.Count == 0 && x.SriLankaFloodAlertScore <= 0) return UnavailableRisk("Flood", "Insufficient flood observations");
+        return AvailableRisk("Flood", FuseOfficialAlert(Weighted(parts), x.SriLankaFloodAlertScore, 0.25), BuildSource(x, "Flood"));
     }
 
-    // =====================================================
-    // LANDSLIDE
-    // =====================================================
-
-    private static DisasterRiskDto CalculateLandslide(
-        RiskPredictionDto x)
+    private static DisasterRiskDto CalculateLandslide(RiskPredictionDto x)
     {
-        var score =
-            Normalize(x.Rainfall24h, 250) * 35 +
-            Normalize(x.SoilMoisture, 100) * 30 +
-            Normalize(x.Elevation, 100) * 15 +
-            Normalize(x.ForecastRainfall, 200) * 20;
-
-        return AvailableRisk(
-            "Landslide",
-            score,
-            "Open-Meteo + Terrain Inputs");
+        var parts = new List<(double score, double weight)>();
+        if (x.Rainfall24h > 0) parts.Add((Normalize(x.Rainfall24h, 150) * 100, 20));
+        if (x.Rainfall72h > 0) parts.Add((Normalize(x.Rainfall72h, 300) * 100, 25));
+        if (x.ForecastRainfall24h > 0) parts.Add((Normalize(x.ForecastRainfall24h, 120) * 100, 20));
+        if (x.SoilMoisture > 0) parts.Add((Normalize(x.SoilMoisture, 0.55) * 100, 15));
+        if (x.Elevation > 0) parts.Add((Normalize(x.Elevation, 1200) * 100, 5));
+        if (parts.Count == 0 && x.SriLankaLandslideAlertScore <= 0) return UnavailableRisk("Landslide", "Insufficient rainfall/terrain evidence");
+        return AvailableRisk("Landslide", FuseOfficialAlert(Weighted(parts), x.SriLankaLandslideAlertScore, 0.35), BuildSource(x, "Landslide"));
     }
 
-    // =====================================================
-    // STORM / CYCLONE
-    // =====================================================
-
-    private static DisasterRiskDto CalculateStorm(
-        RiskPredictionDto x)
+    private static DisasterRiskDto CalculateStorm(RiskPredictionDto x)
     {
-        var score =
-            Normalize(x.WindSpeed, 120) * 50 +
-            Normalize(x.Rainfall24h, 250) * 20 +
-            Normalize(x.ForecastRainfall, 200) * 20 +
-            Normalize(x.Humidity, 100) * 10;
-
-        return AvailableRisk(
-            "Storm / Cyclone",
-            score,
-            "Open-Meteo");
+        if (!x.WeatherDataAvailable && x.SriLankaWeatherAlertScore <= 0) return UnavailableRisk("Storm / Cyclone", "Weather and official warning data unavailable");
+        var baseScore = Normalize(x.WindSpeed, 120) * 40 + Normalize(x.Rainfall1h, 25) * 20 + Normalize(x.ForecastRainfall24h, 100) * 20 + Normalize(x.Humidity, 100) * 20;
+        return AvailableRisk("Storm / Cyclone", FuseOfficialAlert(baseScore, x.SriLankaWeatherAlertScore, 0.30), BuildSource(x, "Storm"));
     }
 
-    // =====================================================
-    // DROUGHT
-    // =====================================================
-
-    private static DisasterRiskDto CalculateDrought(
-        RiskPredictionDto x)
+    private static DisasterRiskDto CalculateDrought(RiskPredictionDto x)
     {
-        var score =
-            (1 - Normalize(x.Rainfall24h, 250)) * 35 +
-            (1 - Normalize(x.ForecastRainfall, 200)) * 20 +
-            Normalize(x.Temperature, 45) * 20 +
-            (1 - Normalize(x.Humidity, 100)) * 10 +
-            (1 - Normalize(x.SoilMoisture, 100)) * 15;
-
-        return AvailableRisk(
-            "Drought",
-            score,
-            "Open-Meteo + Local Risk Inputs");
+        if (!x.WeatherDataAvailable) return UnavailableRisk("Drought", "Open-Meteo weather data unavailable");
+        var rainfall72Stress = 1 - Normalize(x.Rainfall72h, 120);
+        var forecastStress = 1 - Normalize(x.ForecastRainfall24h, 80);
+        var soilStress = x.SoilMoisture > 0 ? 1 - Normalize(x.SoilMoisture, 0.45) : 0.5;
+        var etDemand = Normalize(x.ReferenceEvapotranspiration24h, 6);
+        var vpdStress = Normalize(x.VapourPressureDeficit, 2.0);
+        var heatStress = Math.Clamp((x.Temperature3hAverage - 25) / 12.0, 0, 1);
+        var humidityStress = 1 - Normalize(x.Humidity3hAverage > 0 ? x.Humidity3hAverage : x.Humidity, 100);
+        var baseScore = rainfall72Stress * 25 + forecastStress * 20 + soilStress * 20 + etDemand * 15 + vpdStress * 10 + heatStress * 5 + humidityStress * 5;
+        return AvailableRisk("Drought", FuseOfficialAlert(baseScore, x.SriLankaDroughtAlertScore, 0.20), BuildSource(x, "Drought"));
     }
 
-    // =====================================================
-    // WILDFIRE
-    // =====================================================
-
-    private static DisasterRiskDto CalculateWildfire(
-        RiskPredictionDto x)
+    private static DisasterRiskDto CalculateWildfire(RiskPredictionDto x)
     {
-        var score =
-            Normalize(x.Temperature, 45) * 30 +
-            (1 - Normalize(x.Humidity, 100)) * 25 +
-            (1 - Normalize(x.SoilMoisture, 100)) * 25 +
-            (1 - Normalize(x.Rainfall24h, 250)) * 10 +
-            Normalize(x.WindSpeed, 120) * 10;
-
-        return AvailableRisk(
-            "Wildfire / Forest Fire",
-            score,
-            "Open-Meteo");
+        if (!x.WeatherDataAvailable) return UnavailableRisk("Wildfire / Forest Fire", "Open-Meteo weather data unavailable");
+        var heat = Math.Clamp((x.Temperature - 25) / 15.0, 0, 1);
+        var humidityDryness = 1 - Normalize(x.Humidity, 100);
+        var rainfallDryness = 1 - Normalize(x.Rainfall72h, 120);
+        var etDemand = Normalize(x.ReferenceEvapotranspiration24h, 6);
+        var vpd = Normalize(x.VapourPressureDeficit, 2);
+        var wind = Normalize(x.WindSpeed, 100);
+        var score = heat * 20 + humidityDryness * 20 + rainfallDryness * 20 + etDemand * 15 + vpd * 15 + wind * 10;
+        return AvailableRisk("Wildfire / Forest Fire", score, BuildSource(x, "Wildfire"));
     }
-
-    // =====================================================
-    // EARTHQUAKE - ACTUAL GDACS EVENTS
-    // =====================================================
 
     private static DisasterRiskDto CalculateEarthquake(
     RiskPredictionDto x)
@@ -243,7 +226,7 @@ public class RiskEngine
     if (events.Count == 0)
         return UnavailableRisk(
             "Earthquake",
-            "GDACS");
+            "USGS + GDACS");
 
     var nearest =
         GetNearestEvent(
@@ -256,6 +239,115 @@ public class RiskEngine
     {
         return UnavailableRisk(
             "Earthquake",
+            "USGS + GDACS");
+    }
+
+    var distance =
+        CalculateDistanceKm(
+            x.Latitude,
+            x.Longitude,
+            nearest.Latitude,
+            nearest.Longitude);
+
+    if (distance > 500)
+    {
+        return UnavailableRisk(
+            "Earthquake",
+            "No locally relevant earthquake event");
+    }
+
+    var distanceScore =
+        distance <= 50 ? 90 :
+        distance <= 100 ? 75 :
+        distance <= 250 ? 55 :
+        30;
+
+    double magnitudeScore;
+
+    if (nearest.Magnitude.HasValue)
+    {
+        var magnitude =
+            nearest.Magnitude.Value;
+
+        magnitudeScore =
+            magnitude < 4.0 ? 20 :
+            magnitude < 5.0 ? 40 :
+            magnitude < 6.0 ? 60 :
+            magnitude < 7.0 ? 80 :
+            100;
+    }
+    else
+    {
+        magnitudeScore =
+            string.Equals(
+                nearest.AlertLevel,
+                "Red",
+                StringComparison.OrdinalIgnoreCase) ? 100 :
+            string.Equals(
+                nearest.AlertLevel,
+                "Orange",
+                StringComparison.OrdinalIgnoreCase) ? 75 :
+            string.Equals(
+                nearest.AlertLevel,
+                "Green",
+                StringComparison.OrdinalIgnoreCase) ? 40 :
+            20;
+    }
+
+    var score =
+        Math.Round(
+            (distanceScore * 0.60) +
+            (magnitudeScore * 0.40),
+            2);
+
+    var source =
+        nearest.EventId.StartsWith(
+            "USGS-",
+            StringComparison.OrdinalIgnoreCase)
+            ? "USGS"
+            : "GDACS";
+
+    return AvailableRisk(
+        "Earthquake",
+        score,
+        source);
+}
+// =====================================================
+// TSUNAMI - ACTUAL GDACS EVENTS
+    // =====================================================
+
+    private static DisasterRiskDto CalculateTsunami(
+    RiskPredictionDto x)
+{
+    var events =
+        x.ExternalEvents
+            .Where(e =>
+                e.EventType.Equals(
+                    "TS",
+                    StringComparison.OrdinalIgnoreCase))
+            .Where(e =>
+                e.Latitude.HasValue &&
+                e.Longitude.HasValue)
+            .ToList();
+
+    if (events.Count == 0)
+    {
+        return UnavailableRisk(
+            "Tsunami",
+            "GDACS");
+    }
+
+    var nearest =
+        GetNearestEvent(
+            x,
+            events);
+
+    if (nearest == null ||
+        !nearest.Latitude.HasValue ||
+        !nearest.Longitude.HasValue)
+    {
+        return UnavailableRisk(
+            "Tsunami",
             "GDACS");
     }
 
@@ -266,15 +358,19 @@ public class RiskEngine
             nearest.Latitude,
             nearest.Longitude);
 
-    // Local relevance is based primarily on distance.
-    var distanceScore =
-        distance <= 50 ? 90 :
-        distance <= 100 ? 75 :
-        distance <= 250 ? 55 :
-        distance <= 500 ? 30 :
-        5;
+    if (distance > 500)
+    {
+        return UnavailableRisk(
+            "Tsunami",
+            "No locally relevant GDACS tsunami event");
+    }
 
-    // GDACS alert severity provides a secondary factor.
+    var distanceScore =
+        distance <= 50 ? 100 :
+        distance <= 100 ? 90 :
+        distance <= 250 ? 75 :
+        50;
+
     var alertScore =
         string.Equals(
             nearest.AlertLevel,
@@ -297,157 +393,119 @@ public class RiskEngine
             2);
 
     return AvailableRisk(
-        "Earthquake",
+        "Tsunami",
         score,
         "GDACS");
 }
-
 // =====================================================
-// TSUNAMI - ACTUAL GDACS EVENTS
-    // =====================================================
-
-    private static DisasterRiskDto CalculateTsunami(
-        RiskPredictionDto x)
-    {
-        var events =
-            x.ExternalEvents
-                .Where(e =>
-                    e.EventType.Equals(
-                        "TS",
-                        StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-        if (events.Count == 0)
-            return UnavailableRisk(
-                "Tsunami",
-                "GDACS");
-
-        var nearest =
-            GetNearestEvent(
-                x,
-                events);
-
-        var distance =
-            nearest == null
-                ? double.MaxValue
-                : CalculateDistanceKm(
-                    x.Latitude,
-                    x.Longitude,
-                    nearest.Latitude,
-                    nearest.Longitude);
-
-        var score =
-            distance <= 100 ? 95 :
-            distance <= 250 ? 80 :
-            distance <= 500 ? 60 :
-            35;
-
-        return AvailableRisk(
-            "Tsunami",
-            score,
-            "GDACS");
-    }
-
-    // =====================================================
     // LIGHTNING
     // =====================================================
 
-    private static DisasterRiskDto CalculateLightning(
-        RiskPredictionDto x)
+    private static DisasterRiskDto CalculateLightning(RiskPredictionDto x)
     {
-        if (!x.WeatherDataAvailable)
-        {
-            return UnavailableRisk(
-                "Lightning",
-                "Open-Meteo");
-        }
-
-        var score =
-            Normalize(x.Rainfall3h, 150) * 30 +
-            Normalize(x.Humidity, 100) * 25 +
-            Normalize(x.WindSpeed, 120) * 20 +
-            Normalize(x.Temperature, 45) * 10 +
-            Normalize(x.ForecastRainfall, 200) * 15;
-
-        return AvailableRisk(
-            "Lightning",
-            score,
-            "Open-Meteo");
+        if (!x.WeatherDataAvailable) return UnavailableRisk("Lightning", "Open-Meteo weather data unavailable");
+        var rainfall = Normalize(x.Rainfall3h, 50);
+        var forecast = Normalize(x.ForecastRainfall24h, 100);
+        var humidity = Normalize(x.Humidity, 100);
+        var wind = Normalize(x.WindSpeed, 100);
+        var thunderstormCode = x.WeatherCode is 95 or 96 or 99 ? 1.0 : 0.0;
+        var score = rainfall * 25 + forecast * 15 + humidity * 15 + wind * 10 + thunderstormCode * 35;
+        return AvailableRisk("Lightning", score, BuildSource(x, "Lightning"));
     }
 
-    // =====================================================
-    // HEATWAVE
-    // =====================================================
-
-    private static DisasterRiskDto CalculateHeatwave(
-        RiskPredictionDto x)
+    private static DisasterRiskDto CalculateHeatwave(RiskPredictionDto x)
     {
-        if (!x.WeatherDataAvailable)
-        {
-            return UnavailableRisk(
-                "Heatwave",
-                "Open-Meteo");
-        }
-
-        var score =
-            Normalize(x.Temperature, 45) * 65 +
-            (1 - Normalize(x.Humidity, 100)) * 15 +
-            (1 - Normalize(x.Rainfall24h, 250)) * 10 +
-            (1 - Normalize(x.WindSpeed, 120)) * 10;
-
-        return AvailableRisk(
-            "Heatwave",
-            score,
-            "Open-Meteo");
+        if (!x.WeatherDataAvailable) return UnavailableRisk("Heatwave", "Open-Meteo weather data unavailable");
+        var temp = Math.Clamp((Math.Max(x.Temperature, x.Temperature3hAverage) - 30) / 10.0, 0, 1);
+        var humidity = 1 - Normalize(x.Humidity, 100);
+        var rainfall = 1 - Normalize(x.Rainfall24h, 80);
+        var persistence = Math.Clamp((x.Temperature3hAverage - 28) / 8.0, 0, 1);
+        var score = temp * 55 + humidity * 15 + rainfall * 10 + persistence * 20;
+        return AvailableRisk("Heatwave", score, BuildSource(x, "Heatwave"));
     }
-
-    // =====================================================
-    // VOLCANIC - ACTUAL GDACS EVENTS
-    // =====================================================
 
     private static DisasterRiskDto CalculateVolcanic(
-        RiskPredictionDto x)
+    RiskPredictionDto x)
+{
+    var events =
+        x.ExternalEvents
+            .Where(e =>
+                e.EventType.Equals(
+                    "VO",
+                    StringComparison.OrdinalIgnoreCase))
+            .Where(e =>
+                e.Latitude.HasValue &&
+                e.Longitude.HasValue)
+            .ToList();
+
+    if (events.Count == 0)
     {
-        var events =
-            x.ExternalEvents
-                .Where(e =>
-                    e.EventType.Equals(
-                        "VO",
-                        StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-        if (events.Count == 0)
-            return UnavailableRisk(
-                "Volcanic Eruption",
-                "GDACS");
-
-        var nearest =
-            GetNearestEvent(
-                x,
-                events);
-
-        var distance =
-            nearest == null
-                ? double.MaxValue
-                : CalculateDistanceKm(
-                    x.Latitude,
-                    x.Longitude,
-                    nearest.Latitude,
-                    nearest.Longitude);
-
-        var score =
-            distance <= 100 ? 95 :
-            distance <= 250 ? 80 :
-            distance <= 500 ? 60 :
-            30;
-
-        return AvailableRisk(
+        return UnavailableRisk(
             "Volcanic Eruption",
-            score,
             "GDACS");
     }
 
-    // =====================================================
+    var nearest =
+        GetNearestEvent(
+            x,
+            events);
+
+    if (nearest == null ||
+        !nearest.Latitude.HasValue ||
+        !nearest.Longitude.HasValue)
+    {
+        return UnavailableRisk(
+            "Volcanic Eruption",
+            "GDACS");
+    }
+
+    var distance =
+        CalculateDistanceKm(
+            x.Latitude,
+            x.Longitude,
+            nearest.Latitude,
+            nearest.Longitude);
+
+    if (distance > 500)
+    {
+        return UnavailableRisk(
+            "Volcanic Eruption",
+            "No locally relevant GDACS volcanic event");
+    }
+
+    var distanceScore =
+        distance <= 50 ? 100 :
+        distance <= 100 ? 90 :
+        distance <= 250 ? 75 :
+        50;
+
+    var alertScore =
+        string.Equals(
+            nearest.AlertLevel,
+            "Red",
+            StringComparison.OrdinalIgnoreCase) ? 100 :
+        string.Equals(
+            nearest.AlertLevel,
+            "Orange",
+            StringComparison.OrdinalIgnoreCase) ? 75 :
+        string.Equals(
+            nearest.AlertLevel,
+            "Green",
+            StringComparison.OrdinalIgnoreCase) ? 40 :
+        20;
+
+    var score =
+        Math.Round(
+            (distanceScore * 0.70) +
+            (alertScore * 0.30),
+            2);
+
+    return AvailableRisk(
+        "Volcanic Eruption",
+        score,
+        "GDACS");
+}
+// =====================================================
     // AVALANCHE
     // =====================================================
 
@@ -463,31 +521,13 @@ public class RiskEngine
     // EXTREME COLD
     // =====================================================
 
-    private static DisasterRiskDto CalculateColdWave(
-        RiskPredictionDto x)
+    private static DisasterRiskDto CalculateColdWave(RiskPredictionDto x)
     {
-        if (!x.WeatherDataAvailable)
-        {
-            return UnavailableRisk(
-                "Extreme Cold / Cold Wave",
-                "Open-Meteo");
-        }
-
-        var score =
-            x.Temperature <= 5 ? 90 :
-            x.Temperature <= 10 ? 70 :
-            x.Temperature <= 15 ? 40 :
-            5;
-
-        return AvailableRisk(
-            "Extreme Cold / Cold Wave",
-            score,
-            "Open-Meteo");
+        if (!x.WeatherDataAvailable) return UnavailableRisk("Extreme Cold / Cold Wave", "Open-Meteo weather data unavailable");
+        var temp = Math.Min(x.Temperature, x.Temperature3hAverage > 0 ? x.Temperature3hAverage : x.Temperature);
+        var score = temp <= 5 ? 95 : temp <= 10 ? 75 : temp <= 15 ? 45 : temp <= 20 ? 15 : 0;
+        return AvailableRisk("Extreme Cold / Cold Wave", score, BuildSource(x, "Cold Wave"));
     }
-
-    // =====================================================
-    // HELPERS
-    // =====================================================
 
     private static DisasterRiskDto AvailableRisk(
         string disasterType,
@@ -569,7 +609,7 @@ public class RiskEngine
                 BuildPredictionSource(x),
 
             ModelVersion =
-                "v3.0-RealData-MultiDisaster",
+                "v4.0-EvidenceFusion-MultiSource",
 
             RequiresHumanApproval = false,
             IsApproved = false,
@@ -577,229 +617,128 @@ public class RiskEngine
         };
     }
 
-    private static double CalculateConfidence(
-        RiskPredictionDto x,
-        DisasterRiskDto primary)
+    private static double CalculateConfidence(RiskPredictionDto x, DisasterRiskDto primary)
     {
-        var confidence = 70.0;
-
-        if (x.WeatherDataAvailable)
-            confidence += 10;
-
-        if (x.ExternalEvents.Count > 0)
-            confidence += 10;
-
-        if (primary.DataAvailable)
-            confidence += 5;
-
-        if (x.Latitude.HasValue &&
-            x.Longitude.HasValue)
-            confidence += 5;
-
-        return Math.Min(
-            confidence,
-            100);
+        var score = 35.0;
+        if (x.Latitude.HasValue && x.Longitude.HasValue) score += 10;
+        if (x.WeatherDataAvailable) score += 20;
+        if (x.Rainfall72h > 0 || x.ForecastRainfall24h > 0) score += 10;
+        if (x.SoilMoistureDataAvailable) score += 5;
+        if (x.ExternalEvents.Count > 0) score += 10;
+        if (x.SriLankaRelevantAlertCount > 0) score += 10;
+        if (primary.DataAvailable) score += 5;
+        return Math.Clamp(score, 0, 100);
     }
 
-    private static string BuildPredictionSource(
-        RiskPredictionDto x)
+    private static string BuildPredictionSource(RiskPredictionDto x)
     {
         var sources = new List<string>();
-
-        if (x.WeatherDataAvailable)
-            sources.Add("Open-Meteo");
-
-        if (x.ExternalEvents.Count > 0)
-            sources.Add("GDACS");
-
+        if (x.WeatherDataAvailable) sources.Add("Open-Meteo");
+        if (x.SriLankaRelevantAlertCount > 0) sources.Add("RISE Sri Lanka");
+        if (x.ExternalEvents.Any(e => !e.EventType.StartsWith("SRI_LANKA_", StringComparison.OrdinalIgnoreCase) && !e.EventType.StartsWith("NBRO_", StringComparison.OrdinalIgnoreCase))) sources.Add("GDACS");
         sources.Add("Risk Prediction Agent");
-
-        return string.Join(
-            " + ",
-            sources);
+        return string.Join(" + ", sources.Distinct());
     }
 
     private static List<RiskFactorDto> BuildRiskFactors(
         RiskPredictionDto x,
         string disasterType)
     {
+        double C(double value, double weight) => Math.Round(value * weight, 2);
+        double Dry(double value, double max) => 1 - Normalize(Math.Max(0, value), max);
+
         return disasterType switch
         {
             "Flood" => new()
             {
-                new RiskFactorDto
-                {
-                    Factor = "24-hour Rainfall",
-                    Value = x.Rainfall24h,
-                    Impact =
-                        GetImpact(
-                            x.Rainfall24h,
-                            150,
-                            250),
-                    Contribution =
-                        Math.Round(
-                            Normalize(
-                                x.Rainfall24h,
-                                250) * 35,
-                            2)
-                },
-
-                new RiskFactorDto
-                {
-                    Factor = "River Level",
-                    Value = x.RiverLevel,
-                    Impact =
-                        GetImpact(
-                            x.RiverLevel,
-                            3,
-                            5),
-                    Contribution =
-                        Math.Round(
-                            Normalize(
-                                x.RiverLevel,
-                                6) * 30,
-                            2)
-                },
-
-                new RiskFactorDto
-                {
-                    Factor = "Historical Flood Count",
-                    Value =
-                        x.HistoricalFloodCount,
-                    Impact =
-                        GetImpact(
-                            x.HistoricalFloodCount,
-                            3,
-                            6),
-                    Contribution =
-                        Math.Round(
-                            Normalize(
-                                x.HistoricalFloodCount,
-                                10) * 15,
-                            2)
-                }
+                Factor("1h rainfall", x.Rainfall1h, C(Normalize(x.Rainfall1h, 50), 15), "Short-term intensity"),
+                Factor("24h rainfall", x.Rainfall24h, C(Normalize(x.Rainfall24h, 250), 25), "Accumulation"),
+                Factor("72h rainfall", x.Rainfall72h, C(Normalize(x.Rainfall72h, 400), 15), "Antecedent wetness"),
+                Factor("24h forecast rainfall", x.ForecastRainfall24h, C(Normalize(x.ForecastRainfall24h, 200), 15), "Forecast load"),
+                Factor("River level", x.RiverLevel, C(Normalize(x.RiverLevel, 6), 20), "River condition"),
+                Factor("Official flood alert", x.SriLankaFloodAlertScore, x.SriLankaFloodAlertScore, "RISE Sri Lanka")
             },
-
+            "Landslide" => new()
+            {
+                Factor("24h rainfall", x.Rainfall24h, C(Normalize(x.Rainfall24h, 150), 20), "Trigger rainfall"),
+                Factor("72h rainfall", x.Rainfall72h, C(Normalize(x.Rainfall72h, 300), 25), "Antecedent rainfall"),
+                Factor("24h forecast rainfall", x.ForecastRainfall24h, C(Normalize(x.ForecastRainfall24h, 120), 20), "Expected additional loading"),
+                Factor("Soil moisture", x.SoilMoisture, C(Normalize(x.SoilMoisture, 0.55), 15), "Ground wetness"),
+                Factor("Elevation", x.Elevation, C(Normalize(x.Elevation, 1200), 5), "Terrain proxy"),
+                Factor("Official NBRO/RISE alert", x.SriLankaLandslideAlertScore, x.SriLankaLandslideAlertScore, "Official warning evidence")
+            },
+            "Drought" => new()
+            {
+                Factor("72h rainfall deficit", Dry(x.Rainfall72h, 120), Math.Round(Dry(x.Rainfall72h, 120) * 25, 2), "Multi-day dryness"),
+                Factor("24h forecast rainfall deficit", Dry(x.ForecastRainfall24h, 80), Math.Round(Dry(x.ForecastRainfall24h, 80) * 20, 2), "Near-term relief"),
+                Factor("Soil moisture deficit", x.SoilMoisture > 0 ? Dry(x.SoilMoisture, 0.45) : 0.5, Math.Round((x.SoilMoisture > 0 ? Dry(x.SoilMoisture, 0.45) : 0.5) * 20, 2), "Root-zone water availability"),
+                Factor("ET0 water demand", x.ReferenceEvapotranspiration24h, Math.Round(Normalize(x.ReferenceEvapotranspiration24h, 6) * 15, 2), "Atmospheric water demand"),
+                Factor("Vapour pressure deficit", x.VapourPressureDeficit, Math.Round(Normalize(x.VapourPressureDeficit, 2) * 10, 2), "Atmospheric dryness"),
+                Factor("Heat stress", x.Temperature3hAverage, Math.Round(Math.Clamp((x.Temperature3hAverage - 25) / 12.0, 0, 1) * 5, 2), "3h temperature stress"),
+                Factor("Humidity dryness", x.Humidity3hAverage > 0 ? x.Humidity3hAverage : x.Humidity, Math.Round((1 - Normalize(x.Humidity3hAverage > 0 ? x.Humidity3hAverage : x.Humidity, 100)) * 5, 2), "Low-humidity stress"),
+                Factor("Official drought alert", x.SriLankaDroughtAlertScore, x.SriLankaDroughtAlertScore, "Official warning evidence")
+            },
             "Storm / Cyclone" => new()
             {
-                new RiskFactorDto
-                {
-                    Factor = "Wind Speed",
-                    Value = x.WindSpeed,
-                    Impact =
-                        GetImpact(
-                            x.WindSpeed,
-                            60,
-                            100),
-                    Contribution =
-                        Math.Round(
-                            Normalize(
-                                x.WindSpeed,
-                                120) * 50,
-                            2)
-                },
-
-                new RiskFactorDto
-                {
-                    Factor = "24-hour Rainfall",
-                    Value = x.Rainfall24h,
-                    Impact =
-                        GetImpact(
-                            x.Rainfall24h,
-                            150,
-                            250),
-                    Contribution =
-                        Math.Round(
-                            Normalize(
-                                x.Rainfall24h,
-                                250) * 20,
-                            2)
-                }
+                Factor("Wind speed", x.WindSpeed, C(Normalize(x.WindSpeed, 120), 40), "Wind hazard"),
+                Factor("1h rainfall", x.Rainfall1h, C(Normalize(x.Rainfall1h, 25), 20), "Short-term precipitation"),
+                Factor("24h forecast rainfall", x.ForecastRainfall24h, C(Normalize(x.ForecastRainfall24h, 100), 20), "Forecast precipitation"),
+                Factor("Humidity", x.Humidity, C(Normalize(x.Humidity, 100), 20), "Atmospheric moisture"),
+                Factor("Official weather alert", x.SriLankaWeatherAlertScore, x.SriLankaWeatherAlertScore, "Official warning evidence")
             },
-
+            "Wildfire / Forest Fire" => new()
+            {
+                Factor("Heat stress", x.Temperature, Math.Round(Math.Clamp((x.Temperature - 25) / 15.0, 0, 1) * 20, 2), "Temperature"),
+                Factor("Humidity dryness", x.Humidity, Math.Round((1 - Normalize(x.Humidity, 100)) * 20, 2), "Dry air"),
+                Factor("72h rainfall dryness", x.Rainfall72h, Math.Round(Dry(x.Rainfall72h, 120) * 20, 2), "Recent rainfall deficit"),
+                Factor("ET0 demand", x.ReferenceEvapotranspiration24h, Math.Round(Normalize(x.ReferenceEvapotranspiration24h, 6) * 15, 2), "Evaporative demand"),
+                Factor("VPD", x.VapourPressureDeficit, Math.Round(Normalize(x.VapourPressureDeficit, 2) * 15, 2), "Atmospheric dryness")
+            },
+            "Lightning" => new()
+            {
+                Factor("3h rainfall", x.Rainfall3h, Math.Round(Normalize(x.Rainfall3h, 50) * 25, 2), "Convective precipitation"),
+                Factor("24h forecast rainfall", x.ForecastRainfall24h, Math.Round(Normalize(x.ForecastRainfall24h, 100) * 15, 2), "Forecast convection"),
+                Factor("Humidity", x.Humidity, Math.Round(Normalize(x.Humidity, 100) * 15, 2), "Moisture"),
+                Factor("Weather code", x.WeatherCode, x.WeatherCode is 95 or 96 or 99 ? 35 : 0, "Thunderstorm code evidence")
+            },
             "Heatwave" => new()
             {
-                new RiskFactorDto
-                {
-                    Factor = "Temperature",
-                    Value = x.Temperature,
-                    Impact =
-                        GetImpact(
-                            x.Temperature,
-                            35,
-                            40),
-                    Contribution =
-                        Math.Round(
-                            Normalize(
-                                x.Temperature,
-                                45) * 65,
-                            2)
-                }
+                Factor("Peak temperature stress", x.Temperature, Math.Round(Math.Clamp((x.Temperature - 30) / 10.0, 0, 1) * 55, 2), "Temperature"),
+                Factor("Humidity dryness", x.Humidity, Math.Round((1 - Normalize(x.Humidity, 100)) * 15, 2), "Dry-air stress"),
+                Factor("Rainfall deficit", x.Rainfall24h, Math.Round((1 - Normalize(x.Rainfall24h, 80)) * 10, 2), "Cooling by precipitation"),
+                Factor("3h persistence", x.Temperature3hAverage, Math.Round(Math.Clamp((x.Temperature3hAverage - 28) / 8.0, 0, 1) * 20, 2), "Recent heat persistence")
             },
-
             "Earthquake" => new()
             {
-                new RiskFactorDto
-                {
-                    Factor = "GDACS Earthquake Events",
-                    Value =
-                        x.ExternalEvents.Count(e =>
-                            e.EventType.Equals(
-                                "EQ",
-                                StringComparison.OrdinalIgnoreCase)),
-                    Impact = "Real Event Feed",
-                    Contribution =
-                        Math.Min(
-                            x.ExternalEvents.Count(e =>
-                                e.EventType.Equals(
-                                    "EQ",
-                                    StringComparison.OrdinalIgnoreCase)) * 10,
-                            100)
-                }
+                Factor("Relevant GDACS events", x.ExternalEvents.Count(e => e.EventType.Equals("EQ", StringComparison.OrdinalIgnoreCase)), 100, "External event feed")
             },
-
             "Tsunami" => new()
             {
-                new RiskFactorDto
-                {
-                    Factor = "GDACS Tsunami Events",
-                    Value =
-                        x.ExternalEvents.Count(e =>
-                            e.EventType.Equals(
-                                "TS",
-                                StringComparison.OrdinalIgnoreCase)),
-                    Impact = "Real Event Feed",
-                    Contribution =
-                        100
-                }
+                Factor("Relevant tsunami events", x.ExternalEvents.Count(e => e.EventType.Equals("TS", StringComparison.OrdinalIgnoreCase)), 100, "External event feed")
             },
-
             "Volcanic Eruption" => new()
             {
-                new RiskFactorDto
-                {
-                    Factor = "GDACS Volcano Events",
-                    Value =
-                        x.ExternalEvents.Count(e =>
-                            e.EventType.Equals(
-                                "VO",
-                                StringComparison.OrdinalIgnoreCase)),
-                    Impact = "Real Event Feed",
-                    Contribution =
-                        100
-                }
+                Factor("Relevant volcanic events", x.ExternalEvents.Count(e => e.EventType.Equals("VO", StringComparison.OrdinalIgnoreCase)), 100, "External event feed")
             },
-
+            "Extreme Cold / Cold Wave" => new()
+            {
+                Factor("Temperature", x.Temperature, x.Temperature <= 5 ? 95 : x.Temperature <= 10 ? 75 : x.Temperature <= 15 ? 45 : x.Temperature <= 20 ? 15 : 0, "Cold stress")
+            },
             _ => new()
             {
-                new RiskFactorDto
-                {
-                    Factor = "Available Environmental Data",
-                    Value = 1,
-                    Impact = "Available",
-                    Contribution = 0
-                }
+                Factor("Available environmental evidence", 1, 0, "Multi-source")
             }
+        };
+    }
+
+    private static RiskFactorDto Factor(string name, double value, double contribution, string impact)
+    {
+        return new RiskFactorDto
+        {
+            Factor = name,
+            Value = Math.Round(value, 3),
+            Contribution = Math.Round(contribution, 2),
+            Impact = impact
         };
     }
 
@@ -851,6 +790,27 @@ public class RiskEngine
                     "Activate fire response readiness",
                     "Protect vulnerable areas",
                     "Prepare evacuation resources"
+                },
+
+                "Drought" => new()
+                {
+                    "Monitor water availability",
+                    "Prepare water conservation measures",
+                    "Review drought response readiness"
+                },
+
+                "Heatwave" => new()
+                {
+                    "Issue heat health guidance",
+                    "Check vulnerable populations",
+                    "Prepare cooling and hydration resources"
+                },
+
+                "Volcanic Eruption" => new()
+                {
+                    "Follow official volcanic warnings",
+                    "Prepare evacuation resources",
+                    "Monitor official emergency instructions"
                 },
 
                 _ => new()
@@ -962,10 +922,46 @@ public class RiskEngine
                     x.Event.AlertLevel,
                 Latitude =
                     x.Event.Latitude,
-                Longitude =
-                    x.Event.Longitude
+                Longitude = x.Event.Longitude,
+                Magnitude = x.Event.Magnitude,
+                DepthKm = x.Event.DepthKm
             })
             .FirstOrDefault();
+    }
+
+    private static double Weighted(List<(double score, double weight)> parts)
+    {
+        var weight = parts.Sum(x => x.weight);
+        return weight <= 0 ? 0 : parts.Sum(x => x.score * x.weight) / weight;
+    }
+
+    private static double FuseOfficialAlert(double baseScore, double alertScore, double alertWeight)
+    {
+        if (alertScore <= 0)
+            return Math.Clamp(baseScore, 0, 100);
+
+        var fused =
+            baseScore <= 0
+                ? alertScore
+                : baseScore * (1 - alertWeight) + alertScore * alertWeight;
+
+        // Official alert levels are evidence overrides, not arbitrary
+        // multipliers. A verified red/orange/yellow warning establishes a
+        // minimum readiness floor while preserving the local sensor score.
+        if (alertScore >= 90) fused = Math.Max(fused, 80);
+        else if (alertScore >= 70) fused = Math.Max(fused, 60);
+        else if (alertScore >= 45) fused = Math.Max(fused, 40);
+
+        return Math.Clamp(fused, 0, 100);
+    }
+
+    private static string BuildSource(RiskPredictionDto x, string hazard)
+    {
+        var parts = new List<string>();
+        if (x.WeatherDataAvailable) parts.Add("Open-Meteo");
+        if (x.SriLankaRelevantAlertCount > 0) parts.Add("RISE Sri Lanka");
+        if (x.ExternalEvents.Any(e => e.EventType.Equals("EQ", StringComparison.OrdinalIgnoreCase) || e.EventType.Equals("TS", StringComparison.OrdinalIgnoreCase) || e.EventType.Equals("VO", StringComparison.OrdinalIgnoreCase))) parts.Add("GDACS");
+        return parts.Count == 0 ? "Risk Prediction Agent" : string.Join(" + ", parts.Distinct());
     }
 
     private static double CalculateDistanceKm(
@@ -1019,7 +1015,24 @@ public class RiskEngine
                Math.PI /
                180.0;
     }
+
+    private static string NormalizeDisasterType(
+        string? disasterType)
+    {
+        return disasterType?.Trim() switch
+        {
+            "Cyclone" => "Storm / Cyclone",
+            "Storm" => "Storm / Cyclone",
+            "Wildfire" => "Wildfire / Forest Fire",
+            "Forest Fire" => "Wildfire / Forest Fire",
+            "Cold Wave" => "Extreme Cold / Cold Wave",
+            _ => disasterType?.Trim() ?? string.Empty
+        };
+    }
 }
+
+
+
 
 
 

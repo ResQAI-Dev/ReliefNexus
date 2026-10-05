@@ -50,13 +50,13 @@ const fields: NumericField[] = [
   {
     key: "riverFlow",
     label: "River Flow",
-    unit: "mÂ³/s",
+    unit: "m/s",
     min: 0,
   },
   {
     key: "temperature",
     label: "Temperature",
-    unit: "Â°C",
+    unit: "C",
   },
   {
     key: "humidity",
@@ -72,12 +72,12 @@ const fields: NumericField[] = [
     min: 0,
   },
 
-  // Open-Meteo soil moisture is a volumetric value (mÂ³/mÂ³),
+  // Open-Meteo soil moisture is a volumetric value (m/m),
   // normally represented between 0 and 1.
   {
     key: "soilMoisture",
     label: "Soil Moisture",
-    unit: "mÂ³/mÂ³",
+    unit: "m/m",
     min: 0,
     max: 1,
   },
@@ -91,7 +91,7 @@ const fields: NumericField[] = [
   {
     key: "populationDensity",
     label: "Population Density",
-    unit: "people/kmÂ²",
+    unit: "people/km",
     min: 0,
   },
   {
@@ -412,5 +412,7 @@ export default function RiskPredictionForm({
     </form>
   );
 }
+
+
 
 

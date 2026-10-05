@@ -4,6 +4,8 @@ public class RiskPrediction
 {
     public Guid Id { get; set; } = Guid.NewGuid();
 
+    public Guid? UserId { get; set; }
+
     public string Location { get; set; } = string.Empty;
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
@@ -46,6 +48,7 @@ public class RiskFactor
 {
     public Guid Id { get; set; } = Guid.NewGuid();
 
+
     public Guid RiskPredictionId { get; set; }
 
     public string Factor { get; set; } = string.Empty;
@@ -55,3 +58,5 @@ public class RiskFactor
 
     public RiskPrediction? RiskPrediction { get; set; }
 }
+
+

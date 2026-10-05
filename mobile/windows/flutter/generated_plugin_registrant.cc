@@ -6,6 +6,20 @@
 
 #include "generated_plugin_registrant.h"
 
+<<<<<<< HEAD
 
 void RegisterPlugins(flutter::PluginRegistry* registry) {
+=======
+#include <file_selector_windows/file_selector_windows.h>
+#include <flutter_secure_storage_windows/flutter_secure_storage_windows_plugin.h>
+#include <printing/printing_plugin.h>
+
+void RegisterPlugins(flutter::PluginRegistry* registry) {
+  FileSelectorWindowsRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("FileSelectorWindows"));
+  FlutterSecureStorageWindowsPluginRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("FlutterSecureStorageWindowsPlugin"));
+  PrintingPluginRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("PrintingPlugin"));
+>>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
 }

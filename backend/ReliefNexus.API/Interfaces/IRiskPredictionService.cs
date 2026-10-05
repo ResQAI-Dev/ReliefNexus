@@ -4,20 +4,30 @@ namespace ReliefNexus.API.Interfaces;
 
 public interface IRiskPredictionService
 {
-    Task<RiskPredictionDto> CreateAsync(RiskPredictionDto request);
+    Task<RiskPredictionDto> CreateAsync(
+        Guid userId,
+        RiskPredictionDto request,
+        Guid executionId);
 
     Task<List<RiskPredictionDto>> GetAllAsync();
 
     Task<RiskPredictionDto?> GetByIdAsync(Guid id);
 
-    Task<List<RiskPredictionDto>> GetByLocationAsync(string location);
+    Task<List<RiskPredictionDto>> GetByLocationAsync(
+        string location);
 
     Task<List<RiskPredictionDto>> GetHighRiskAsync();
 
     Task<PaginatedRiskPredictionDto> GetPagedAsync(
-        RiskPredictionQueryDto query);
+        Guid userId,
+        RiskPredictionQueryDto query,
+        bool isAdministrator);
 
-    Task<List<RiskPredictionDto>> GetHistoryAsync();
+    Task<List<RiskPredictionDto>> GetHistoryAsync(Guid userId);
+
+    Task<List<RiskPredictionDto>> GetHistoryAsync(
+        Guid userId,
+        bool includeAll);
 
     Task<List<RiskPredictionDto>> GetPendingApprovalAsync();
 
@@ -25,3 +35,8 @@ public interface IRiskPredictionService
 
     Task<RiskPredictionDto?> RejectAsync(Guid id);
 }
+
+
+
+
+

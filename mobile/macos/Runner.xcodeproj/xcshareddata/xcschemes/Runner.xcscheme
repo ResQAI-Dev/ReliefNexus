@@ -15,7 +15,11 @@
                   <BuildableReference
                      BuildableIdentifier = "primary"
                      BlueprintIdentifier = "33CC10EC2044A3C60003C045"
+<<<<<<< HEAD
                      BuildableName = "relief_nexus.app"
+=======
+                     BuildableName = "reliefnexus_mobile.app"
+>>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
                      BlueprintName = "Runner"
                      ReferencedContainer = "container:Runner.xcodeproj">
                   </BuildableReference>
@@ -33,7 +37,11 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "33CC10EC2044A3C60003C045"
+<<<<<<< HEAD
                BuildableName = "relief_nexus.app"
+=======
+               BuildableName = "reliefnexus_mobile.app"
+>>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
                BlueprintName = "Runner"
                ReferencedContainer = "container:Runner.xcodeproj">
             </BuildableReference>
@@ -49,7 +57,11 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "33CC10EC2044A3C60003C045"
+<<<<<<< HEAD
             BuildableName = "relief_nexus.app"
+=======
+            BuildableName = "reliefnexus_mobile.app"
+>>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
             BlueprintName = "Runner"
             ReferencedContainer = "container:Runner.xcodeproj">
          </BuildableReference>
@@ -84,7 +96,11 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "33CC10EC2044A3C60003C045"
+<<<<<<< HEAD
             BuildableName = "relief_nexus.app"
+=======
+            BuildableName = "reliefnexus_mobile.app"
+>>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
             BlueprintName = "Runner"
             ReferencedContainer = "container:Runner.xcodeproj">
          </BuildableReference>
@@ -101,7 +117,11 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "33CC10EC2044A3C60003C045"
+<<<<<<< HEAD
             BuildableName = "relief_nexus.app"
+=======
+            BuildableName = "reliefnexus_mobile.app"
+>>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
             BlueprintName = "Runner"
             ReferencedContainer = "container:Runner.xcodeproj">
          </BuildableReference>

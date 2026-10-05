@@ -1,10 +1,12 @@
-﻿import { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   createRiskPrediction,
   explainPrediction,
   getExternalEvents,
-  getRiskPredictions,
+  getPredictionHistory,
+  getPredictionById,
 } from "../services/riskPredictionApi";
+
 import type {
   ExternalDisasterEvent,
   RiskPrediction,
@@ -28,15 +30,34 @@ export function useRiskPrediction() {
   const [loadingRecent, setLoadingRecent] = useState(false);
   const [loadingEvents, setLoadingEvents] = useState(false);
 
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] =
+    useState<string | null>(null);
+
   const [eventsError, setEventsError] =
     useState<string | null>(null);
 
+  /*
+   * ---------------------------------------------------------
+   * Load Recent Predictions
+   * ---------------------------------------------------------
+   *
+   * The history endpoint can return lightweight prediction
+   * records without the complete disasterRisks[] collection.
+   *
+   * Therefore:
+   *
+   *   1. Load recent prediction records.
+   *   2. For each record, load its complete prediction by ID.
+   *   3. Keep the complete records for the UI.
+   *
+   * This allows RecentPredictions.tsx to correctly determine
+   * the highest available disaster risk.
+   */
   const loadRecentPredictions = useCallback(async () => {
     setLoadingRecent(true);
 
     try {
-      const response = await getRiskPredictions();
+      const response = await getPredictionHistory();
 
       const items = Array.isArray(response)
         ? response
@@ -52,29 +73,67 @@ export function useRiskPrediction() {
           : "Failed to load recent predictions.";
 
       console.error(
-        "Failed to load recent risk predictions:",
+        "Failed to load recent risk prediction history:",
         err
       );
 
-      /*
-       * Recent-history failure should not prevent
-       * the main prediction feature from working.
-       */
       console.warn(message);
     } finally {
       setLoadingRecent(false);
     }
   }, []);
+  /*
+   * ---------------------------------------------------------
+   * Load Complete Prediction By ID
+   * ---------------------------------------------------------
+   */
+  const loadPredictionById = useCallback(
+    async (id: string) => {
+      if (!id.trim()) {
+        return null;
+      }
 
+      try {
+        const result = await getPredictionById(id);
+
+        console.log(
+          "[RiskPrediction] Full prediction by ID:",
+          result
+        );
+
+        console.log(
+          "[RiskPrediction] disasterRisks:",
+          result?.disasterRisks
+        );
+
+        return result;
+      } catch (err) {
+        console.error(
+          "Failed to load complete risk prediction:",
+          err
+        );
+        return null;
+      }
+    },
+    []
+  );
+/*
+   * ---------------------------------------------------------
+   * Load External Events
+   * ---------------------------------------------------------
+   */
   const loadExternalEvents = useCallback(async () => {
     setLoadingEvents(true);
     setEventsError(null);
 
     try {
-      const response = await getExternalEvents();
+      const response =
+        await getExternalEvents();
 
       setExternalEvents(
-        Array.isArray(response) ? response : []
+        Array.isArray(response)
+          ? response
+          : []
       );
     } catch (err) {
       setExternalEvents([]);
@@ -95,21 +154,56 @@ export function useRiskPrediction() {
     }
   }, []);
 
+  /*
+   * ---------------------------------------------------------
+   * Create Prediction
+   * ---------------------------------------------------------
+   */
   const predict = useCallback(
-    async (payload: RiskPredictionRequest) => {
+    async (
+      payload: RiskPredictionRequest
+    ) => {
       setLoading(true);
       setError(null);
 
       try {
-        const result = await createRiskPrediction(payload);
+        /*
+         * POST returns the complete prediction including
+         * disasterRisks[].
+         */
+        const result =
+          await createRiskPrediction(payload);
 
+        /*
+         * Main Prediction Result.
+         */
         setPrediction(result);
 
         /*
-         * Refresh history after a successful prediction
-         * so the new prediction appears immediately.
+         * Refresh history.
          */
         await loadRecentPredictions();
+
+        /*
+         * Make absolutely sure the freshly-created
+         * full prediction appears at the top.
+         *
+         * This prevents the history endpoint from replacing
+         * the newest complete result with a lightweight
+         * summary record.
+         */
+        setRecentPredictions((current) => {
+          const withoutCurrent =
+            current.filter(
+              (item) =>
+                item.id !== result.id
+            );
+
+          return [
+            result,
+            ...withoutCurrent,
+          ].slice(0, 10);
+        });
 
         return result;
       } catch (err) {
@@ -133,6 +227,11 @@ export function useRiskPrediction() {
     [loadRecentPredictions]
   );
 
+  /*
+   * ---------------------------------------------------------
+   * Load Explanation
+   * ---------------------------------------------------------
+   */
   const loadExplanation = useCallback(
     async (id: string) => {
       if (!id.trim()) {
@@ -141,7 +240,8 @@ export function useRiskPrediction() {
       }
 
       try {
-        const result = await explainPrediction(id);
+        const result =
+          await explainPrediction(id);
 
         setExplanation(result);
 
@@ -160,12 +260,48 @@ export function useRiskPrediction() {
     []
   );
 
+  /*
+   * ---------------------------------------------------------
+   * Update Prediction
+   * ---------------------------------------------------------
+   */
+  const updatePrediction = useCallback(
+    (updatedPrediction: RiskPrediction) => {
+      /*
+       * Update the main prediction.
+       */
+      setPrediction(updatedPrediction);
+
+      /*
+       * Update the same record inside Recent Predictions.
+       */
+      setRecentPredictions((current) =>
+        current.map((item) =>
+          item.id === updatedPrediction.id
+            ? updatedPrediction
+            : item
+        )
+      );
+    },
+    []
+  );
+
+  /*
+   * ---------------------------------------------------------
+   * Clear Prediction
+   * ---------------------------------------------------------
+   */
   const clearPrediction = useCallback(() => {
     setPrediction(null);
     setExplanation(null);
     setError(null);
   }, []);
 
+  /*
+   * ---------------------------------------------------------
+   * Clear Error
+   * ---------------------------------------------------------
+   */
   const clearError = useCallback(() => {
     setError(null);
   }, []);
@@ -185,10 +321,15 @@ export function useRiskPrediction() {
 
     predict,
     loadRecentPredictions,
+    loadPredictionById,
     loadExternalEvents,
     loadExplanation,
+    updatePrediction,
 
     clearPrediction,
     clearError,
   };
 }
+
+
+

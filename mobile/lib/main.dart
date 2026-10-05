@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
 import 'theme/app_theme.dart';
 import 'views/dashboard_screen.dart';
 
@@ -26,4 +27,20 @@ class ReliefNexusApp extends StatelessWidget {
       home: const DashboardScreen(),
     );
   }
+=======
+import 'package:provider/provider.dart';
+
+import 'app/app.dart';
+import 'features/auth/providers/auth_provider.dart';
+
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => AuthProvider(),
+      child: const ReliefNexusApp(),
+    ),
+  );
+>>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
 }

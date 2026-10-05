@@ -1,6 +1,11 @@
 {
+<<<<<<< HEAD
     "name": "relief_nexus",
     "short_name": "relief_nexus",
+=======
+    "name": "reliefnexus_mobile",
+    "short_name": "reliefnexus_mobile",
+>>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

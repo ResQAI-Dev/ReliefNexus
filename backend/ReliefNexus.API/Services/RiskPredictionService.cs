@@ -1,9 +1,10 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using ReliefNexus.API.AI.Agents;
 using ReliefNexus.API.Data;
 using ReliefNexus.API.DTOs;
 using ReliefNexus.API.Interfaces;
 using ReliefNexus.API.Models;
+using ReliefNexus.API.AI.Services;
 
 namespace ReliefNexus.API.Services;
 
@@ -11,23 +12,95 @@ public class RiskPredictionService : IRiskPredictionService
 {
     private readonly AppDbContext _context;
     private readonly RiskPredictionAgent _agent;
+    private readonly IPythonAIService _pythonAIService;
+    private readonly IAgentExecutionService _agentExecutionService;
 
     public RiskPredictionService(
         AppDbContext context,
-        RiskPredictionAgent agent)
+        RiskPredictionAgent agent,
+        IPythonAIService pythonAIService,
+        IAgentExecutionService agentExecutionService)
     {
         _context = context;
         _agent = agent;
+        _pythonAIService = pythonAIService;
+        _agentExecutionService = agentExecutionService;
     }
 
     public async Task<RiskPredictionDto> CreateAsync(
-        RiskPredictionDto request)
+        Guid userId,
+        RiskPredictionDto request,
+        Guid executionId)
     {
         var agentResult =
-            await _agent.RunAsync(request);
+            await _agent.RunAsync(request, executionId);
 
+        var aiAssessment =
+            await _pythonAIService.AssessRiskAsync(agentResult);
+
+        if (aiAssessment != null)
+        {
+            await _agentExecutionService.UpdateStepAsync(
+                executionId,
+                "Python AI assessment completed",
+                "WeatherTool -> DisasterDataTool -> RiskEngine -> Validation -> Python AI",
+                $"Gemini model={aiAssessment.Usage.Model}; " +
+                $"InputTokens={aiAssessment.Usage.InputTokens}; " +
+                $"OutputTokens={aiAssessment.Usage.OutputTokens}; " +
+                $"TotalTokens={aiAssessment.Usage.TotalTokens}");
+
+            await _agentExecutionService.RecordUsageAsync(
+                executionId,
+                aiAssessment.Usage.InputTokens,
+                aiAssessment.Usage.OutputTokens,
+                aiAssessment.Usage.TotalTokens,
+                aiAssessment.Usage.Model);
+        }
+
+        if (aiAssessment != null &&
+            aiAssessment.Status.Equals(
+                "completed",
+                StringComparison.OrdinalIgnoreCase) &&
+            aiAssessment.Validation.ScoreValid &&
+            aiAssessment.Validation.ConfidenceValid &&
+            aiAssessment.Validation.EvidenceGrounded)
+        {
+            agentResult.RiskScore =
+                aiAssessment.RiskScore;
+
+            agentResult.RiskLevel =
+                aiAssessment.RiskLevel;
+
+            agentResult.Confidence =
+                aiAssessment.Confidence * 100.0;
+
+            if (!string.IsNullOrWhiteSpace(
+                    aiAssessment.PrimaryHazard))
+            {
+                agentResult.DisasterType =
+                    aiAssessment.PrimaryHazard;
+            }
+
+            agentResult.PredictionSource =
+                "ReliefNexus AI Agent + Gemini";
+
+            agentResult.ModelVersion =
+                "Gemini AI Risk Agent";
+
+            if (!string.IsNullOrWhiteSpace(
+                    aiAssessment.Reasoning))
+            {
+                agentResult.OfficialAlertSummary =
+                    string.IsNullOrWhiteSpace(
+                        agentResult.OfficialAlertSummary)
+                        ? aiAssessment.Reasoning
+                        : agentResult.OfficialAlertSummary;
+            }
+        }
         var prediction = new RiskPrediction
         {
+            UserId = userId,
+
             Location = agentResult.Location,
             Latitude = agentResult.Latitude,
             Longitude = agentResult.Longitude,
@@ -95,15 +168,11 @@ public class RiskPredictionService : IRiskPredictionService
             ModelVersion =
                 agentResult.ModelVersion,
 
-            RequiresHumanApproval =
-                agentResult.RequiresHumanApproval,
+            RequiresHumanApproval = agentResult.RiskScore >= 75,
 
             IsApproved = false,
 
-            ApprovalStatus =
-                agentResult.RequiresHumanApproval
-                    ? "Pending"
-                    : "NotRequired",
+            ApprovalStatus = agentResult.RiskScore >= 75 ? "Pending" : "NotRequired",
 
             CreatedAt =
                 DateTime.UtcNow,
@@ -149,20 +218,65 @@ public class RiskPredictionService : IRiskPredictionService
             .Select(MapToDto)
             .ToList();
     }
-
-    public async Task<RiskPredictionDto?>
-        GetByIdAsync(Guid id)
+    public async Task<RiskPredictionDto?> GetByIdAsync(Guid id)
     {
         var prediction =
             await _context.RiskPredictions
                 .Include(x => x.RiskFactors)
-                .FirstOrDefaultAsync(
-                    x => x.Id == id);
+                .FirstOrDefaultAsync(x => x.Id == id);
 
-        return prediction == null
-            ? null
-            : MapToDto(prediction);
+        if (prediction == null)
+            return null;
+
+        var response = MapToDto(prediction);
+
+        // Rebuild Agent 01 multi-disaster results
+        // using the actual stored prediction inputs.
+        var agentInput = new RiskPredictionDto
+        {
+            Location = prediction.Location,
+            Latitude = prediction.Latitude,
+            Longitude = prediction.Longitude,
+
+            Rainfall1h = prediction.Rainfall1h,
+            Rainfall3h = prediction.Rainfall3h,
+            Rainfall24h = prediction.Rainfall24h,
+
+            RiverLevel = prediction.RiverLevel,
+            RiverFlow = prediction.RiverFlow,
+
+            Temperature = prediction.Temperature,
+            Humidity = prediction.Humidity,
+            WindSpeed = prediction.WindSpeed,
+
+            SoilMoisture = prediction.SoilMoisture,
+            Elevation = prediction.Elevation,
+            PopulationDensity = prediction.PopulationDensity,
+
+            HistoricalFloodCount =
+                prediction.HistoricalFloodCount,
+
+            HistoricalSeverity =
+                prediction.HistoricalSeverity,
+
+            DrainageCapacity =
+                prediction.DrainageCapacity,
+
+            ForecastRainfall =
+                prediction.ForecastRainfall
+        };
+
+        var agentResult =
+            await _agent.RunAsync(
+                agentInput,
+                Guid.NewGuid());
+
+        response.DisasterRisks =
+            agentResult.DisasterRisks;
+
+        return response;
     }
+
 
     public async Task<List<RiskPredictionDto>>
         GetByLocationAsync(
@@ -211,7 +325,9 @@ public class RiskPredictionService : IRiskPredictionService
 
     public async Task<PaginatedRiskPredictionDto>
         GetPagedAsync(
-            RiskPredictionQueryDto query)
+            Guid userId,
+            RiskPredictionQueryDto query,
+            bool isAdministrator)
     {
         query.Page =
             Math.Max(
@@ -228,6 +344,12 @@ public class RiskPredictionService : IRiskPredictionService
             _context.RiskPredictions
                 .Include(x => x.RiskFactors)
                 .AsQueryable();
+
+        if (!isAdministrator)
+        {
+            predictions =
+                predictions.Where(x => x.UserId == userId);
+        }
 
         if (!string.IsNullOrWhiteSpace(
                 query.Search))
@@ -398,12 +520,49 @@ public class RiskPredictionService : IRiskPredictionService
         };
     }
 
-    public async Task<List<RiskPredictionDto>>
-        GetHistoryAsync()
-    {
-        return await GetAllAsync();
-    }
 
+    public async Task<List<RiskPredictionDto>>
+        GetHistoryAsync(
+            Guid userId)
+    {
+        var predictions =
+            await _context.RiskPredictions
+                .Include(x => x.RiskFactors)
+                .Where(x => x.UserId == userId)
+                .OrderByDescending(
+                    x => x.CreatedAt)
+                .ToListAsync();
+
+        return predictions
+            .Select(MapToDto)
+            .ToList();
+    }
+    public async Task<List<RiskPredictionDto>>
+        GetHistoryAsync(
+            Guid userId,
+            bool includeAll)
+    {
+        var query =
+            _context.RiskPredictions
+                .Include(x => x.RiskFactors)
+                .AsQueryable();
+
+        if (!includeAll)
+        {
+            query = query.Where(
+                x => x.UserId == userId);
+        }
+
+        var predictions =
+            await query
+                .OrderByDescending(
+                    x => x.CreatedAt)
+                .ToListAsync();
+
+        return predictions
+            .Select(MapToDto)
+            .ToList();
+    }
     public async Task<List<RiskPredictionDto>>
         GetPendingApprovalAsync()
     {
@@ -440,11 +599,35 @@ public class RiskPredictionService : IRiskPredictionService
         prediction.ApprovalStatus =
             "Approved";
 
+        var volunteers =
+            await _context.Users
+                .Where(u =>
+                    u.Role == "FieldVolunteer" &&
+                    u.IsActive)
+                .ToListAsync();
+
+        foreach (var volunteer in volunteers)
+        {
+            _context.Notifications.Add(
+                new Notification
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = volunteer.Id,
+                    Title = "Approved Disaster Risk",
+                    Message =
+                        $"{prediction.RiskLevel} risk identified at {prediction.Location}. " +
+                        $"Disaster type: {prediction.DisasterType}. " +
+                        "Please review the situation and respond if required.",
+                    Type = "ApprovedRisk",
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow
+                });
+        }
+
         await _context.SaveChangesAsync();
 
         return MapToDto(prediction);
     }
-
     public async Task<RiskPredictionDto?>
         RejectAsync(Guid id)
     {
@@ -605,3 +788,29 @@ public class RiskPredictionService : IRiskPredictionService
         };
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

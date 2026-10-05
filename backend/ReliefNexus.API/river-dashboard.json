@@ -1,4 +1,4 @@
-﻿{
+{
     "version":  "5.1.0",
     "authoringApp":  "ArcGIS Dashboards",
     "authoringAppVersion":  "5.1.0+259753e880",
@@ -72,7 +72,7 @@
                                   },
                                   {
                                       "key":  "micro",
-                                      "symbol":  "µ",
+                                      "symbol":  "",
                                       "enabled":  false
                                   },
                                   {
@@ -1555,7 +1555,7 @@
                                             "type":  "listWidget",
                                             "selectionMode":  "single",
                                             "iconType":  "none",
-                                            "text":  "\u003cp\u003e\u003cspan style=\"font-size:12px;\"\u003e{field/CreationDate}\u0026nbsp;\u003c/span\u003e\u0026nbsp;\u003cspan style=\"font-size:14px;\"\u003e\u003cstrong\u003e{field/gauge}\u0026nbsp; {expression/WaterLevel}\u003c/strong\u003e\u003c/span\u003e\u0026nbsp;▸\u003cstrong\u003e{expression/AlertLevel}\u003c/strong\u003e\u003c/p\u003e\u003cp\u003e\u003cspan style=\"font-size:11px;\"\u003eRiver Basin: {field/basin}\u003c/span\u003e\u003c/p\u003e",
+                                            "text":  "\u003cp\u003e\u003cspan style=\"font-size:12px;\"\u003e{field/CreationDate}\u0026nbsp;\u003c/span\u003e\u0026nbsp;\u003cspan style=\"font-size:14px;\"\u003e\u003cstrong\u003e{field/gauge}\u0026nbsp; {expression/WaterLevel}\u003c/strong\u003e\u003c/span\u003e\u0026nbsp;\u003cstrong\u003e{expression/AlertLevel}\u003c/strong\u003e\u003c/p\u003e\u003cp\u003e\u003cspan style=\"font-size:11px;\"\u003eRiver Basin: {field/basin}\u003c/span\u003e\u003c/p\u003e",
                                             "showFilter":  true
                                         },
                                         {
@@ -5061,7 +5061,7 @@
                                            "type":  "listWidget",
                                            "selectionMode":  "single",
                                            "iconType":  "none",
-                                           "text":  "\u003cp\u003e\u003cspan style=\"font-size:12px;\"\u003e{field/CreationDate}\u0026nbsp;\u003c/span\u003e\u0026nbsp;\u003cspan style=\"font-size:14px;\"\u003e\u003cstrong\u003e{field/gauge}\u0026nbsp; \u003c/strong\u003e\u003c/span\u003e{field/water_level}\u0026nbsp;{expression/WLUnit}\u0026nbsp;▸ RF {field/rain_fall} mm▸ \u003cstrong\u003e{expression/AlertLevel}\u003c/strong\u003e\u003c/p\u003e\u003cp\u003e\u003cspan style=\"font-size:11px;\"\u003eRiver Basin: {field/basin}\u003c/span\u003e\u003c/p\u003e",
+                                           "text":  "\u003cp\u003e\u003cspan style=\"font-size:12px;\"\u003e{field/CreationDate}\u0026nbsp;\u003c/span\u003e\u0026nbsp;\u003cspan style=\"font-size:14px;\"\u003e\u003cstrong\u003e{field/gauge}\u0026nbsp; \u003c/strong\u003e\u003c/span\u003e{field/water_level}\u0026nbsp;{expression/WLUnit}\u0026nbsp; RF {field/rain_fall} mm \u003cstrong\u003e{expression/AlertLevel}\u003c/strong\u003e\u003c/p\u003e\u003cp\u003e\u003cspan style=\"font-size:11px;\"\u003eRiver Basin: {field/basin}\u003c/span\u003e\u003c/p\u003e",
                                            "showFilter":  false
                                        },
                                        {

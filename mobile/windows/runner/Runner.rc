@@ -89,6 +89,7 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
+<<<<<<< HEAD
             VALUE "CompanyName", "com.reliefnexus" "\0"
             VALUE "FileDescription", "relief_nexus" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
@@ -96,6 +97,15 @@ BEGIN
             VALUE "LegalCopyright", "Copyright (C) 2026 com.reliefnexus. All rights reserved." "\0"
             VALUE "OriginalFilename", "relief_nexus.exe" "\0"
             VALUE "ProductName", "relief_nexus" "\0"
+=======
+            VALUE "CompanyName", "com.example" "\0"
+            VALUE "FileDescription", "reliefnexus_mobile" "\0"
+            VALUE "FileVersion", VERSION_AS_STRING "\0"
+            VALUE "InternalName", "reliefnexus_mobile" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
+            VALUE "OriginalFilename", "reliefnexus_mobile.exe" "\0"
+            VALUE "ProductName", "reliefnexus_mobile" "\0"
+>>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

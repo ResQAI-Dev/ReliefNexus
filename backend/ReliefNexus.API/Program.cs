@@ -1,8 +1,10 @@
+﻿using ReliefNexus.API.AI.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.FileProviders;
 using ReliefNexus.API.AI.Tools;
 using ReliefNexus.API.AI.Agents;
 using ReliefNexus.API.AI.Engines;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using ReliefNexus.API.Data;
@@ -12,12 +14,16 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddHttpContextAccessor();
+
 // ======================================================
 // SERVICES
 // ======================================================
 
 // Controllers
 builder.Services.AddControllers();
+
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendPolicy", policy =>
@@ -38,20 +44,25 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(options =>
 {
-    // JWT Bearer authentication
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Type = SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT",
-        Description = "JWT Authorization header using the Bearer scheme."
-    });
+    options.AddSecurityDefinition(
+        "Bearer",
+        new OpenApiSecurityScheme
+        {
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            Description =
+                "JWT Authorization header using the Bearer scheme."
+        });
 
-    // Apply Bearer authentication to Swagger
     options.AddSecurityRequirement(document =>
         new OpenApiSecurityRequirement
         {
-            [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+            [
+                new OpenApiSecuritySchemeReference(
+                    "Bearer",
+                    document)
+            ] = []
         });
 });
 
@@ -61,7 +72,8 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection")
+        builder.Configuration.GetConnectionString(
+            "DefaultConnection")
     )
 );
 
@@ -69,67 +81,305 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // DEPENDENCY INJECTION
 // ======================================================
 
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IRiskPredictionService, RiskPredictionService>();
-builder.Services.AddScoped<RiskPredictionAgent>();
-builder.Services.AddScoped<RiskEngine>();
-builder.Services.AddHttpClient<DisasterDataTool>();
-builder.Services.AddHttpClient<WeatherTool>();
-builder.Services.AddScoped<IAgentExecutionService, AgentExecutionService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
+// ------------------------------------------------------
+// Core Services
+// ------------------------------------------------------
 
+<<<<<<< HEAD
 // Component 2 – Population Vulnerability & Impact Assessment
 builder.Services.AddScoped<IVulnerabilityService, VulnerabilityService>();
 
+=======
+builder.Services.AddScoped<IUserService, UserService>();
+
+builder.Services.AddScoped<
+    IRiskPredictionService,
+    RiskPredictionService>();
+
+builder.Services.AddScoped<
+    IVulnerabilityImpactService,
+    VulnerabilityImpactService>();
+
+builder.Services.AddScoped<
+    IResourceService,
+    ResourceService>();
+
+builder.Services.AddScoped<
+    IDisasterReportService,
+    DisasterReportService>();
+
+builder.Services.AddScoped<IEmailService, EmailService>();
+
+builder.Services.AddScoped<
+    IReliefRequestService,
+    ReliefRequestService>();
+
+builder.Services.AddScoped<
+    ILocationSharingService,
+    LocationSharingService>();
+
+builder.Services.AddScoped<
+EarlyWarningCoordinationAgent>();
+
+builder.Services.AddScoped<
+IEmergencyAlertService, EmergencyAlertService>();
+
+builder.Services.AddScoped<
+    IAuditLogService,
+    AuditLogService>();
+
+builder.Services.AddScoped<
+    IAuthService,
+    AuthService>();
+
+// ------------------------------------------------------
+// Agent Execution
+// ------------------------------------------------------
+
+builder.Services.AddScoped<
+    IAgentExecutionService,
+    AgentExecutionService>();
+
+// ------------------------------------------------------
+// Emergency Alert
+// ------------------------------------------------------
+
+builder.Services.AddScoped<
+    IEmergencyAlertService,
+    EmergencyAlertService>();
+
+// ------------------------------------------------------
+// Volunteer Assignment
+// ------------------------------------------------------
+
+builder.Services.AddScoped<
+    IVolunteerAssignmentService,
+    VolunteerAssignmentService>();
+
+builder.Services.AddScoped<
+    VolunteerAssignmentAgent>();
+
+// ------------------------------------------------------
+// AI Agents
+// ------------------------------------------------------
+
+builder.Services.AddScoped<
+    RiskPredictionAgent>();
+
+builder.Services.AddScoped<
+    VulnerabilityImpactAgent>();
+
+builder.Services.AddScoped<
+    ResourceOptimizationAgent>();
+
+builder.Services.AddScoped<
+    EarlyWarningCoordinationAgent>();
+
+// ------------------------------------------------------
+// AI Engines
+// ------------------------------------------------------
+
+builder.Services.AddScoped<
+    RiskEngine>();
+
+// ------------------------------------------------------
+// AI Tools
+// ------------------------------------------------------
+
+builder.Services.AddHttpClient<
+    DisasterDataTool>();
+
+builder.Services.AddHttpClient<
+    WeatherTool>();
+
+builder.Services.AddHttpClient<
+    RiverGaugeTool>();
+
+builder.Services.AddHttpClient<
+    HistoricalDisasterTool>();
+
+builder.Services.AddHttpClient<
+    PopulationTool>();
+
+builder.Services.AddHttpClient<
+    DrainageDataTool>();
+>>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
 // ======================================================
 // JWT AUTHENTICATION
 // ======================================================
 
 builder.Services.AddAuthentication(
-    JwtBearerDefaults.AuthenticationScheme
-)
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+    JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        // Validate issuer
-        ValidateIssuer = true,
+        options.MapInboundClaims = false;
 
-        // Validate audience
-        ValidateAudience = true,
+        options.TokenValidationParameters =
+            new TokenValidationParameters
+            {
+                // Validate issuer
+                ValidateIssuer = true,
 
-        // Validate token expiry
-        ValidateLifetime = true,
+                // Validate audience
+                ValidateAudience = true,
 
-        // Validate signing key
-        ValidateIssuerSigningKey = true,
+                // Validate token expiry
+                ValidateLifetime = true,
 
-        // JWT Issuer
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                // Validate signing key
+                ValidateIssuerSigningKey = true,
 
-        // JWT Audience
-        ValidAudience = builder.Configuration["Jwt:Audience"],
+                // JWT Issuer
+                ValidIssuer =
+                    builder.Configuration["Jwt:Issuer"],
 
-        // JWT Secret Key
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(
-                builder.Configuration["Jwt:Key"]!
-            )
-        )
-    };
-});
+                // JWT Audience
+                ValidAudience =
+                    builder.Configuration["Jwt:Audience"],
+
+                // JWT Secret Key
+                IssuerSigningKey =
+                    new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(
+                            builder.Configuration["Jwt:Key"]!
+                        )
+                    )
+            };
+    });
 
 // ======================================================
 // AUTHORIZATION
 // ======================================================
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    foreach (var permission in
+        ReliefNexus.API.Helpers.RoleConstants.AllPermissions)
+    {
+        options.AddPolicy(
+            $"Permission:{permission}",
+            policy =>
+            {
+                policy.RequireAuthenticatedUser();
+
+                policy.RequireAssertion(context =>
+                    context.User.IsInRole(
+                        ReliefNexus.API.Helpers
+                            .RoleConstants
+                            .SystemAdministrator)
+                    ||
+                    context.User.Claims.Any(c =>
+                        (
+                            c.Type == "permission" ||
+                            c.Type == "permissions" ||
+                            c.Type ==
+                                System.Security.Claims
+                                    .ClaimTypes.Role
+                        )
+                        &&
+                        string.Equals(
+                            c.Value,
+                            permission,
+                            StringComparison
+                                .OrdinalIgnoreCase)));
+            });
+    }
+});
 
 // ======================================================
 // BUILD APPLICATION
 // ======================================================
 
+builder.Services.AddHttpClient<IPythonAIService, PythonAIService>(client =>
+{
+    client.BaseAddress = new Uri(
+        builder.Configuration["AIService:BaseUrl"]
+        ?? "http://127.0.0.1:8000");
+
+    client.Timeout = TimeSpan.FromSeconds(60);
+});
+
+builder.Services.AddHttpClient<IPythonVulnerabilityService, PythonVulnerabilityService>(client =>
+{
+    client.BaseAddress = new Uri(
+        builder.Configuration["AIService:BaseUrl"]
+        ?? "http://127.0.0.1:8000");
+
+    client.Timeout = TimeSpan.FromSeconds(60);
+});
+
+builder.Services.AddHttpClient<IPythonResourceService, PythonResourceService>(client =>
+{
+    client.BaseAddress = new Uri(
+        builder.Configuration["AIService:BaseUrl"]
+        ?? "http://127.0.0.1:8000");
+
+    client.Timeout = TimeSpan.FromSeconds(60);
+});
+
+builder.Services.AddHttpClient<IPythonEarlyWarningService, PythonEarlyWarningService>(client =>
+{
+    client.BaseAddress = new Uri(
+        builder.Configuration["AIService:BaseUrl"]
+        ?? "http://127.0.0.1:8000");
+
+    client.Timeout = TimeSpan.FromSeconds(60);
+});
 var app = builder.Build();
+
+// ======================================================
+// DATABASE / INITIAL SCHEMA
+// ======================================================
+
+using (var profileScope =
+    app.Services.CreateScope())
+{
+    var profileDb =
+        profileScope.ServiceProvider
+            .GetRequiredService<AppDbContext>();
+
+    // --------------------------------------------------
+    // Users
+    // --------------------------------------------------
+
+    await profileDb.Database.ExecuteSqlRawAsync(
+        """
+        ALTER TABLE "Users"
+        ADD COLUMN IF NOT EXISTS "ProfileImageUrl" text;
+        """);
+
+    // --------------------------------------------------
+    // Disaster Reports
+    // --------------------------------------------------
+
+    await profileDb.Database.ExecuteSqlRawAsync(
+        """
+        ALTER TABLE "DisasterReports"
+        ADD COLUMN IF NOT EXISTS "AssignedVolunteerUserId" uuid;
+
+        ALTER TABLE "DisasterReports"
+        ADD COLUMN IF NOT EXISTS "AssignedAt"
+            timestamp with time zone;
+
+        ALTER TABLE "DisasterReports"
+        ADD COLUMN IF NOT EXISTS "FieldUpdateNotes" text;
+
+        ALTER TABLE "DisasterReports"
+        ADD COLUMN IF NOT EXISTS "FieldSituation" text;
+
+        ALTER TABLE "DisasterReports"
+        ADD COLUMN IF NOT EXISTS "FieldUpdateLatitude"
+            double precision;
+
+        ALTER TABLE "DisasterReports"
+        ADD COLUMN IF NOT EXISTS "FieldUpdateLongitude"
+            double precision;
+
+        ALTER TABLE "DisasterReports"
+        ADD COLUMN IF NOT EXISTS "FieldUpdatedAt"
+            timestamp with time zone;
+        """);
+}
 
 // ======================================================
 // INITIAL DATA SEEDING
@@ -149,40 +399,59 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// ======================================================
 // HTTPS
+// ======================================================
+
 app.UseHttpsRedirection();
 
+// ======================================================
+// STATIC FILES
+// ======================================================
+
+app.UseStaticFiles();
+
+app.UseStaticFiles(
+    new StaticFileOptions
+    {
+        FileProvider =
+            new PhysicalFileProvider(
+                Path.Combine(
+                    builder.Environment.ContentRootPath,
+                    "uploads")),
+
+        RequestPath = "/uploads"
+    });
+
+// ======================================================
 // CORS
+// ======================================================
+
 app.UseCors("FrontendPolicy");
 
-// Authentication
+// ======================================================
+// AUTHENTICATION
+// ======================================================
+
 app.UseAuthentication();
 
-// Authorization
+// ======================================================
+// AUTHORIZATION
+// ======================================================
+
 app.UseAuthorization();
 
-// Controllers
+// ======================================================
+// CONTROLLERS
+// ======================================================
+
 app.MapControllers();
 
 // ======================================================
-// RUN
+// RUN APPLICATION
 // ======================================================
 
 app.Run();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

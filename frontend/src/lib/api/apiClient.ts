@@ -24,16 +24,26 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("user");
+  console.error(
+    "RELIEFNEXUS 401 FOUND:",
+    error.config?.method?.toUpperCase(),
+    error.config?.url,
+    "STATUS:",
+    error.response?.status,
+    "TOKEN EXISTS:",
+    Boolean(localStorage.getItem("accessToken")),
+    "RESPONSE:",
+    error.response?.data
+  );
 
-      if (window.location.pathname !== "/login") {
-        window.location.href = "/login";
-      }
-    }
+  // TEMPORARY DEBUG:
+  // Do NOT remove token or redirect.
+}
 
     return Promise.reject(error);
   }
 );
 
 export default api;
+
+
