@@ -341,114 +341,537 @@ export function AuditLogsModule({
   loading?: boolean;
 }) {
   const [filter, setFilter] = useState("All");
+  const [search, setSearch] = useState("");
+  const [expanded, setExpanded] = useState<string | null>(null);
+
   const filtered = useMemo(() => {
-    if (filter === "All") return logs;
-    return logs.filter((log) => String(log.status || log.severity || "").toLowerCase() === filter.toLowerCase());
-  }, [logs, filter]);
+    const query = search.trim().toLowerCase();
+
+    return logs.filter((log) => {
+      const status = String(
+        log.status || log.severity || "Success"
+      ).toLowerCase();
+
+      const matchesFilter =
+        filter === "All" ||
+        status === filter.toLowerCase();
+
+      const searchable = [
+        log.userEmail,
+        log.role,
+        log.action,
+        log.description,
+        log.status,
+        log.severity,
+        log.createdAt,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      const matchesSearch =
+        !query || searchable.includes(query);
+
+      return matchesFilter && matchesSearch;
+    });
+  }, [logs, filter, search]);
+
+  const totalEvents = logs.length;
+
+  const agentRuns = logs.filter((log) =>
+    String(log.action || "")
+      .toLowerCase()
+      .includes("agent")
+  ).length;
+
+  const approvalEvents = logs.filter((log) =>
+    String(log.action || "")
+      .toLowerCase()
+      .includes("approval")
+  ).length;
+
+  const criticalEvents = logs.filter((log) =>
+    ["critical", "failed", "error"].includes(
+      String(log.status || log.severity || "").toLowerCase()
+    )
+  ).length;
+
+  const statusStyle = (value?: string) => {
+    const status = String(value || "Success").toLowerCase();
+
+    if (
+      ["critical", "failed", "error"].includes(status)
+    ) {
+      return {
+        badge:
+          "border-red-200 bg-red-50 text-red-700",
+        dot: "bg-red-500",
+      };
+    }
+
+    if (
+      ["warning", "pending", "needs approval"].includes(status)
+    ) {
+      return {
+        badge:
+          "border-amber-200 bg-amber-50 text-amber-700",
+        dot: "bg-amber-500",
+      };
+    }
+
+    if (
+      ["approved", "success", "successful", "completed"].includes(
+        status
+      )
+    ) {
+      return {
+        badge:
+          "border-emerald-200 bg-emerald-50 text-emerald-700",
+        dot: "bg-emerald-500",
+      };
+    }
+
+    return {
+      badge:
+        "border-blue-200 bg-blue-50 text-blue-700",
+      dot: "bg-blue-500",
+    };
+  };
 
   const exportLogs = () => {
-    const headers = ["Time", "User", "Role", "Action", "Description", "Status"];
+    const headers = [
+      "Time",
+      "User",
+      "Role",
+      "Action",
+      "Description",
+      "Status",
+    ];
+
     const rows = filtered.map((log) => [
       formatDate(log.createdAt),
       log.userEmail || "System",
       log.role || "System",
       log.action || "Activity",
       log.description || "",
-      log.status || "Success",
+      log.status || log.severity || "Success",
     ]);
+
     const csv = [headers, ...rows]
-      .map((row) => row.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(","))
+      .map((row) =>
+        row
+          .map((value) =>
+            `"${String(value ?? "").replace(/"/g, '""')}"`
+          )
+          .join(",")
+      )
       .join("\n");
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "reliefnexus-audit-logs.csv";
-    a.click();
+
+    const url = URL.createObjectURL(
+      new Blob([csv], {
+        type: "text/csv;charset=utf-8",
+      })
+    );
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "reliefnexus-audit-trail.csv";
+    link.click();
+
     URL.revokeObjectURL(url);
   };
 
   return (
     <div className="space-y-6">
-      <Card
-        title="Audit Logs"
-        eyebrow="Security & transparency"
-        action="Export CSV"
-        onAction={exportLogs}
-      >
-        <div className="mb-5 flex flex-wrap gap-2">
-          {[
-            "All",
-            "Success",
-            "Warning",
-            "Critical",
-          ].map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => setFilter(item)}
-              className={`rounded-xl px-3 py-2 text-[10px] font-black transition ${
-                filter === item ? "bg-blue-600 text-white" : "border border-slate-200 bg-white text-slate-600"
-              }`}
-            >
-              {item}
-            </button>
-          ))}
+
+      {/* HEADER */}
+      <div className="relative overflow-hidden rounded-[28px] bg-[#081b35] px-7 py-7 text-white shadow-xl">
+        <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-blue-500/20 to-transparent" />
+
+        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-300">
+              Security & Transparency
+            </p>
+
+            <h1 className="mt-2 text-3xl font-black">
+              Audit Trail
+            </h1>
+
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+              Detailed chronological activity across users,
+              AI agents, tools, approvals and protected system
+              operations.
+            </p>
+
+            <p className="mt-2 text-[10px] text-slate-400">
+              Every recorded event is displayed from the
+              platform audit log.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={exportLogs}
+            className="rounded-xl bg-white px-4 py-2.5 text-xs font-black text-slate-900 shadow-sm transition hover:bg-slate-100"
+          >
+            Export CSV
+          </button>
+        </div>
+      </div>
+
+      {/* SUMMARY */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">
+            Audit Events
+          </p>
+
+          <p className="mt-2 text-3xl font-black text-slate-950">
+            {totalEvents}
+          </p>
+
+          <p className="mt-1 text-xs text-slate-500">
+            Recorded platform activity
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5 shadow-sm">
+          <p className="text-[9px] font-black uppercase tracking-wider text-blue-600">
+            Agent Activity
+          </p>
+
+          <p className="mt-2 text-3xl font-black text-blue-950">
+            {agentRuns}
+          </p>
+
+          <p className="mt-1 text-xs text-blue-700">
+            AI-related audit events
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-amber-100 bg-amber-50 p-5 shadow-sm">
+          <p className="text-[9px] font-black uppercase tracking-wider text-amber-700">
+            Approval Events
+          </p>
+
+          <p className="mt-2 text-3xl font-black text-amber-950">
+            {approvalEvents}
+          </p>
+
+          <p className="mt-1 text-xs text-amber-700">
+            Governance activity
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-red-100 bg-red-50 p-5 shadow-sm">
+          <p className="text-[9px] font-black uppercase tracking-wider text-red-700">
+            Critical / Failed
+          </p>
+
+          <p className="mt-2 text-3xl font-black text-red-950">
+            {criticalEvents}
+          </p>
+
+          <p className="mt-1 text-xs text-red-700">
+            Events requiring attention
+          </p>
+        </div>
+
+      </div>
+
+      {/* FILTERS */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-[0.15em] text-blue-600">
+              Activity Explorer
+            </p>
+
+            <h2 className="mt-1 text-lg font-black text-slate-950">
+              Filter Audit Activity
+            </h2>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+
+            <input
+              type="text"
+              value={search}
+              onChange={(event) =>
+                setSearch(event.target.value)
+              }
+              placeholder="Search user, action, agent..."
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs text-slate-700 outline-none transition focus:border-blue-400 focus:bg-white sm:w-72"
+            />
+
+            <div className="flex flex-wrap gap-2">
+              {[
+                "All",
+                "Success",
+                "Warning",
+                "Critical",
+              ].map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => setFilter(item)}
+                  className={`rounded-xl px-3 py-2 text-[10px] font-black transition ${
+                    filter === item
+                      ? "bg-blue-600 text-white"
+                      : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      {/* TIMELINE */}
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+        <div className="border-b border-slate-200 px-5 py-5">
+          <p className="text-[9px] font-black uppercase tracking-[0.15em] text-blue-600">
+            Chronological Activity
+          </p>
+
+          <div className="mt-1 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-xl font-black text-slate-950">
+              Audit Trail
+            </h2>
+
+            <span className="text-xs text-slate-400">
+              Showing {filtered.length} of {logs.length} events
+            </span>
+          </div>
         </div>
 
         {loading ? (
-          <div className="py-12 text-center text-sm text-slate-500">Loading audit activity...</div>
+          <div className="p-12 text-center text-sm text-slate-500">
+            Loading audit activity...
+          </div>
         ) : filtered.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-12 text-center">
-            <FileClock className="mx-auto text-slate-400" size={28} />
-            <p className="mt-3 text-sm font-black text-slate-700">No audit activity available</p>
-            <p className="mt-1 text-xs text-slate-400">Successful workflow actions will appear here.</p>
+          <div className="p-12 text-center">
+            <p className="text-sm font-black text-slate-700">
+              No audit activity found
+            </p>
+
+            <p className="mt-1 text-xs text-slate-400">
+              Try changing the search or status filter.
+            </p>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-2xl border border-slate-200">
-            <table className="w-full min-w-[980px] text-left text-xs">
-              <thead className="bg-slate-50 text-[9px] font-black uppercase tracking-wider text-slate-400">
-                <tr>
-                  <th className="px-4 py-3">Time</th>
-                  <th className="px-4 py-3">User</th>
-                  <th className="px-4 py-3">Action</th>
-                  <th className="px-4 py-3">Description</th>
-                  <th className="px-4 py-3">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((log, index) => (
-                  <tr key={log.id || index} className="border-t border-slate-100">
-                    <td className="px-4 py-4 whitespace-nowrap text-slate-500">{formatDate(log.createdAt)}</td>
-                    <td className="px-4 py-4">
-                      <p className="font-black text-slate-800">{log.userEmail || "System"}</p>
-                      <p className="mt-0.5 text-[10px] text-slate-400">{log.role || "System"}</p>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[9px] font-black text-blue-700">
-                        {log.action || "ACTIVITY"}
-                      </span>
-                    </td>
-                    <td className="max-w-[430px] px-4 py-4 text-slate-600">{log.description || "No description"}</td>
-                    <td className="px-4 py-4">
-                      <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[9px] font-black text-emerald-700">
-                        {log.status || "Success"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="p-5">
+
+            <div className="relative">
+
+              <div className="absolute bottom-4 left-[15px] top-4 w-px bg-slate-200" />
+
+              <div className="space-y-4">
+
+                {filtered.map((log, index) => {
+                  const key =
+                    `${log.createdAt || "event"}-${log.action || "activity"}-${index}`;
+
+                  const status =
+                    log.status ||
+                    log.severity ||
+                    "Success";
+
+                  const styles = statusStyle(status);
+
+                  const isOpen =
+                    expanded === key;
+
+                  return (
+                    <div
+                      key={key}
+                      className="relative pl-10"
+                    >
+
+                      {/* TIMELINE DOT */}
+                      <div
+                        className={`absolute left-[9px] top-5 z-10 h-3.5 w-3.5 rounded-full border-2 border-white shadow-sm ${styles.dot}`}
+                      />
+
+                      {/* EVENT CARD */}
+                      <div className="rounded-2xl border border-slate-200 bg-white transition hover:border-slate-300 hover:shadow-sm">
+
+                        <div className="p-4">
+
+                          <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+
+                            <div className="min-w-0">
+
+                              <div className="flex flex-wrap items-center gap-2">
+
+                                <span className="text-sm font-black text-slate-900">
+                                  {log.action ||
+                                    "System Activity"}
+                                </span>
+
+                                <span
+                                  className={`rounded-full border px-2.5 py-1 text-[9px] font-black ${styles.badge}`}
+                                >
+                                  {status}
+                                </span>
+
+                              </div>
+
+                              <p className="mt-2 text-sm leading-6 text-slate-600">
+                                {log.description ||
+                                  "No description recorded."}
+                              </p>
+
+                              <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-[10px] text-slate-400">
+
+                                <span>
+                                  User:{" "}
+                                  <strong className="text-slate-600">
+                                    {log.userEmail ||
+                                      "System"}
+                                  </strong>
+                                </span>
+
+                                <span>
+                                  Role:{" "}
+                                  <strong className="text-slate-600">
+                                    {log.role ||
+                                      "System"}
+                                  </strong>
+                                </span>
+
+                                <span>
+                                  {formatDate(
+                                    log.createdAt
+                                  )}
+                                </span>
+
+                              </div>
+
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setExpanded(
+                                  isOpen ? null : key
+                                )
+                              }
+                              className="shrink-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[10px] font-black text-slate-600 transition hover:bg-slate-100"
+                            >
+                              {isOpen
+                                ? "Hide details"
+                                : "Show details"}
+                            </button>
+
+                          </div>
+
+                          {isOpen && (
+                            <div className="mt-4 border-t border-slate-100 pt-4">
+
+                              <div className="grid gap-3 md:grid-cols-2">
+
+                                <div className="rounded-xl bg-slate-50 p-4">
+                                  <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">
+                                    Event
+                                  </p>
+
+                                  <p className="mt-2 text-xs font-bold text-slate-700">
+                                    {log.action ||
+                                      "Activity"}
+                                  </p>
+                                </div>
+
+                                <div className="rounded-xl bg-slate-50 p-4">
+                                  <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">
+                                    Timestamp
+                                  </p>
+
+                                  <p className="mt-2 text-xs font-bold text-slate-700">
+                                    {formatDate(
+                                      log.createdAt
+                                    )}
+                                  </p>
+                                </div>
+
+                                <div className="rounded-xl bg-slate-50 p-4">
+                                  <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">
+                                    User
+                                  </p>
+
+                                  <p className="mt-2 break-all text-xs font-bold text-slate-700">
+                                    {log.userEmail ||
+                                      "System"}
+                                  </p>
+                                </div>
+
+                                <div className="rounded-xl bg-slate-50 p-4">
+                                  <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">
+                                    Role
+                                  </p>
+
+                                  <p className="mt-2 text-xs font-bold text-slate-700">
+                                    {log.role ||
+                                      "System"}
+                                  </p>
+                                </div>
+
+                              </div>
+
+                              <div className="mt-3 rounded-xl border border-slate-200 bg-slate-950 p-4">
+
+                                <div className="flex items-center justify-between">
+                                  <p className="text-[9px] font-black uppercase tracking-wider text-blue-300">
+                                    Raw Audit Record
+                                  </p>
+
+                                  <span className="rounded bg-white/10 px-2 py-1 text-[9px] font-bold text-slate-400">
+                                    AUDIT DATA
+                                  </span>
+                                </div>
+
+                                <pre className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-5 text-slate-300">
+                                  {JSON.stringify(
+                                    log,
+                                    null,
+                                    2
+                                  )}
+                                </pre>
+
+                              </div>
+
+                            </div>
+                          )}
+
+                        </div>
+
+                      </div>
+
+                    </div>
+                  );
+                })}
+
+              </div>
+
+            </div>
+
           </div>
         )}
-      </Card>
+
+      </div>
+
     </div>
   );
 }
-
-/* ============================================================
-   03. SYSTEM REPORTS
-============================================================ */
-
 export function SystemReportsModule({
   summary,
 }: {
@@ -1254,7 +1677,7 @@ export function AdminProfileModule({
                     ? "bg-emerald-400/20 text-emerald-100"
                     : "bg-red-400/20 text-red-100"
                 }`}>
-                  ● {active ? "Active account" : "Inactive account"}
+                  â— {active ? "Active account" : "Inactive account"}
                 </span>
               </div>
             </div>
@@ -1279,7 +1702,7 @@ export function AdminProfileModule({
           </p>
           <div className="mt-3 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-              <span className="text-lg">✓</span>
+              <span className="text-lg">âœ“</span>
             </div>
             <div>
               <p className="text-sm font-black text-slate-900">
@@ -1298,7 +1721,7 @@ export function AdminProfileModule({
           </p>
           <div className="mt-3 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600">
-              <span className="text-lg">◆</span>
+              <span className="text-lg">â—†</span>
             </div>
             <div>
               <p className="text-sm font-black text-slate-900">
@@ -1317,7 +1740,7 @@ export function AdminProfileModule({
           </p>
           <div className="mt-3 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-              <span className="text-lg">◷</span>
+              <span className="text-lg">â—·</span>
             </div>
             <div>
               <p className="text-sm font-black text-slate-900">
@@ -1477,6 +1900,7 @@ export function AdminProfileModule({
     </div>
   );
 }
+
 
 
 
