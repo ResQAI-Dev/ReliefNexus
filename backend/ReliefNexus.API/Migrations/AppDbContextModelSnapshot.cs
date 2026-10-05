@@ -22,17 +22,17 @@ namespace ReliefNexus.API.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-<<<<<<< HEAD
+ HEAD
             modelBuilder.Entity("ReliefNexus.API.Models.CriticalInfrastructure", b =>
-=======
+
             modelBuilder.Entity("ReliefNexus.API.Models.AuditLog", b =>
->>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
+ e607c09081109747a894baa16772e0eb4a19a0ef
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-<<<<<<< HEAD
+ HEAD
                     b.Property<Guid>("AffectedAreaId")
                         .HasColumnType("uuid");
 
@@ -87,16 +87,16 @@ namespace ReliefNexus.API.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("AffectedFacilitiesSummary")
-=======
+
                     b.Property<string>("Action")
                         .IsRequired()
->>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
+ e607c09081109747a894baa16772e0eb4a19a0ef
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-<<<<<<< HEAD
+ HEAD
                     b.Property<Guid>("DisasterEventId")
                         .HasColumnType("uuid");
 
@@ -212,7 +212,7 @@ namespace ReliefNexus.API.Migrations
                     b.Property<DateTime>("StartedAt")
                         .HasColumnType("timestamp with time zone");
 
-=======
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");
@@ -224,19 +224,19 @@ namespace ReliefNexus.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
->>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
+ e607c09081109747a894baa16772e0eb4a19a0ef
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
 
-<<<<<<< HEAD
+ HEAD
                     b.HasKey("Id");
 
                     b.ToTable("RiskAgentExecutions");
                 });
 
             modelBuilder.Entity("ReliefNexus.API.Models.RiskFactor", b =>
-=======
+
                     b.Property<string>("UserEmail")
                         .HasColumnType("text");
 
@@ -249,13 +249,13 @@ namespace ReliefNexus.API.Migrations
                 });
 
             modelBuilder.Entity("ReliefNexus.API.Models.DisasterReport", b =>
->>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
+ e607c09081109747a894baa16772e0eb4a19a0ef
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-<<<<<<< HEAD
+ HEAD
                     b.Property<double>("Contribution")
                         .HasColumnType("double precision");
 
@@ -296,7 +296,7 @@ namespace ReliefNexus.API.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-=======
+
                     b.Property<DateTime?>("AssignedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -310,12 +310,12 @@ namespace ReliefNexus.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
->>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
+ e607c09081109747a894baa16772e0eb4a19a0ef
                     b.Property<string>("DisasterType")
                         .IsRequired()
                         .HasColumnType("text");
 
-<<<<<<< HEAD
+ HEAD
                     b.Property<double>("DrainageCapacity")
                         .HasColumnType("double precision");
 
@@ -336,7 +336,7 @@ namespace ReliefNexus.API.Migrations
 
                     b.Property<bool>("IsApproved")
                         .HasColumnType("boolean");
-=======
+
                     b.Property<string>("FieldSituation")
                         .HasColumnType("text");
 
@@ -351,7 +351,7 @@ namespace ReliefNexus.API.Migrations
 
                     b.Property<DateTime?>("FieldUpdatedAt")
                         .HasColumnType("timestamp with time zone");
->>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
+e607c09081109747a894baa16772e0eb4a19a0ef
 
                     b.Property<double?>("Latitude")
                         .HasColumnType("double precision");
@@ -363,7 +363,7 @@ namespace ReliefNexus.API.Migrations
                     b.Property<double?>("Longitude")
                         .HasColumnType("double precision");
 
-<<<<<<< HEAD
+ HEAD
                     b.Property<string>("ModelVersion")
                         .IsRequired()
                         .HasColumnType("text");
@@ -415,7 +415,7 @@ namespace ReliefNexus.API.Migrations
                 });
 
             modelBuilder.Entity("ReliefNexus.API.Models.User", b =>
-=======
+
                     b.Property<Guid>("ReporterUserId")
                         .HasColumnType("uuid");
 
@@ -439,7 +439,7 @@ namespace ReliefNexus.API.Migrations
                 });
 
             modelBuilder.Entity("ReliefNexus.API.Models.EmergencyAlert", b =>
->>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
+ e607c09081109747a894baa16772e0eb4a19a0ef
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -977,8 +977,8 @@ namespace ReliefNexus.API.Migrations
                     b.ToTable("Users");
                 });
 
-<<<<<<< HEAD
-=======
+ HEAD
+
             modelBuilder.Entity("ReliefNexus.API.Models.VulnerabilityAssessment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1036,7 +1036,7 @@ namespace ReliefNexus.API.Migrations
                     b.ToTable("VulnerabilityAssessments");
                 });
 
->>>>>>> e607c09081109747a894baa16772e0eb4a19a0ef
+ e607c09081109747a894baa16772e0eb4a19a0ef
             modelBuilder.Entity("ReliefNexus.API.Models.RiskFactor", b =>
                 {
                     b.HasOne("ReliefNexus.API.Models.RiskPrediction", "RiskPrediction")
