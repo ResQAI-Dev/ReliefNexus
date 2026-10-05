@@ -448,6 +448,19 @@ app.MapControllers();
 // RUN APPLICATION
 // ======================================================
 
+// ======================================================
+// HEALTH CHECK
+// ======================================================
+
+app.MapGet("/health", () =>
+    Results.Ok(new
+    {
+        status = "Healthy",
+        service = "ReliefNexus.API",
+        timestamp = DateTime.UtcNow
+    }))
+    .AllowAnonymous();
+
 app.Run();
 
 
@@ -456,5 +469,20 @@ app.Run();
 
 
 
+
+
+
+// ======================================================
+// HEALTH CHECK
+// ======================================================
+
+app.MapGet("/health", () =>
+    Results.Ok(new
+    {
+        status = "Healthy",
+        service = "ReliefNexus.API",
+        timestamp = DateTime.UtcNow
+    }))
+    .AllowAnonymous();
 
 
