@@ -20,10 +20,8 @@ builder.Services.AddHttpContextAccessor();
 // SERVICES
 // ======================================================
 
-// Controllers
 builder.Services.AddControllers();
 
-// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendPolicy", policy =>
@@ -35,11 +33,10 @@ builder.Services.AddCors(options =>
     });
 });
 
-// API Explorer
 builder.Services.AddEndpointsApiExplorer();
 
 // ======================================================
-// SWAGGER + JWT
+// SWAGGER + JWT (Updated for OpenAPI v2 compatibility)
 // ======================================================
 
 builder.Services.AddSwaggerGen(options =>
@@ -51,19 +48,13 @@ builder.Services.AddSwaggerGen(options =>
             Type = SecuritySchemeType.Http,
             Scheme = "bearer",
             BearerFormat = "JWT",
-            Description =
-                "JWT Authorization header using the Bearer scheme."
+            Description = "JWT Authorization header using the Bearer scheme."
         });
 
-    options.AddSecurityRequirement(document =>
-        new OpenApiSecurityRequirement
-        {
-            [
-                new OpenApiSecuritySchemeReference(
-                    "Bearer",
-                    document)
-            ] = []
-        });
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+    });
 });
 
 // ======================================================
@@ -81,6 +72,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // DEPENDENCY INJECTION
 // ======================================================
 
+HEAD
 // ------------------------------------------------------
 // Core Services
 // ------------------------------------------------------
@@ -88,44 +80,40 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Component 2 – Population Vulnerability & Impact Assessment
 builder.Services.AddScoped<IVulnerabilityService, VulnerabilityService>();
 
+builder.Services.AddScoped<IVulnerabilityService, VulnerabilityService>();
+ e12ad0dd02150b6fb27c97807a92937fd37d497e
 builder.Services.AddScoped<IUserService, UserService>();
-
-builder.Services.AddScoped<
-    IRiskPredictionService,
-    RiskPredictionService>();
-
-builder.Services.AddScoped<
-    IVulnerabilityImpactService,
-    VulnerabilityImpactService>();
-
-builder.Services.AddScoped<
-    IResourceService,
-    ResourceService>();
-
-builder.Services.AddScoped<
-    IDisasterReportService,
-    DisasterReportService>();
-
+builder.Services.AddScoped<IRiskPredictionService, RiskPredictionService>();
+builder.Services.AddScoped<IVulnerabilityImpactService, VulnerabilityImpactService>();
+builder.Services.AddScoped<IResourceService, ResourceService>();
+builder.Services.AddScoped<IDisasterReportService, DisasterReportService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IReliefRequestService, ReliefRequestService>();
+builder.Services.AddScoped<ILocationSharingService, LocationSharingService>();
+builder.Services.AddScoped<IEmergencyAlertService, EmergencyAlertService>();
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
-builder.Services.AddScoped<
-    IReliefRequestService,
-    ReliefRequestService>();
+builder.Services.AddScoped<IAgentExecutionService, AgentExecutionService>();
 
-builder.Services.AddScoped<
-    ILocationSharingService,
-    LocationSharingService>();
+builder.Services.AddScoped<IVolunteerAssignmentService, VolunteerAssignmentService>();
+builder.Services.AddScoped<VolunteerAssignmentAgent>();
 
-builder.Services.AddScoped<
-EarlyWarningCoordinationAgent>();
+builder.Services.AddScoped<RiskPredictionAgent>();
+builder.Services.AddScoped<VulnerabilityImpactAgent>();
+builder.Services.AddScoped<ResourceOptimizationAgent>();
+builder.Services.AddScoped<EarlyWarningCoordinationAgent>();
 
-builder.Services.AddScoped<
-IEmergencyAlertService, EmergencyAlertService>();
+builder.Services.AddScoped<RiskEngine>();
 
-builder.Services.AddScoped<
-    IAuditLogService,
-    AuditLogService>();
+builder.Services.AddHttpClient<DisasterDataTool>();
+builder.Services.AddHttpClient<WeatherTool>();
+builder.Services.AddHttpClient<RiverGaugeTool>();
+builder.Services.AddHttpClient<HistoricalDisasterTool>();
+builder.Services.AddHttpClient<PopulationTool>();
+builder.Services.AddHttpClient<DrainageDataTool>();
 
+HEAD
 builder.Services.AddScoped<
     IAuthService,
     AuthService>();
@@ -202,6 +190,8 @@ builder.Services.AddHttpClient<
 builder.Services.AddHttpClient<
     DrainageDataTool>();
 
+
+ e12ad0dd02150b6fb27c97807a92937fd37d497e
 // ======================================================
 // JWT AUTHENTICATION
 // ======================================================
@@ -215,33 +205,17 @@ builder.Services.AddAuthentication(
         options.TokenValidationParameters =
             new TokenValidationParameters
             {
-                // Validate issuer
                 ValidateIssuer = true,
-
-                // Validate audience
                 ValidateAudience = true,
-
-                // Validate token expiry
                 ValidateLifetime = true,
-
-                // Validate signing key
                 ValidateIssuerSigningKey = true,
-
-                // JWT Issuer
-                ValidIssuer =
-                    builder.Configuration["Jwt:Issuer"],
-
-                // JWT Audience
-                ValidAudience =
-                    builder.Configuration["Jwt:Audience"],
-
-                // JWT Secret Key
-                IssuerSigningKey =
-                    new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(
-                            builder.Configuration["Jwt:Key"]!
-                        )
+                ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                ValidAudience = builder.Configuration["Jwt:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(
+                        builder.Configuration["Jwt:Key"]!
                     )
+                )
             };
     });
 
@@ -251,8 +225,7 @@ builder.Services.AddAuthentication(
 
 builder.Services.AddAuthorization(options =>
 {
-    foreach (var permission in
-        ReliefNexus.API.Helpers.RoleConstants.AllPermissions)
+    foreach (var permission in ReliefNexus.API.Helpers.RoleConstants.AllPermissions)
     {
         options.AddPolicy(
             $"Permission:{permission}",
@@ -262,30 +235,25 @@ builder.Services.AddAuthorization(options =>
 
                 policy.RequireAssertion(context =>
                     context.User.IsInRole(
-                        ReliefNexus.API.Helpers
-                            .RoleConstants
-                            .SystemAdministrator)
+                        ReliefNexus.API.Helpers.RoleConstants.SystemAdministrator)
                     ||
                     context.User.Claims.Any(c =>
                         (
                             c.Type == "permission" ||
                             c.Type == "permissions" ||
-                            c.Type ==
-                                System.Security.Claims
-                                    .ClaimTypes.Role
+                            c.Type == System.Security.Claims.ClaimTypes.Role
                         )
                         &&
                         string.Equals(
                             c.Value,
                             permission,
-                            StringComparison
-                                .OrdinalIgnoreCase)));
+                            StringComparison.OrdinalIgnoreCase)));
             });
     }
 });
 
 // ======================================================
-// BUILD APPLICATION
+// HTTP CLIENTS FOR PYTHON AI SERVICES
 // ======================================================
 
 builder.Services.AddHttpClient<IPythonAIService, PythonAIService>(client =>
@@ -323,22 +291,16 @@ builder.Services.AddHttpClient<IPythonEarlyWarningService, PythonEarlyWarningSer
 
     client.Timeout = TimeSpan.FromSeconds(60);
 });
+
 var app = builder.Build();
 
 // ======================================================
 // DATABASE / INITIAL SCHEMA
 // ======================================================
 
-using (var profileScope =
-    app.Services.CreateScope())
+using (var profileScope = app.Services.CreateScope())
 {
-    var profileDb =
-        profileScope.ServiceProvider
-            .GetRequiredService<AppDbContext>();
-
-    // --------------------------------------------------
-    // Users
-    // --------------------------------------------------
+    var profileDb = profileScope.ServiceProvider.GetRequiredService<AppDbContext>();
 
     await profileDb.Database.ExecuteSqlRawAsync(
         """
@@ -346,18 +308,13 @@ using (var profileScope =
         ADD COLUMN IF NOT EXISTS "ProfileImageUrl" text;
         """);
 
-    // --------------------------------------------------
-    // Disaster Reports
-    // --------------------------------------------------
-
     await profileDb.Database.ExecuteSqlRawAsync(
         """
         ALTER TABLE "DisasterReports"
         ADD COLUMN IF NOT EXISTS "AssignedVolunteerUserId" uuid;
 
         ALTER TABLE "DisasterReports"
-        ADD COLUMN IF NOT EXISTS "AssignedAt"
-            timestamp with time zone;
+        ADD COLUMN IF NOT EXISTS "AssignedAt" timestamp with time zone;
 
         ALTER TABLE "DisasterReports"
         ADD COLUMN IF NOT EXISTS "FieldUpdateNotes" text;
@@ -366,22 +323,15 @@ using (var profileScope =
         ADD COLUMN IF NOT EXISTS "FieldSituation" text;
 
         ALTER TABLE "DisasterReports"
-        ADD COLUMN IF NOT EXISTS "FieldUpdateLatitude"
-            double precision;
+        ADD COLUMN IF NOT EXISTS "FieldUpdateLatitude" double precision;
 
         ALTER TABLE "DisasterReports"
-        ADD COLUMN IF NOT EXISTS "FieldUpdateLongitude"
-            double precision;
+        ADD COLUMN IF NOT EXISTS "FieldUpdateLongitude" double precision;
 
         ALTER TABLE "DisasterReports"
-        ADD COLUMN IF NOT EXISTS "FieldUpdatedAt"
-            timestamp with time zone;
+        ADD COLUMN IF NOT EXISTS "FieldUpdatedAt" timestamp with time zone;
         """);
 }
-
-// ======================================================
-// INITIAL DATA SEEDING
-// ======================================================
 
 await SeedData.InitializeAsync(
     app.Services,
@@ -397,56 +347,31 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// ======================================================
-// HTTPS
-// ======================================================
-
 app.UseHttpsRedirection();
-
-// ======================================================
-// STATIC FILES
-// ======================================================
 
 app.UseStaticFiles();
 
-app.UseStaticFiles(
-    new StaticFileOptions
-    {
-        FileProvider =
-            new PhysicalFileProvider(
-                Path.Combine(
-                    builder.Environment.ContentRootPath,
-                    "uploads")),
-
-        RequestPath = "/uploads"
-    });
-
-// ======================================================
-// CORS
-// ======================================================
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(
+            builder.Environment.ContentRootPath,
+            "uploads")),
+    RequestPath = "/uploads"
+});
 
 app.UseCors("FrontendPolicy");
 
-// ======================================================
-// AUTHENTICATION
-// ======================================================
-
 app.UseAuthentication();
-
-// ======================================================
-// AUTHORIZATION
-// ======================================================
-
 app.UseAuthorization();
-
-// ======================================================
-// CONTROLLERS
-// ======================================================
 
 app.MapControllers();
 
+ HEAD
 // ======================================================
 // RUN APPLICATION
 // ======================================================
 
+
+ e12ad0dd02150b6fb27c97807a92937fd37d497e
 app.Run();

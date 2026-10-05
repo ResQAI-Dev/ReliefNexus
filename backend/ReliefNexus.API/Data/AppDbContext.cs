@@ -17,20 +17,30 @@ public class AppDbContext : DbContext
     // =========================================================================
 
     public DbSet<User> Users { get; set; }
+HEAD
  HEAD
 
+ e12ad0dd02150b6fb27c97807a92937fd37d497e
+
     // =========================================================================
-    // Component 1 – Risk Prediction (from develop)
+    // Component 1 – Risk Prediction & Shared Entities
     // =========================================================================
 
+HEAD
 
+=======
+ e12ad0dd02150b6fb27c97807a92937fd37d497e
     public DbSet<DisasterReport> DisasterReports { get; set; }
     public DbSet<ReliefRequest> ReliefRequests { get; set; }
     public DbSet<LocationShare> LocationShares { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
     public DbSet<Notification> Notifications { get; set; }
+ HEAD
  e607c09081109747a894baa16772e0eb4a19a0ef
+
+ e12ad0dd02150b6fb27c97807a92937fd37d497e
     public DbSet<RiskPrediction> RiskPredictions { get; set; }
+    public DbSet<RiskFactor> RiskFactors { get; set; }
     public DbSet<RiskAgentExecution> RiskAgentExecutions { get; set; }
     public DbSet<VulnerabilityAssessment> VulnerabilityAssessments { get; set; }
     public DbSet<ReliefResource> ReliefResources { get; set; }
@@ -40,8 +50,7 @@ public class AppDbContext : DbContext
     // =========================================================================
     // Component 2 – Population Vulnerability & Impact Assessment
     // Owner: Component 2 team
-    // Tables: population_risk_snapshots, critical_infrastructures,
-    //         impact_assessments
+    // Tables: population_risk_snapshots, critical_infrastructures, impact_assessments
     // =========================================================================
 
     /// <summary>
@@ -72,9 +81,13 @@ public class AppDbContext : DbContext
         base.OnModelCreating(modelBuilder);
 
  HEAD
+ HEAD
+
+ e12ad0dd02150b6fb27c97807a92937fd37d497e
         // ─────────────────────────────────────────────────────────────────────
-        // Component 1 – Risk Prediction (from develop)
+        // User Entity Configuration (JSON permissions & Value Comparer)
         // ─────────────────────────────────────────────────────────────────────
+ HEAD
         modelBuilder.Entity<RiskPrediction>().ToTable("RiskPredictions");
         modelBuilder.Entity<RiskFactor>().ToTable("RiskFactors");
 
@@ -182,6 +195,8 @@ public class AppDbContext : DbContext
     }
 }
 
+
+ e12ad0dd02150b6fb27c97807a92937fd37d497e
         modelBuilder.Entity<User>()
             .Property(u => u.Permissions)
             .HasColumnType("jsonb")
@@ -207,12 +222,104 @@ public class AppDbContext : DbContext
                         ? new List<string>()
                         : value.ToList()));
 
-        modelBuilder.Entity<RiskPrediction>()
-            .ToTable("RiskPredictions");
+        // ─────────────────────────────────────────────────────────────────────
+        // Component 1 – Risk Prediction
+        // ─────────────────────────────────────────────────────────────────────
+        modelBuilder.Entity<RiskPrediction>().ToTable("RiskPredictions");
+        modelBuilder.Entity<RiskFactor>().ToTable("RiskFactors");
 
-        modelBuilder.Entity<RiskFactor>()
-            .ToTable("RiskFactors");
+        // ─────────────────────────────────────────────────────────────────────
+        // Component 2 – PopulationRiskSnapshot
+        // ─────────────────────────────────────────────────────────────────────
+        modelBuilder.Entity<PopulationRiskSnapshot>(entity =>
+        {
+            entity.ToTable("population_risk_snapshots");
+
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.AffectedAreaId)
+                  .HasDatabaseName("ix_population_risk_snapshots_affected_area_id");
+
+            entity.HasIndex(e => e.SnapshotDate)
+                  .HasDatabaseName("ix_population_risk_snapshots_snapshot_date");
+
+            entity.Property(e => e.DataSource).HasMaxLength(100);
+
+            entity.Property(e => e.SnapshotDate)
+                  .HasColumnType("timestamp with time zone");
+            entity.Property(e => e.CreatedAt)
+                  .HasColumnType("timestamp with time zone");
+            entity.Property(e => e.UpdatedAt)
+                  .HasColumnType("timestamp with time zone");
+        });
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Component 2 – CriticalInfrastructure
+        // ─────────────────────────────────────────────────────────────────────
+        modelBuilder.Entity<CriticalInfrastructure>(entity =>
+        {
+            entity.ToTable("critical_infrastructures");
+
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.AffectedAreaId)
+                  .HasDatabaseName("ix_critical_infrastructures_affected_area_id");
+
+            entity.HasIndex(e => new { e.AffectedAreaId, e.Type })
+                  .HasDatabaseName("ix_critical_infrastructures_area_type");
+
+            entity.Property(e => e.Name).HasMaxLength(150).IsRequired();
+            entity.Property(e => e.Type).HasMaxLength(50).IsRequired();
+
+            entity.Property(e => e.Latitude).HasColumnType("double precision");
+            entity.Property(e => e.Longitude).HasColumnType("double precision");
+
+            entity.Property(e => e.IsEmergencyHub).HasDefaultValue(false);
+
+            entity.Property(e => e.CreatedAt)
+                  .HasColumnType("timestamp with time zone");
+            entity.Property(e => e.UpdatedAt)
+                  .HasColumnType("timestamp with time zone");
+        });
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Component 2 – ImpactAssessment
+        // ─────────────────────────────────────────────────────────────────────
+        modelBuilder.Entity<ImpactAssessment>(entity =>
+        {
+            entity.ToTable("impact_assessments");
+
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.DisasterEventId)
+                  .HasDatabaseName("ix_impact_assessments_disaster_event_id");
+
+            entity.HasIndex(e => e.AffectedAreaId)
+                  .HasDatabaseName("ix_impact_assessments_affected_area_id");
+
+            entity.HasIndex(e => e.WorkflowId)
+                  .HasDatabaseName("ix_impact_assessments_workflow_id")
+                  .IsUnique(false);
+
+            entity.Property(e => e.ImpactSeverity)
+                  .HasMaxLength(20)
+                  .IsRequired()
+                  .HasDefaultValue("LOW");
+
+            entity.Property(e => e.AffectedFacilitiesSummary)
+                  .HasColumnType("text");
+
+            entity.Property(e => e.GeneratedBy)
+                  .HasMaxLength(50)
+                  .HasDefaultValue("VulnerabilityAgent");
+
+            entity.Property(e => e.CreatedAt)
+                  .HasColumnType("timestamp with time zone");
+            entity.Property(e => e.UpdatedAt)
+                  .HasColumnType("timestamp with time zone");
+        });
     }
+ HEAD
 }
 
 
@@ -229,3 +336,6 @@ public class AppDbContext : DbContext
 
 
 e607c09081109747a894baa16772e0eb4a19a0ef
+
+}
+ e12ad0dd02150b6fb27c97807a92937fd37d497e
