@@ -7,6 +7,7 @@ import PendingPage from "../../features/authentication/pages/PendingPage";
 
 import UserDashboard from "../../features/dashboard/pages/UserDashboard";
 import SystemAdministratorDashboard from "../../features/dashboard/pages/SystemAdministratorDashboard";
+import FieldVolunteerAssignedIncidents from "../../features/disaster-reports/pages/FieldVolunteerAssignedIncidents";
 
 
 const AppRoutes = () => {
@@ -33,11 +34,14 @@ const AppRoutes = () => {
         path="*"
         element={<Navigate to="/" replace />}
       />
+      <Route path="/dashboard/field-volunteer/incidents" element={<FieldVolunteerAssignedIncidents />} />
     </Routes>
   );
 };
 
 export default AppRoutes;
+
+
 
 
 

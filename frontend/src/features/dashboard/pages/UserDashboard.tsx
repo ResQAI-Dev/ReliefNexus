@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";
+﻿import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";
 import DisasterReportForm from "../components/DisasterReportForm";
 import DisasterReportsPage from "../../disaster-reports/pages/DisasterReportsPage";
 import api from "../../../lib/api/apiClient";
@@ -13,6 +13,7 @@ import { useAuth } from "../../../context/AuthContext";
 import DashboardLayout from "../../../components/layout/DashboardLayout";
 import RiskPredictionPage from "../../risk-prediction/pages/RiskPredictionPage";
 import ResourceOptimizationPage from "../../resource-optimization/pages/ResourceOptimizationPage";
+import FieldVolunteerDisasterReports from "../components/FieldVolunteerDisasterReports";
 
 import {
   MapContainer,
@@ -36,7 +37,8 @@ type SectionId =
   | "risk"
   | "resources"
   | "location"
-  | "profile";
+  | "profile"
+  | "field";
 
 interface RiskPrediction {
   id?: string;
@@ -149,6 +151,7 @@ const ROLE_CONFIG: Record<
       "alerts",
       "risk",
       "location",
+      "field",
       "profile",
     ],
     quickActions: ["reports", "requests", "risk", "alerts"],
@@ -200,6 +203,7 @@ const UserDashboard = () => {
     resources: "Manage Relief Resources",
     location: "Share Location",
     profile: null,
+    field: null,
   };
 
   const canAccessSection = (section: SectionId) => {
@@ -247,6 +251,7 @@ const UserDashboard = () => {
       risk: "Risk Prediction",
       resources: "Relief Resources",
       location: "Location Sharing",
+      field: "Field Operations",
       profile: "Profile",
     };
 
@@ -258,6 +263,7 @@ const UserDashboard = () => {
       risk: <ChartIcon />,
       resources: <LayersIcon />,
       location: <LocationIcon />,
+      field: <AlertTriangleIcon />,
       profile: <UserIcon />,
     };
 
@@ -658,8 +664,7 @@ const UserDashboard = () => {
                   </div>
                 </div>
               </section>
-
-              {/* ==========================================================
+{/* ==========================================================
                   REFERENCE KPI CARDS
                  ========================================================== */}
               <section className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -1203,6 +1208,9 @@ const UserDashboard = () => {
             )
           )}
 
+          {currentSection === "field" && role === "FieldVolunteer" && (
+            <FieldVolunteerDisasterReports />
+          )}
           {currentSection === "requests" && (
             <PageShell
               icon={<ClipboardIcon />}
@@ -2930,6 +2938,7 @@ const getCurrentSection = (pathname: string): SectionId => {
     if (pathname.endsWith("/risk-information")) return "risk";
   if (pathname.endsWith("/relief-resources")) return "resources";
   if (pathname.endsWith("/location-sharing")) return "location";
+  if (pathname.endsWith("/field-operations")) return "field";
   if (pathname.endsWith("/profile")) return "profile";
 
   return "dashboard";
@@ -2943,6 +2952,7 @@ const sectionRoute = (section: SectionId) => {
     risk: "risk-prediction",
     resources: "relief-resources",
     location: "location-sharing",
+    field: "field-operations",
     profile: "profile",
   };
 
@@ -3080,6 +3090,13 @@ const ShieldCheckIcon = () => (
 
 
 export default UserDashboard;
+
+
+
+
+
+
+
 
 
 

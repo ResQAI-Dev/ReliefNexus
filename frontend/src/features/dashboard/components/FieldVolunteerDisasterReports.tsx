@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import api from "../../../lib/api/apiClient";
 import { useAuth } from "../../../context/AuthContext";
 
@@ -335,7 +335,7 @@ export default function FieldVolunteerDisasterReports() {
     setError("");
 
     try {
-      const response = await api.get("/disaster-reports");
+      const response = await api.get("/disaster-reports/assigned-to-me");
 
       const raw: Report[] = Array.isArray(response.data)
         ? response.data
@@ -469,7 +469,7 @@ export default function FieldVolunteerDisasterReports() {
     if (!selected?.id) return;
 
     try {
-      const response = await api.get("/disaster-reports");
+      const response = await api.get("/disaster-reports/assigned-to-me");
       const raw = Array.isArray(response.data) ? response.data : [];
       const latest = raw.find((item: Report) => item.id === selected.id);
 
@@ -1362,6 +1362,7 @@ export default function FieldVolunteerDisasterReports() {
     </>
   );
 }
+
 
 
 

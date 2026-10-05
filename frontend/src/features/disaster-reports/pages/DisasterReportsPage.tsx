@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -1309,7 +1309,7 @@ useEffect(() => {
       <section class="section"><h2>Agent 03  Resource Optimization</h2><table><thead><tr><th>#</th><th>Resource</th><th>Quantity</th><th>Location</th><th>Status</th></tr></thead><tbody>${resourceRows}</tbody></table></section>
       <section class="section"><h2>Agent 04  Early Warning</h2><div class="grid"><div class="card"><div class="label">Warning</div><div class="value">${alert ? "Generated" : "Not available"}</div></div><div class="card"><div class="label">Severity</div><div class="value">${escapeReportHtml(alert?.severity || "")}</div></div><div class="card"><div class="label">Status</div><div class="value">${escapeReportHtml(alert?.status || "")}</div></div><div class="card"><div class="label">Created</div><div class="value">${escapeReportHtml(alert?.createdAt ? formatDate(alert.createdAt) : "")}</div></div></div></section>
       <section class="section"><h2>Volunteer & Field Response</h2><div class="two"><div class="card"><div class="label">Assigned Volunteer</div><div class="value">${escapeReportHtml(report.assignedVolunteerName || "Not assigned")}</div><div class="muted">Assigned: ${escapeReportHtml(report.assignedAt ? formatDate(report.assignedAt) : "")}</div></div><div class="card"><div class="label">Field Status</div><div class="value">${escapeReportHtml(formatStatus(report.status))}</div><div class="muted">Updated: ${escapeReportHtml(report.fieldUpdatedAt ? formatDate(report.fieldUpdatedAt) : "")}</div></div><div class="card"><div class="label">Latest Situation</div><div class="value">${escapeReportHtml(report.fieldSituation || "No field situation submitted.")}</div></div><div class="card"><div class="label">Field Notes</div><div class="value">${escapeReportHtml(report.fieldUpdateNotes || "No field notes submitted.")}</div></div></div></section>
-      <section class="section"><h2>Resolution</h2><div class="note"><strong class="pill"> Incident Resolved</strong><br/>The incident completed the ReliefNexus operational lifecycle after the field response stage. Final lifecycle status: <strong>${escapeReportHtml(formatStatus(report.status))}</strong>.</div></section>
+      <section class="section"><h2>Final Operational Summary</h2><div class="note"><strong>Incident Outcome</strong><br/>${escapeReportHtml(report.disasterType || "Disaster incident")} reported at <strong>${escapeReportHtml(report.location || "Unknown location")}</strong> completed the ReliefNexus operational lifecycle. The final incident status is <strong>${escapeReportHtml(formatStatus(report.status))}</strong>.</div><div class="grid" style="margin-top:12px"><div class="card"><div class="label">Risk</div><div class="value">${escapeReportHtml(risk?.riskScore ?? "—")} / 100</div></div><div class="card"><div class="label">Vulnerability</div><div class="value">${escapeReportHtml(assessment ? "Assessment completed" : "Not available")}</div></div><div class="card"><div class="label">Impact</div><div class="value">${escapeReportHtml(assessment ? "Assessment completed" : "Not available")}</div></div><div class="card"><div class="label">Field Volunteer</div><div class="value">${escapeReportHtml(report.assignedVolunteerName || "Not assigned")}</div></div></div></section><section class="section"><h2>Resolution</h2><div class="note"><strong class="pill"> Incident Resolved</strong><br/>The incident completed the ReliefNexus operational lifecycle after the field response stage. Final lifecycle status: <strong>${escapeReportHtml(formatStatus(report.status))}</strong>.</div></section>
       <section class="section"><h2>Operational Timeline</h2><div class="timeline">${timelineRows || "<p class='muted'>No timestamped events are available.</p>"}</div></section>
       <footer class="footer"><span>ReliefNexus  AI-Powered Disaster Management Platform</span><span>Generated from live operational records  ${escapeReportHtml(formatDate(generatedAt))}</span></footer>
       </main><script>window.onload=function(){setTimeout(function(){window.print()},450)};</script></body></html>`;
@@ -2900,7 +2900,7 @@ useEffect(() => {
                                       type="button"
                                       onClick={() => {
                                         setThisStep(6);
-                                        if (report.id) {
+                                        if (report.id && !report.assignedVolunteerUserId) {
                                           void loadVolunteerRecommendation(report);
                                         }
                                       }}
@@ -3315,7 +3315,8 @@ useEffect(() => {
                                         </p>
                                       </div>
 
-                                      {!recommendation && !recommendationLoading && (
+                                      {!report.assignedVolunteerUserId &&
+                                      !recommendation && !recommendationLoading && (
                                         <button
                                           type="button"
                                           onClick={() => void loadVolunteerRecommendation(report)}
@@ -3341,7 +3342,7 @@ useEffect(() => {
                                       />
                                     </div>
 
-                                    {recommendationError && (
+                                    {!report.assignedVolunteerUserId && recommendationError && (
                                       <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[10px] font-semibold text-red-700">
                                         {recommendationError}
                                       </div>
@@ -5028,7 +5029,7 @@ useEffect(() => {
                                             </button>
                                           </div>
 
-                                          {recommendationError && (
+                                          {!linkedReport?.assignedVolunteerUserId && recommendationError && (
                                             <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-[10px] font-semibold text-red-700">
                                               {recommendationError}
                                             </div>
@@ -5619,5 +5620,11 @@ useEffect(() => {
     </div>
   );
 }
+
+
+
+
+
+
 
 
