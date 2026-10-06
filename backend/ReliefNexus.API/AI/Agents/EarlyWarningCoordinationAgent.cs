@@ -1,4 +1,5 @@
-﻿using ReliefNexus.API.AI.Services;
+﻿using ReliefNexus.API.AI.Policies;
+using ReliefNexus.API.AI.Services;
 using Microsoft.EntityFrameworkCore;
 using ReliefNexus.API.Data;
 using ReliefNexus.API.Interfaces;
@@ -10,13 +11,16 @@ public class EarlyWarningCoordinationAgent
 {
     private readonly AppDbContext _context;
     private readonly IAgentExecutionService _agentExecutionService;
+    private readonly IAgentToolPolicyService _agentToolPolicy;
 
     private readonly IPythonEarlyWarningService _pythonEarlyWarningService;
     public EarlyWarningCoordinationAgent(
         AppDbContext context,
         IAgentExecutionService agentExecutionService,
-        IPythonEarlyWarningService pythonEarlyWarningService)
+        IPythonEarlyWarningService pythonEarlyWarningService,
+        IAgentToolPolicyService agentToolPolicy)
     {
+        _agentToolPolicy = agentToolPolicy;
         _context = context;
         _agentExecutionService = agentExecutionService;
         _pythonEarlyWarningService = pythonEarlyWarningService;
@@ -229,31 +233,71 @@ public class EarlyWarningCoordinationAgent
                 "Warning message and coordination actions prepared"
             );
 
+            _agentToolPolicy.EnsureAllowed(
+
+
+                AgentToolPolicies.EarlyWarningCoordination,
+
+
+                "PythonEarlyWarningService");
+
+
             var pythonEarlyWarningAnalysis =
                 await _pythonEarlyWarningService.CoordinateAsync(
-                    new
+                new
+                {
+                    location = assessment.Location,
+                    disaster_type = assessment.DisasterType,
+                    severity_score = severityScore,
+                    vulnerability_score = assessment.VulnerabilityScore,
+                    impact_score = assessment.ImpactScore,
+                    allocations = allocations.Select(x => new
                     {
-                        location = assessment.Location,
-                        disaster_type = assessment.DisasterType,
-                        severity_score = severityScore,
-                        vulnerability_score = assessment.VulnerabilityScore,
-                        impact_score = assessment.ImpactScore,
-                        allocations = allocations.Select(x => new
-                        {
-                            resource_id = x.ResourceId,
-                            resource_type = x.ResourceType,
-                            resource_name = x.ResourceName,
-                            recommended_quantity = x.RecommendedQuantity,
-                            priority = x.Priority,
-                            location = x.Location,
-                            created_at = x.CreatedAt
-                        }).ToList()
-                    });
+                        resource_id = x.ResourceId,
+                        resource_type = x.ResourceType,
+                        resource_name = x.ResourceName,
+                        recommended_quantity = x.RecommendedQuantity,
+                        priority = x.Priority,
+                        location = x.Location,
+                        created_at = x.CreatedAt
+                    }).ToList()
+                });
             // =========================================================
             // STEP 6 - PERSIST EMERGENCY ALERT
             // =========================================================
 
-            await _agentExecutionService.UpdateStepAsync(
+            
+        if (pythonEarlyWarningAnalysis.HasValue &&
+            pythonEarlyWarningAnalysis.Value.TryGetProperty("usage", out var usage))
+        {
+            var inputTokens =
+                usage.TryGetProperty("inputTokens", out var input)
+                    ? input.GetInt32()
+                    : 0;
+
+            var outputTokens =
+                usage.TryGetProperty("outputTokens", out var output)
+                    ? output.GetInt32()
+                    : 0;
+
+            var totalTokens =
+                usage.TryGetProperty("totalTokens", out var total)
+                    ? total.GetInt32()
+                    : 0;
+
+            var modelName =
+                usage.TryGetProperty("model", out var model)
+                    ? model.GetString() ?? string.Empty
+                    : string.Empty;
+
+            await _agentExecutionService.RecordUsageAsync(
+                execution.Id,
+                inputTokens,
+                outputTokens,
+                totalTokens,
+                modelName);
+        }
+await _agentExecutionService.UpdateStepAsync(
                 execution.Id,
                 "Persisting emergency alert",
                 string.Join(" -> ", completedSteps),
@@ -773,6 +817,10 @@ public class EarlyWarningCoordinationAgent
         return errors;
     }
 }
+
+
+
+
 
 
 

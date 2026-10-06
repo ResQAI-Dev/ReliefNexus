@@ -1,9 +1,11 @@
-﻿using ReliefNexus.API.AI.Services;
+﻿using ReliefNexus.API.AI.Policies;
+using ReliefNexus.API.AI.Services;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using ReliefNexus.API.Data;
 using ReliefNexus.API.Models;
 using ReliefNexus.API.DTOs.ResourceOptimization;
+using ReliefNexus.API.Interfaces;
 
 namespace ReliefNexus.API.AI.Agents;
 
@@ -20,11 +22,17 @@ public class ResourceOptimizationAgent
 {
     private readonly AppDbContext _context;
     private readonly IPythonResourceService _pythonResourceService;
+    private readonly IAgentToolPolicyService _agentToolPolicy;
+    private readonly IAgentExecutionService _agentExecutionService;
 
     public ResourceOptimizationAgent(
         AppDbContext context,
-        IPythonResourceService pythonResourceService)
+        IPythonResourceService pythonResourceService,
+        IAgentToolPolicyService agentToolPolicy,
+        IAgentExecutionService agentExecutionService)
     {
+        _agentToolPolicy = agentToolPolicy;
+        _agentExecutionService = agentExecutionService;
         _pythonResourceService = pythonResourceService;
         _context = context;
     }
@@ -160,6 +168,24 @@ public class ResourceOptimizationAgent
             });
         }
 
+        var execution = await _agentExecutionService.StartAsync(
+            $"VulnerabilityAssessmentId={assessment.Id}; " +
+            $"RiskPredictionId={assessment.RiskPredictionId}; " +
+            $"Location={assessment.Location}; " +
+            $"DisasterType={assessment.DisasterType}; " +
+            $"Priority={priority}",
+            "Predict disaster resource demand from the validated Agent 02 assessment and match it against real inventory.",
+            "Load Agent 02 assessment -> validate eligibility -> read inventory -> predict demand -> run Python resource analysis.",
+            "Resource Optimization Agent");
+        _agentToolPolicy.EnsureAllowed(
+
+
+            AgentToolPolicies.ResourceOptimization,
+
+
+            "PythonResourceService");
+
+
         var pythonResourceAnalysis = await _pythonResourceService.OptimizeAsync(
             new
             {
@@ -179,6 +205,49 @@ public class ResourceOptimizationAgent
                     coverage_status = x.CoverageStatus
                 }).ToList()
             });
+        if (pythonResourceAnalysis.HasValue &&
+            pythonResourceAnalysis.Value.TryGetProperty("usage", out var usage))
+        {
+            var inputTokens =
+                usage.TryGetProperty("inputTokens", out var input)
+                    ? input.GetInt32()
+                    : 0;
+
+            var outputTokens =
+                usage.TryGetProperty("outputTokens", out var output)
+                    ? output.GetInt32()
+                    : 0;
+
+            var totalTokens =
+                usage.TryGetProperty("totalTokens", out var total)
+                    ? total.GetInt32()
+                    : 0;
+
+            var modelName =
+                usage.TryGetProperty("model", out var model)
+                    ? model.GetString() ?? string.Empty
+                    : string.Empty;
+
+            await _agentExecutionService.RecordUsageAsync(
+                execution.Id,
+                inputTokens,
+                outputTokens,
+                totalTokens,
+                modelName);
+        }
+        await _agentExecutionService.UpdateStepAsync(
+            execution.Id,
+            "Resource demand analysis completed",
+            "Agent 02 assessment loaded; real inventory assessed; Python resource analysis completed",
+            "Agent 03 resource demand workflow completed.");
+
+        await _agentExecutionService.CompleteAsync(
+            execution.Id,
+            assessment.RiskPredictionId,
+            "Resource demand assessment completed using validated Agent 02 data and real inventory.",
+            "Deterministic C# resource calculations remain authoritative; Python resource analysis completed.",
+            "Agent 03 completed successfully.",
+            "NotRequired");
         return new ResourceDemandAssessmentDto
         {
             VulnerabilityAssessmentId = assessment.Id,
@@ -811,5 +880,13 @@ public class ResourceOptimizationAgent
         };
     }
 }
+
+
+
+
+
+
+
+
 
 
