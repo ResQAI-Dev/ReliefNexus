@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace ReliefNexus.API.AI.Tools;
@@ -20,7 +20,7 @@ public class WeatherTool
             "https://api.open-meteo.com/v1/forecast" +
             $"?latitude={latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}" +
             $"&longitude={longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}" +
-            "&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,vapour_pressure_deficit" +
+            "&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m" +
             "&hourly=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,soil_moisture_0_to_10cm,et0_fao_evapotranspiration,vapour_pressure_deficit,precipitation_probability,weather_code" +
             "&past_hours=72" +
             "&forecast_hours=24" +
@@ -79,8 +79,9 @@ public class WeatherTool
                 RetrievedAt = DateTime.UtcNow
             };
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine($"[WeatherTool ERROR] {ex}");
             return null;
         }
     }
@@ -223,3 +224,6 @@ public class WeatherData
     public string Source { get; set; } = "Open-Meteo";
     public DateTime RetrievedAt { get; set; }
 }
+
+
+
