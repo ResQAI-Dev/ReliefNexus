@@ -36,7 +36,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddEndpointsApiExplorer();
 
 // ======================================================
-// SWAGGER + JWT (Updated for OpenAPI v2 compatibility)
+// SWAGGER + JWT
 // ======================================================
 
 builder.Services.AddSwaggerGen(options =>
@@ -72,16 +72,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // DEPENDENCY INJECTION
 // ======================================================
 
-HEAD
 // ------------------------------------------------------
 // Core Services
 // ------------------------------------------------------
 
 // Component 2 – Population Vulnerability & Impact Assessment
 builder.Services.AddScoped<IVulnerabilityService, VulnerabilityService>();
-
-builder.Services.AddScoped<IVulnerabilityService, VulnerabilityService>();
- e12ad0dd02150b6fb27c97807a92937fd37d497e
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRiskPredictionService, RiskPredictionService>();
 builder.Services.AddScoped<IVulnerabilityImpactService, VulnerabilityImpactService>();
@@ -93,17 +89,13 @@ builder.Services.AddScoped<ILocationSharingService, LocationSharingService>();
 builder.Services.AddScoped<IEmergencyAlertService, EmergencyAlertService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-
 builder.Services.AddScoped<IAgentExecutionService, AgentExecutionService>();
-
 builder.Services.AddScoped<IVolunteerAssignmentService, VolunteerAssignmentService>();
 builder.Services.AddScoped<VolunteerAssignmentAgent>();
-
 builder.Services.AddScoped<RiskPredictionAgent>();
 builder.Services.AddScoped<VulnerabilityImpactAgent>();
 builder.Services.AddScoped<ResourceOptimizationAgent>();
 builder.Services.AddScoped<EarlyWarningCoordinationAgent>();
-
 builder.Services.AddScoped<RiskEngine>();
 
 builder.Services.AddHttpClient<DisasterDataTool>();
@@ -113,85 +105,6 @@ builder.Services.AddHttpClient<HistoricalDisasterTool>();
 builder.Services.AddHttpClient<PopulationTool>();
 builder.Services.AddHttpClient<DrainageDataTool>();
 
-HEAD
-builder.Services.AddScoped<
-    IAuthService,
-    AuthService>();
-
-// ------------------------------------------------------
-// Agent Execution
-// ------------------------------------------------------
-
-builder.Services.AddScoped<
-    IAgentExecutionService,
-    AgentExecutionService>();
-
-// ------------------------------------------------------
-// Emergency Alert
-// ------------------------------------------------------
-
-builder.Services.AddScoped<
-    IEmergencyAlertService,
-    EmergencyAlertService>();
-
-// ------------------------------------------------------
-// Volunteer Assignment
-// ------------------------------------------------------
-
-builder.Services.AddScoped<
-    IVolunteerAssignmentService,
-    VolunteerAssignmentService>();
-
-builder.Services.AddScoped<
-    VolunteerAssignmentAgent>();
-
-// ------------------------------------------------------
-// AI Agents
-// ------------------------------------------------------
-
-builder.Services.AddScoped<
-    RiskPredictionAgent>();
-
-builder.Services.AddScoped<
-    VulnerabilityImpactAgent>();
-
-builder.Services.AddScoped<
-    ResourceOptimizationAgent>();
-
-builder.Services.AddScoped<
-    EarlyWarningCoordinationAgent>();
-
-// ------------------------------------------------------
-// AI Engines
-// ------------------------------------------------------
-
-builder.Services.AddScoped<
-    RiskEngine>();
-
-// ------------------------------------------------------
-// AI Tools
-// ------------------------------------------------------
-
-builder.Services.AddHttpClient<
-    DisasterDataTool>();
-
-builder.Services.AddHttpClient<
-    WeatherTool>();
-
-builder.Services.AddHttpClient<
-    RiverGaugeTool>();
-
-builder.Services.AddHttpClient<
-    HistoricalDisasterTool>();
-
-builder.Services.AddHttpClient<
-    PopulationTool>();
-
-builder.Services.AddHttpClient<
-    DrainageDataTool>();
-
-
- e12ad0dd02150b6fb27c97807a92937fd37d497e
 // ======================================================
 // JWT AUTHENTICATION
 // ======================================================
@@ -367,11 +280,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 
- HEAD
-// ======================================================
-// RUN APPLICATION
-// ======================================================
-
-
- e12ad0dd02150b6fb27c97807a92937fd37d497e
 app.Run();

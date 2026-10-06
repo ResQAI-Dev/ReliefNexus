@@ -17,28 +17,16 @@ public class AppDbContext : DbContext
     // =========================================================================
 
     public DbSet<User> Users { get; set; }
-HEAD
- HEAD
-
- e12ad0dd02150b6fb27c97807a92937fd37d497e
 
     // =========================================================================
     // Component 1 – Risk Prediction & Shared Entities
     // =========================================================================
 
-HEAD
-
-=======
- e12ad0dd02150b6fb27c97807a92937fd37d497e
     public DbSet<DisasterReport> DisasterReports { get; set; }
     public DbSet<ReliefRequest> ReliefRequests { get; set; }
     public DbSet<LocationShare> LocationShares { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
     public DbSet<Notification> Notifications { get; set; }
- HEAD
- e607c09081109747a894baa16772e0eb4a19a0ef
-
- e12ad0dd02150b6fb27c97807a92937fd37d497e
     public DbSet<RiskPrediction> RiskPredictions { get; set; }
     public DbSet<RiskFactor> RiskFactors { get; set; }
     public DbSet<RiskAgentExecution> RiskAgentExecutions { get; set; }
@@ -80,123 +68,9 @@ HEAD
     {
         base.OnModelCreating(modelBuilder);
 
- HEAD
- HEAD
-
- e12ad0dd02150b6fb27c97807a92937fd37d497e
         // ─────────────────────────────────────────────────────────────────────
         // User Entity Configuration (JSON permissions & Value Comparer)
         // ─────────────────────────────────────────────────────────────────────
- HEAD
-        modelBuilder.Entity<RiskPrediction>().ToTable("RiskPredictions");
-        modelBuilder.Entity<RiskFactor>().ToTable("RiskFactors");
-
-        // ─────────────────────────────────────────────────────────────────────
-        // Component 2 – PopulationRiskSnapshot
-        // ─────────────────────────────────────────────────────────────────────
-        modelBuilder.Entity<PopulationRiskSnapshot>(entity =>
-        {
-            // Explicit snake_case table name to avoid EF Core pluralisation surprises
-            entity.ToTable("population_risk_snapshots");
-
-            entity.HasKey(e => e.Id);
-
-            // Index on AffectedAreaId – most queries filter by area
-            entity.HasIndex(e => e.AffectedAreaId)
-                  .HasDatabaseName("ix_population_risk_snapshots_affected_area_id");
-
-            // Index on SnapshotDate – supports time-series queries
-            entity.HasIndex(e => e.SnapshotDate)
-                  .HasDatabaseName("ix_population_risk_snapshots_snapshot_date");
-
-            entity.Property(e => e.DataSource).HasMaxLength(100);
-
-            // Ensure UTC storage for all timestamp columns
-            entity.Property(e => e.SnapshotDate)
-                  .HasColumnType("timestamp with time zone");
-            entity.Property(e => e.CreatedAt)
-                  .HasColumnType("timestamp with time zone");
-            entity.Property(e => e.UpdatedAt)
-                  .HasColumnType("timestamp with time zone");
-        });
-
-        // ─────────────────────────────────────────────────────────────────────
-        // Component 2 – CriticalInfrastructure
-        // ─────────────────────────────────────────────────────────────────────
-        modelBuilder.Entity<CriticalInfrastructure>(entity =>
-        {
-            entity.ToTable("critical_infrastructures");
-
-            entity.HasKey(e => e.Id);
-
-            // Index on AffectedAreaId – most queries filter by area
-            entity.HasIndex(e => e.AffectedAreaId)
-                  .HasDatabaseName("ix_critical_infrastructures_affected_area_id");
-
-            // Composite index on (AffectedAreaId, Type) – common filter pattern
-            entity.HasIndex(e => new { e.AffectedAreaId, e.Type })
-                  .HasDatabaseName("ix_critical_infrastructures_area_type");
-
-            entity.Property(e => e.Name).HasMaxLength(150).IsRequired();
-            entity.Property(e => e.Type).HasMaxLength(50).IsRequired();
-
-            // Double precision for geospatial coordinates (WGS-84)
-            entity.Property(e => e.Latitude).HasColumnType("double precision");
-            entity.Property(e => e.Longitude).HasColumnType("double precision");
-
-            entity.Property(e => e.IsEmergencyHub).HasDefaultValue(false);
-
-            entity.Property(e => e.CreatedAt)
-                  .HasColumnType("timestamp with time zone");
-            entity.Property(e => e.UpdatedAt)
-                  .HasColumnType("timestamp with time zone");
-        });
-
-        // ─────────────────────────────────────────────────────────────────────
-        // Component 2 – ImpactAssessment
-        // ─────────────────────────────────────────────────────────────────────
-        modelBuilder.Entity<ImpactAssessment>(entity =>
-        {
-            entity.ToTable("impact_assessments");
-
-            entity.HasKey(e => e.Id);
-
-            // Index on DisasterEventId – joins back to disaster events
-            entity.HasIndex(e => e.DisasterEventId)
-                  .HasDatabaseName("ix_impact_assessments_disaster_event_id");
-
-            // Index on AffectedAreaId – area-level filtering
-            entity.HasIndex(e => e.AffectedAreaId)
-                  .HasDatabaseName("ix_impact_assessments_affected_area_id");
-
-            // Index on WorkflowId – agent workflow correlation queries
-            entity.HasIndex(e => e.WorkflowId)
-                  .HasDatabaseName("ix_impact_assessments_workflow_id")
-                  .IsUnique(false);
-
-            entity.Property(e => e.ImpactSeverity)
-                  .HasMaxLength(20)
-                  .IsRequired()
-                  .HasDefaultValue("LOW");
-
-            // JSON summary stored as PostgreSQL text column
-            entity.Property(e => e.AffectedFacilitiesSummary)
-                  .HasColumnType("text");
-
-            entity.Property(e => e.GeneratedBy)
-                  .HasMaxLength(50)
-                  .HasDefaultValue("VulnerabilityAgent");
-
-            entity.Property(e => e.CreatedAt)
-                  .HasColumnType("timestamp with time zone");
-            entity.Property(e => e.UpdatedAt)
-                  .HasColumnType("timestamp with time zone");
-        });
-    }
-}
-
-
- e12ad0dd02150b6fb27c97807a92937fd37d497e
         modelBuilder.Entity<User>()
             .Property(u => u.Permissions)
             .HasColumnType("jsonb")
@@ -319,23 +193,4 @@ HEAD
                   .HasColumnType("timestamp with time zone");
         });
     }
- HEAD
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-e607c09081109747a894baa16772e0eb4a19a0ef
-
-}
- e12ad0dd02150b6fb27c97807a92937fd37d497e
