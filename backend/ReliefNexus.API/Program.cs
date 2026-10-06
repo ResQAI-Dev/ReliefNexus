@@ -1,4 +1,4 @@
-using ReliefNexus.API.AI.Services;
+﻿using ReliefNexus.API.AI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.FileProviders;
 using ReliefNexus.API.AI.Tools;
@@ -22,6 +22,11 @@ builder.Services.AddHttpContextAccessor();
 
 // Controllers
 builder.Services.AddControllers();
+
+// AI Agent Tool Policy
+builder.Services.AddSingleton<
+    ReliefNexus.API.AI.Policies.IAgentToolPolicyService,
+    ReliefNexus.API.AI.Policies.AgentToolPolicyService>();
 
 // CORS
 builder.Services.AddCors(options =>
@@ -484,5 +489,6 @@ app.MapGet("/health", () =>
         timestamp = DateTime.UtcNow
     }))
     .AllowAnonymous();
+
 
 
