@@ -1,0 +1,13 @@
+.notification {
+  display: flex;
+  gap: 12px;
+  padding: 13px;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+}
+.notification.unread {
+  background: #eff6ff;
+}
+.notification-title {
+  font-weight: 800;
+}
