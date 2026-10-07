@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
 namespace ReliefNexus.API.AI.Models;
 
@@ -69,4 +69,7 @@ public class PythonUsageResult
 
     [JsonPropertyName("model")]
     public string Model { get; set; } = string.Empty;
+
+    [JsonPropertyName("cost")]
+    public decimal? Cost { get; set; }
 }

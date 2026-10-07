@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ReliefNexus.API.AI.Agents;
 using ReliefNexus.API.Data;
 using ReliefNexus.API.DTOs;
@@ -54,7 +54,8 @@ public class RiskPredictionService : IRiskPredictionService
                 aiAssessment.Usage.InputTokens,
                 aiAssessment.Usage.OutputTokens,
                 aiAssessment.Usage.TotalTokens,
-                aiAssessment.Usage.Model);
+                aiAssessment.Usage.Model,
+                aiAssessment.Usage.Cost);
         }
 
         if (aiAssessment != null &&

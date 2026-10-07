@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ReliefNexus.API.Data;
 using ReliefNexus.API.Interfaces;
 using ReliefNexus.API.Models;
@@ -127,7 +127,8 @@ public class AgentExecutionService : IAgentExecutionService
         int inputTokens,
         int outputTokens,
         int totalTokens,
-        string modelName)
+        string modelName,
+        decimal? estimatedCost = null)
     {
         var execution =
             await _context.RiskAgentExecutions
@@ -141,8 +142,11 @@ public class AgentExecutionService : IAgentExecutionService
         execution.TotalTokens = totalTokens;
         execution.ModelName = modelName ?? string.Empty;
 
+        if (estimatedCost.HasValue)
+            execution.EstimatedCost = estimatedCost.Value;
+
         Console.WriteLine(
-            $"[TokenUsage] ExecutionId={execution.Id}, Agent={execution.AgentName}, Input={inputTokens}, Output={outputTokens}, Total={totalTokens}, Model={modelName}");
+            $"[TokenUsage] ExecutionId={execution.Id}, Agent={execution.AgentName}, Input={inputTokens}, Output={outputTokens}, Total={totalTokens}, Model={modelName}, Cost={estimatedCost?.ToString() ?? "Not reported"}");
         await _context.SaveChangesAsync();
 
         return execution;

@@ -1,4 +1,4 @@
-﻿import json
+import json
 from typing import Any
 
 from app.services.gemini import generate_text_with_usage, GeminiQuotaError
@@ -101,6 +101,7 @@ If enough evidence has been collected, return:
             "outputTokens": usage_result["outputTokens"],
             "totalTokens": usage_result["totalTokens"],
             "model": usage_result["model"],
+            "cost": usage_result.get("cost"),
         }
 
         return decision
@@ -193,6 +194,7 @@ Do not claim to have accessed data that was not supplied.
             "outputTokens": usage_result["outputTokens"],
             "totalTokens": usage_result["totalTokens"],
             "model": usage_result["model"],
+            "cost": usage_result.get("cost"),
         }
     except json.JSONDecodeError:
         return {
@@ -276,6 +278,8 @@ async def run_risk_agent(
     total_input_tokens = 0
     total_output_tokens = 0
     total_tokens = 0
+    total_cost = 0.0
+    cost_reported = False
     model_name = ""
 
     # ==============================
@@ -303,6 +307,10 @@ async def run_risk_agent(
         total_tokens += int(
             usage.get("totalTokens", 0) or 0
         )
+        reported_cost = usage.get("cost")
+        if reported_cost is not None:
+            total_cost += float(reported_cost)
+            cost_reported = True
 
         if usage.get("model"):
             model_name = str(usage["model"])
@@ -359,6 +367,10 @@ async def run_risk_agent(
     total_tokens += int(
         usage.get("totalTokens", 0) or 0
     )
+    reported_cost = usage.get("cost")
+    if reported_cost is not None:
+        total_cost += float(reported_cost)
+        cost_reported = True
 
     if usage.get("model"):
         model_name = str(usage["model"])
@@ -391,6 +403,7 @@ async def run_risk_agent(
         "outputTokens": total_output_tokens,
         "totalTokens": total_tokens,
         "model": model_name,
+        "cost": total_cost if cost_reported else None,
     }
 
     return result

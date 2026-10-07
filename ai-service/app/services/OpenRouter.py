@@ -1,4 +1,4 @@
-﻿import os
+import os
 from typing import Any
 
 import httpx
@@ -36,6 +36,9 @@ async def generate_text_with_usage(prompt: str) -> dict[str, Any]:
                 "content": prompt,
             }
         ],
+        "usage": {
+            "include": True
+        },
     }
 
     async with httpx.AsyncClient(timeout=120.0) as client:
@@ -71,6 +74,8 @@ async def generate_text_with_usage(prompt: str) -> dict[str, Any]:
         text = message.get("content", "") or ""
 
     usage = data.get("usage", {})
+    reported_cost = usage.get("cost")
+    cost = float(reported_cost) if reported_cost is not None else None
 
     input_tokens = int(
         usage.get("prompt_tokens", 0) or 0
@@ -90,6 +95,7 @@ async def generate_text_with_usage(prompt: str) -> dict[str, Any]:
         "inputTokens": input_tokens,
         "outputTokens": output_tokens,
         "totalTokens": total_tokens,
+        "cost": cost,
     }
 
 

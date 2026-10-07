@@ -10,6 +10,7 @@ def _usage(result: dict[str, Any]) -> dict[str, Any]:
         "outputTokens": int(result.get("outputTokens", 0) or 0),
         "totalTokens": int(result.get("totalTokens", 0) or 0),
         "model": str(result.get("model", "") or ""),
+        "cost": result.get("cost"),
     }
 
 
@@ -81,6 +82,7 @@ async def coordinate_warning(payload: dict[str, Any]) -> dict[str, Any]:
         "outputTokens": 0,
         "totalTokens": 0,
         "model": "",
+        "cost": None,
     }
     llm_status = "fallback"
 

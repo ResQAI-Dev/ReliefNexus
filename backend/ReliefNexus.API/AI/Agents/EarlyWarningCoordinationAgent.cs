@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ReliefNexus.API.AI.Policies;
 using ReliefNexus.API.AI.Services;
 using Microsoft.EntityFrameworkCore;
@@ -303,12 +304,17 @@ public class EarlyWarningCoordinationAgent
                     ? model.GetString() ?? string.Empty
                     : string.Empty;
 
+decimal? estimatedCost = usage.TryGetProperty("cost", out var costElement) && costElement.ValueKind == JsonValueKind.Number
+    ? costElement.GetDecimal()
+    : null;
+
             await _agentExecutionService.RecordUsageAsync(
                 execution.Id,
                 inputTokens,
                 outputTokens,
                 totalTokens,
-                modelName);
+                modelName,
+                estimatedCost);
         }
 await _agentExecutionService.UpdateStepAsync(
                 execution.Id,
