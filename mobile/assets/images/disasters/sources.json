@@ -1,0 +1,32 @@
+﻿[
+    {
+        "Name":  "landslide",
+        "File":  "/assets/disasters/landslide.jpg",
+        "Source":  "https://commons.wikimedia.org/wiki/File%3A2014_Landslide_in_Washington_State_-_13715354793.jpg",
+        "Title":  "File:2014 Landslide in Washington State - 13715354793.jpg"
+    },
+    {
+        "Name":  "earthquake",
+        "File":  "/assets/disasters/earthquake.jpg",
+        "Source":  "https://commons.wikimedia.org/wiki/File%3A09.21_%E7%B8%BD%E7%B5%B1%E5%87%BA%E5%B8%AD%E3%80%8C%E5%A4%A7%E8%A6%8F%E6%A8%A1%E9%9C%87%E7%81%BD%E6%B6%88%E9%98%B2%E6%95%91%E7%81%BD%E5%8B%95%E5%93%A1%E6%BC%94%E7%B7%B4%E3%80%8D.jpg",
+        "Title":  "File:09.21 總統出席「大規模震災消防救災動員演練」.jpg"
+    },
+    {
+        "Name":  "tsunami",
+        "File":  "/assets/disasters/tsunami.jpg",
+        "Source":  "https://commons.wikimedia.org/wiki/File%3A140328-G-KL864-660_(13851736845).jpg",
+        "Title":  "File:140328-G-KL864-660 (13851736845).jpg"
+    },
+    {
+        "Name":  "wildfire",
+        "File":  "/assets/disasters/wildfire.jpg",
+        "Source":  "https://commons.wikimedia.org/wiki/File%3A%22A_Night_March.%22_-_DPLA_-_a98e7c5d280113d30a9794b3029e445b.jpg",
+        "Title":  "File:\"A Night March.\" - DPLA - a98e7c5d280113d30a9794b3029e445b.jpg"
+    },
+    {
+        "Name":  "tornado",
+        "File":  "/assets/disasters/tornado.jpg",
+        "Source":  "https://commons.wikimedia.org/wiki/File%3AAmazing-natural-disasters.jpg",
+        "Title":  "File:Amazing-natural-disasters.jpg"
+    }
+]

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="400" viewBox="0 0 640 400">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f1f5f9"/><stop offset="1" stop-color="#ffffff"/></linearGradient></defs>
+<rect width="640" height="400" rx="28" fill="url(#g)"/><circle cx="520" cy="90" r="46" fill="#475569" opacity=".14"/>
+<rect x="55" y="55" width="190" height="250" rx="24" fill="white" opacity=".9"/><rect x="78" y="78" width="144" height="150" rx="18" fill="#f1f5f9"/>
+<text x="150" y="175" text-anchor="middle" font-family="Arial" font-size="70" fill="#475569">▰</text>
+<rect x="78" y="245" width="110" height="12" rx="6" fill="#475569" opacity=".2"/><rect x="78" y="268" width="80" height="9" rx="4" fill="#475569" opacity=".14"/>
+<text x="280" y="145" font-family="Arial" font-size="30" font-weight="700" fill="#0f172a">Blankets</text>
+<text x="280" y="182" font-family="Arial" font-size="16" fill="#64748b">ReliefNexus Resource Inventory</text>
+<text x="280" y="220" font-family="Arial" font-size="14" fill="#94a3b8">Agent 03 • Live allocation resource</text>
+<rect x="280" y="260" width="185" height="42" rx="21" fill="#475569" opacity=".1"/><text x="372" y="287" text-anchor="middle" font-family="Arial" font-size="14" font-weight="700" fill="#475569">REAL INVENTORY</text>
+</svg>

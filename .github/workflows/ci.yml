@@ -1,0 +1,87 @@
+name: ReliefNexus CI
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+  pull_request:
+    branches:
+      - develop
+      - main
+
+jobs:
+  backend:
+    name: Backend Build and Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore backend dependencies
+        run: dotnet restore backend/ReliefNexus.API/ReliefNexus.API.csproj
+
+      - name: Restore backend test dependencies
+        run: dotnet restore backend/ReliefNexus.API.Tests/ReliefNexus.API.Tests.csproj
+
+      - name: Build backend
+        run: dotnet build backend/ReliefNexus.API/ReliefNexus.API.csproj --no-restore --configuration Release
+
+      - name: Run backend tests
+        run: dotnet test backend/ReliefNexus.API.Tests/ReliefNexus.API.Tests.csproj --no-restore --configuration Release --logger "console;verbosity=minimal"
+
+  frontend:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+  mobile:
+    name: Flutter Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Check Flutter installation
+        run: flutter --version
+
+      - name: Install Flutter dependencies
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Run Flutter tests
+        working-directory: mobile
+        run: flutter test --no-pub
+
+
