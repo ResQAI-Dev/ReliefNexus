@@ -1,0 +1,11 @@
+.loader {
+  width: 38px;
+  height: 38px;
+  border: 4px solid #dbeafe;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
