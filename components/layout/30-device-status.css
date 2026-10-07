@@ -1,0 +1,9 @@
+.status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.status-online { background: var(--success); }
+.status-offline { background: var(--muted); }
+.status-error { background: var(--danger); }
