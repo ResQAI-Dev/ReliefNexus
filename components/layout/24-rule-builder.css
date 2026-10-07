@@ -1,0 +1,15 @@
+.rule-builder {
+  display: grid;
+  gap: 16px;
+}
+.rule-step {
+  border-left: 3px solid var(--primary);
+  background: #fff;
+  padding: 16px;
+  border-radius: 8px;
+}
+.rule-step-number {
+  font-size: .8rem;
+  color: var(--primary);
+  font-weight: 800;
+}
