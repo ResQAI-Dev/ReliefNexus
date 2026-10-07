@@ -1,0 +1,10 @@
+h1, h2, h3, h4 {
+  line-height: 1.2;
+  font-weight: 700;
+}
+h1 { font-size: 2rem; }
+h2 { font-size: 1.5rem; }
+h3 { font-size: 1.2rem; }
+p { color: var(--muted); }
+.small { font-size: .875rem; }
+.text-muted { color: var(--muted); }
