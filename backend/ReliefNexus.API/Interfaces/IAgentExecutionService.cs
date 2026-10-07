@@ -34,7 +34,8 @@ public interface IAgentExecutionService
         int inputTokens,
         int outputTokens,
         int totalTokens,
-        string modelName);
+        string modelName,
+        decimal? estimatedCost = null);
 
     Task<RiskAgentExecution?> FailAsync(
         Guid executionId,
@@ -50,5 +51,6 @@ public interface IAgentExecutionService
     Task<List<RiskAgentExecution>> GetByPredictionIdAsync(
         Guid predictionId);
 }
+
 
 
