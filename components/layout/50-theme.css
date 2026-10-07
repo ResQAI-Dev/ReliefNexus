@@ -1,0 +1,17 @@
+.theme-primary {
+  background: var(--primary);
+  color: #fff;
+}
+.theme-surface {
+  background: var(--surface);
+  color: var(--text);
+}
+.border-default {
+  border: 1px solid var(--border);
+}
+.rounded {
+  border-radius: var(--radius);
+}
+.shadow {
+  box-shadow: var(--shadow);
+}
