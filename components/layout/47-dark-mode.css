@@ -1,0 +1,15 @@
+body.dark {
+  --bg: #0f172a;
+  --surface: #111827;
+  --surface-2: #1f2937;
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --border: #334155;
+}
+body.dark .card,
+body.dark .rule-card,
+body.dark .device-card,
+body.dark .event-card,
+body.dark .settings-section {
+  background: var(--surface);
+}
