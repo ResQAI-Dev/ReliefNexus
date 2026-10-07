@@ -1,0 +1,8 @@
+.alert {
+  padding: 12px 14px;
+  border-radius: 9px;
+  border: 1px solid;
+}
+.alert-success { background: #f0fdf4; border-color: #86efac; color: #166534; }
+.alert-warning { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
+.alert-danger { background: #fef2f2; border-color: #fca5a5; color: #991b1b; }
