@@ -1,0 +1,12 @@
+.log-viewer {
+  background: #111827;
+  color: #d1d5db;
+  padding: 16px;
+  border-radius: 10px;
+  font-family: monospace;
+  font-size: .85rem;
+  max-height: 460px;
+  overflow: auto;
+}
+.log-error { color: #fca5a5; }
+.log-success { color: #86efac; }
