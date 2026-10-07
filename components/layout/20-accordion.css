@@ -1,0 +1,18 @@
+.accordion-item {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+.accordion-button {
+  width: 100%;
+  padding: 14px 16px;
+  background: #fff;
+  border: 0;
+  text-align: left;
+  font-weight: 700;
+}
+.accordion-content {
+  padding: 0 16px 16px;
+  color: var(--muted);
+}
