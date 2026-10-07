@@ -1,0 +1,11 @@
+.d-flex { display: flex; }
+.d-grid { display: grid; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-8 { gap: 8px; }
+.gap-16 { gap: 16px; }
+.mt-16 { margin-top: 16px; }
+.mb-16 { margin-bottom: 16px; }
+.p-16 { padding: 16px; }
+.w-full { width: 100%; }
+.text-center { text-align: center; }
