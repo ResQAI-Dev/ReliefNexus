@@ -1,0 +1,14 @@
+.form-group {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 16px;
+}
+.form-label {
+  font-weight: 700;
+  font-size: .9rem;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
