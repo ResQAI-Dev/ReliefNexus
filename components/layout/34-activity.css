@@ -1,0 +1,19 @@
+.activity-list {
+  position: relative;
+  padding-left: 22px;
+}
+.activity-item {
+  position: relative;
+  padding: 0 0 18px 18px;
+  border-left: 2px solid var(--border);
+}
+.activity-item::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--primary);
+}
