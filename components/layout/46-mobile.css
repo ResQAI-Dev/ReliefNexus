@@ -1,0 +1,7 @@
+@media (max-width: 480px) {
+  .main-content { padding: 16px; }
+  .app-header { padding: 0 16px; }
+  h1 { font-size: 1.6rem; }
+  .btn { width: 100%; }
+  .header-actions { gap: 8px; }
+}
