@@ -1,0 +1,14 @@
+@media (max-width: 1024px) {
+  .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
+  .device-grid { grid-template-columns: repeat(2, 1fr); }
+  .automation-summary { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 768px) {
+  .app-shell { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .two-column,
+  .form-row,
+  .automation-summary,
+  .device-grid,
+  .dashboard-grid { grid-template-columns: 1fr; }
+}
