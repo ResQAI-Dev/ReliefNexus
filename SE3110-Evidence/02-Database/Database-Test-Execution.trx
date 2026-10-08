@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="406c976d-7e0c-44ca-86a8-51f61bd710db" name="Havindu Hesara@DESKTOP-OT5VCFT 2026-10-08 16:29:31" runUser="DESKTOP-OT5VCFT\Havindu Hesara" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-08T16:29:31.0816408+05:30" queuing="2026-10-08T16:29:31.0816411+05:30" start="2026-10-08T16:29:29.8306262+05:30" finish="2026-10-08T16:29:31.0881553+05:30" />
+  <TestSettings name="default" id="8392a144-37a1-44fc-bd98-7de818702fd3">
+    <Deployment runDeploymentRoot="Havindu_Hesara_DESKTOP-OT5VCFT_2026-10-08_16_29_31" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="03299a55-0d82-4b37-9324-e11775a9009f" testId="dc868e14-5d95-7a44-e6dc-11be99968f58" testName="ReliefNexus.AI.Tests.PostgreSqlIntegrationTests.PostgreSql_RiskFactorForeignKeyExists" computerName="DESKTOP-OT5VCFT" duration="00:00:00.0144293" startTime="2026-10-08T16:29:30.8419828+05:30" endTime="2026-10-08T16:29:30.8567860+05:30" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="03299a55-0d82-4b37-9324-e11775a9009f" />
+    <UnitTestResult executionId="00967169-652f-4257-9b27-17fcdfe98811" testId="3162e870-108e-3100-56b1-e3f4e710c488" testName="ReliefNexus.AI.Tests.PostgreSqlIntegrationTests.PostgreSql_CanConnect" computerName="DESKTOP-OT5VCFT" duration="00:00:00.0030245" startTime="2026-10-08T16:29:30.8385129+05:30" endTime="2026-10-08T16:29:30.8418363+05:30" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="00967169-652f-4257-9b27-17fcdfe98811" />
+    <UnitTestResult executionId="71f050ae-2032-4628-ad85-d8bf972f29c5" testId="2263d46d-1f5f-8caa-003f-c33512a67a94" testName="ReliefNexus.AI.Tests.PostgreSqlIntegrationTests.PostgreSql_TransactionRollbackLeavesNoCommittedTestRow" computerName="DESKTOP-OT5VCFT" duration="00:00:00.0235349" startTime="2026-10-08T16:29:30.8177050+05:30" endTime="2026-10-08T16:29:30.8383654+05:30" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="71f050ae-2032-4628-ad85-d8bf972f29c5" />
+    <UnitTestResult executionId="2cf37862-ad90-4019-afda-fa69f37c3e00" testId="13bbc0af-5fee-ed29-cbdb-cb51d63fa60a" testName="ReliefNexus.AI.Tests.PostgreSqlIntegrationTests.PostgreSql_ForeignKeyConstraintRejectsInvalidReference" computerName="DESKTOP-OT5VCFT" duration="00:00:00.2234406" startTime="2026-10-08T16:29:30.5752594+05:30" endTime="2026-10-08T16:29:30.8065999+05:30" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2cf37862-ad90-4019-afda-fa69f37c3e00" />
+    <UnitTestResult executionId="0579caef-25fc-448d-a7e0-14fe861e4077" testId="7340b51f-71a5-f658-adab-d5f21fd15476" testName="ReliefNexus.AI.Tests.PostgreSqlIntegrationTests.PostgreSql_InitialCreateMigrationSchemaExists" computerName="DESKTOP-OT5VCFT" duration="00:00:00.0066889" startTime="2026-10-08T16:29:30.8169318+05:30" endTime="2026-10-08T16:29:30.8169950+05:30" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0579caef-25fc-448d-a7e0-14fe861e4077" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="ReliefNexus.AI.Tests.PostgreSqlIntegrationTests.PostgreSql_RiskFactorForeignKeyExists" storage="c:\users\sk computers\reliefnexus\backend\reliefnexus.ai.tests\bin\debug\net8.0\reliefnexus.ai.tests.dll" id="dc868e14-5d95-7a44-e6dc-11be99968f58">
+      <Execution id="03299a55-0d82-4b37-9324-e11775a9009f" />
+      <TestMethod codeBase="C:\Users\SK COMPUTERS\ReliefNexus\backend\ReliefNexus.AI.Tests\bin\Debug\net8.0\ReliefNexus.AI.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="ReliefNexus.AI.Tests.PostgreSqlIntegrationTests" name="PostgreSql_RiskFactorForeignKeyExists" />
+    </UnitTest>
+    <UnitTest name="ReliefNexus.AI.Tests.PostgreSqlIntegrationTests.PostgreSql_ForeignKeyConstraintRejectsInvalidReference" storage="c:\users\sk computers\reliefnexus\backend\reliefnexus.ai.tests\bin\debug\net8.0\reliefnexus.ai.tests.dll" id="13bbc0af-5fee-ed29-cbdb-cb51d63fa60a">
+      <Execution id="2cf37862-ad90-4019-afda-fa69f37c3e00" />
+      <TestMethod codeBase="C:\Users\SK COMPUTERS\ReliefNexus\backend\ReliefNexus.AI.Tests\bin\Debug\net8.0\ReliefNexus.AI.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="ReliefNexus.AI.Tests.PostgreSqlIntegrationTests" name="PostgreSql_ForeignKeyConstraintRejectsInvalidReference" />
+    </UnitTest>
+    <UnitTest name="ReliefNexus.AI.Tests.PostgreSqlIntegrationTests.PostgreSql_CanConnect" storage="c:\users\sk computers\reliefnexus\backend\reliefnexus.ai.tests\bin\debug\net8.0\reliefnexus.ai.tests.dll" id="3162e870-108e-3100-56b1-e3f4e710c488">
+      <Execution id="00967169-652f-4257-9b27-17fcdfe98811" />
+      <TestMethod codeBase="C:\Users\SK COMPUTERS\ReliefNexus\backend\ReliefNexus.AI.Tests\bin\Debug\net8.0\ReliefNexus.AI.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="ReliefNexus.AI.Tests.PostgreSqlIntegrationTests" name="PostgreSql_CanConnect" />
+    </UnitTest>
+    <UnitTest name="ReliefNexus.AI.Tests.PostgreSqlIntegrationTests.PostgreSql_InitialCreateMigrationSchemaExists" storage="c:\users\sk computers\reliefnexus\backend\reliefnexus.ai.tests\bin\debug\net8.0\reliefnexus.ai.tests.dll" id="7340b51f-71a5-f658-adab-d5f21fd15476">
+      <Execution id="0579caef-25fc-448d-a7e0-14fe861e4077" />
+      <TestMethod codeBase="C:\Users\SK COMPUTERS\ReliefNexus\backend\ReliefNexus.AI.Tests\bin\Debug\net8.0\ReliefNexus.AI.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="ReliefNexus.AI.Tests.PostgreSqlIntegrationTests" name="PostgreSql_InitialCreateMigrationSchemaExists" />
+    </UnitTest>
+    <UnitTest name="ReliefNexus.AI.Tests.PostgreSqlIntegrationTests.PostgreSql_TransactionRollbackLeavesNoCommittedTestRow" storage="c:\users\sk computers\reliefnexus\backend\reliefnexus.ai.tests\bin\debug\net8.0\reliefnexus.ai.tests.dll" id="2263d46d-1f5f-8caa-003f-c33512a67a94">
+      <Execution id="71f050ae-2032-4628-ad85-d8bf972f29c5" />
+      <TestMethod codeBase="C:\Users\SK COMPUTERS\ReliefNexus\backend\ReliefNexus.AI.Tests\bin\Debug\net8.0\ReliefNexus.AI.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="ReliefNexus.AI.Tests.PostgreSqlIntegrationTests" name="PostgreSql_TransactionRollbackLeavesNoCommittedTestRow" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="dc868e14-5d95-7a44-e6dc-11be99968f58" executionId="03299a55-0d82-4b37-9324-e11775a9009f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3162e870-108e-3100-56b1-e3f4e710c488" executionId="00967169-652f-4257-9b27-17fcdfe98811" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2263d46d-1f5f-8caa-003f-c33512a67a94" executionId="71f050ae-2032-4628-ad85-d8bf972f29c5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="13bbc0af-5fee-ed29-cbdb-cb51d63fa60a" executionId="2cf37862-ad90-4019-afda-fa69f37c3e00" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7340b51f-71a5-f658-adab-d5f21fd15476" executionId="0579caef-25fc-448d-a7e0-14fe861e4077" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="5" executed="5" passed="5" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v4.0.0+05679a7ab5 (64-bit .NET 8.0.29)&#xD;
+[xUnit.net 00:00:00.08]   Discovering: ReliefNexus.AI.Tests&#xD;
+[xUnit.net 00:00:00.13]   Discovered:  ReliefNexus.AI.Tests&#xD;
+[xUnit.net 00:00:00.16]   Starting:    ReliefNexus.AI.Tests&#xD;
+[xUnit.net 00:00:00.46]   Finished:    ReliefNexus.AI.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

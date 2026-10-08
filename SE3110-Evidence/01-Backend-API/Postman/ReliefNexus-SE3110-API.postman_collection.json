@@ -1,0 +1,148 @@
+﻿{
+  "info": {
+    "_postman_id": "reliefnexus-se3110-api-2026",
+    "name": "ReliefNexus - SE3110 Backend API Tests",
+    "description": "Automated HTTP API verification for SE3110 testing evidence.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5115"
+    }
+  ],
+  "item": [
+    {
+      "name": "API-001 Health - 200",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Health response contains Healthy', function () {",
+              "    pm.expect(pm.response.text()).to.include('Healthy');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "API-002 Users - 401 Unauthenticated",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/Users",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "Users"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 401', function () {",
+              "    pm.response.to.have.status(401);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "API-003 Vulnerability Impact - 401 Unauthenticated",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/vulnerability-impact",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "vulnerability-impact"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 401', function () {",
+              "    pm.response.to.have.status(401);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "API-004 Users Wrong Method - 405",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/Users",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "Users"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 405', function () {",
+              "    pm.response.to.have.status(405);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "API-005 Volunteer Assignment Invalid Request - 401",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"disasterReportId\": \"00000000-0000-0000-0000-000000000000\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/volunteer-assignment/recommend",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "volunteer-assignment", "recommend"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Unauthenticated request is rejected', function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

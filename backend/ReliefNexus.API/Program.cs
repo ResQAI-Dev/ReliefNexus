@@ -504,3 +504,5 @@ app.MapGet("/health", () =>
 
 
 
+
+public partial class Program { }
