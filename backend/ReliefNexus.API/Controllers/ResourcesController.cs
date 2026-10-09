@@ -169,10 +169,31 @@ public class ResourceOptimizationController : ControllerBase
         if (vulnerabilityAssessmentId == Guid.Empty)
             return BadRequest(new { message = "Vulnerability assessment id is required." });
 
+        var assessmentExists = await _context.VulnerabilityAssessments
+            .AsNoTracking()
+            .AnyAsync(x => x.Id == vulnerabilityAssessmentId);
+
+        if (!assessmentExists)
+        {
+            return NotFound(new
+            {
+                code = "ASSESSMENT_NOT_FOUND",
+                message = "No vulnerability assessment exists for the supplied id."
+            });
+        }
+
         var demand = await _service.GetDemandAssessmentAsync(vulnerabilityAssessmentId);
-        return demand == null
-            ? NotFound(new { message = "No vulnerability assessment was found for the supplied id." })
-            : Ok(demand);
+
+        if (demand == null)
+        {
+            return UnprocessableEntity(new
+            {
+                code = "AGENT03_NOT_ELIGIBLE",
+                message = "The assessment exists, but Agent 03 only processes High or Critical priority assessments."
+            });
+        }
+
+        return Ok(demand);
     }
 
     // ============================================================
