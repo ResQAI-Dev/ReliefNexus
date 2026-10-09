@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import type {
   DisasterRisk,
   RiskFactor,
@@ -1072,9 +1073,7 @@ export default function PredictionDetailsModal({
     }
   };
 
-  return (
-    <div
-      className="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-950/75 p-2 backdrop-blur-xl sm:p-4"
+  return createPortal((<div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/75 p-2 backdrop-blur-xl sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="prediction-details-title"
@@ -2161,8 +2160,7 @@ export default function PredictionDetailsModal({
           </p>
         </main>
       </div>
-    </div>
-  );
+    </div>), document.body);
 }
 
 function approvalClass(state: string): string {
