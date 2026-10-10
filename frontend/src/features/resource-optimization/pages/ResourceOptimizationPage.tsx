@@ -1989,16 +1989,26 @@ const getPlanningPriority = (severity: number) => {
 const getAgent03Priority = (assessment: VulnerabilityAssessmentSummary | null | undefined) => {
   if (!assessment) return null;
 
-  const explicit = String(assessment.riskLevel || "").trim().toLowerCase();
-  if (explicit === "critical") return "Critical";
-  if (explicit === "high") return "High";
+  const risk = assessment.riskScore;
+  const vulnerability = assessment.vulnerabilityScore;
+  const impact = assessment.impactScore;
 
-  const riskScore = Number(assessment.riskScore);
-  if (Number.isFinite(riskScore)) {
-    if (riskScore >= 75) return "Critical";
-    if (riskScore >= 55) return "High";
+  if (
+    risk == null || vulnerability == null || impact == null ||
+    !Number.isFinite(Number(risk)) ||
+    !Number.isFinite(Number(vulnerability)) ||
+    !Number.isFinite(Number(impact))
+  ) {
+    return null;
   }
 
+  const severity =
+    Math.max(0, Math.min(100, Number(risk))) * 0.4 +
+    Math.max(0, Math.min(100, Number(vulnerability))) * 0.3 +
+    Math.max(0, Math.min(100, Number(impact))) * 0.3;
+
+  if (severity >= 75) return "Critical";
+  if (severity >= 55) return "High";
   return null;
 };
 
@@ -4423,7 +4433,7 @@ export default function ResourceOptimizationPage() {
         {currentAssessment && showRecentAssessmentDetails && (
           <div
             id="recent-assessment-details"
-            className="fixed inset-0 z-[120] flex items-center justify-center p-2 sm:p-4"
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4"
             role="dialog"
             aria-modal="true"
             aria-label="Selected assessment details"
@@ -4569,12 +4579,12 @@ export default function ResourceOptimizationPage() {
                   ) : (
                     <div className="grid grid-cols-1 gap-3 p-3 md:grid-cols-2 xl:grid-cols-3">
                       {selectedRecentAllocations.map((allocation) => (
-                        <div key={allocation.id} className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50/60 transition hover:border-blue-200 hover:bg-white">
-                          <div className="relative h-36 overflow-hidden bg-slate-100">
+                        <div key={allocation.id} className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
+                          <div className="flex h-36 items-center justify-center overflow-hidden bg-slate-50 p-3">
                             <img
                               src={getResourceImageUrl(allocation.resourceName, allocation.resourceType)}
                               alt={allocation.resourceName || "Allocated resource"}
-                              className="h-full w-full object-cover"
+                              className="h-full w-full rounded-lg object-contain"
                               loading="lazy"
                               onError={(event) => {
                                 advanceImageFallback(
@@ -4583,12 +4593,13 @@ export default function ResourceOptimizationPage() {
                                 );
                               }}
                             />
-                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/70 to-transparent p-3 pt-8">
-                              <p className="truncate text-[10px] font-black text-white">{allocation.resourceName || "Resource"}</p>
-                              <p className="mt-0.5 text-[8px] font-semibold text-white/75">{allocation.resourceType || "Emergency resource"}</p>
-                            </div>
                           </div>
-                          <div className="p-3">
+                          <div className="border-t border-slate-100 p-3">
+                            <div className="mb-3 min-w-0">
+                              <h4 className="truncate text-sm font-black text-slate-900">{allocation.resourceName || "Resource"}</h4>
+                              <p className="mt-1 text-xs font-medium text-slate-500">{allocation.resourceType || "Emergency resource"}</p>
+                              <span className="mt-2 inline-flex rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-bold text-emerald-700">Saved allocation</span>
+                            </div>
                             <div className="grid grid-cols-2 gap-2">
                               <ContextValue label="Quantity" value={`${Number(allocation.recommendedQuantity || 0).toLocaleString()} units`} />
                               <ContextValue label="Priority" value={allocation.priority || ""} />
@@ -6059,5 +6070,8 @@ function MiniMetric({
     </div>
   );
 }
+
+
+
 
 
