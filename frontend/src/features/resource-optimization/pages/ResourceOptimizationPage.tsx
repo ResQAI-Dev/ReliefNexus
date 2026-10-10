@@ -1974,6 +1974,23 @@ const getSeverityScore = (assessment: VulnerabilityAssessmentSummary | null) => 
   return Math.round((risk * 0.4 + vulnerability * 0.3 + impact * 0.3) * 10) / 10;
 };
 
+const getCombinedSeverityPriority = (assessment: VulnerabilityAssessmentSummary | null | undefined) => {
+  if (!assessment) return "Unknown";
+  const risk = Number(assessment.riskScore);
+  const vulnerability = Number(assessment.vulnerabilityScore);
+  const impact = Number(assessment.impactScore);
+  if (![risk, vulnerability, impact].every(Number.isFinite)) return "Unknown";
+
+  const severity =
+    Math.max(0, Math.min(100, risk)) * 0.4 +
+    Math.max(0, Math.min(100, vulnerability)) * 0.3 +
+    Math.max(0, Math.min(100, impact)) * 0.3;
+
+  if (severity >= 75) return "Critical";
+  if (severity >= 55) return "High";
+  if (severity >= 30) return "Medium";
+  return "Low";
+};
 const getPlanningPriority = (severity: number) => {
   if (severity >= 75) return "Critical";
   if (severity >= 55) return "High";
@@ -2504,7 +2521,7 @@ export default function ResourceOptimizationPage() {
       coverage,
       shortageItems,
       recommendations,
-      priority: getAgent03Priority(currentAssessment) || "High",
+      priority: getCombinedSeverityPriority(currentAssessment),
     };
   }, [workflowPlan, selectedRecentAllocations, currentAssessment]);
 
@@ -3855,8 +3872,7 @@ export default function ResourceOptimizationPage() {
                     (item) => item.vulnerabilityAssessmentId === assessment.id
                   );
                   const priority =
-                    getAgent03Priority(assessment) ||
-                    "High";
+                    getCombinedSeverityPriority(assessment);
                   const imageUrl = getDisasterPhotoUrl(assessment.disasterType);
 
                   return (
@@ -4392,10 +4408,10 @@ export default function ResourceOptimizationPage() {
                       </div>
                       <span
                         className={`shrink-0 rounded-full border px-2 py-1 text-[8px] font-black ${getPriorityBadge(
-                          getAgent03Priority(assessment) || assessment.riskLevel || "Medium"
+                          getCombinedSeverityPriority(assessment)
                         )}`}
                       >
-                        {getAgent03Priority(assessment) || assessment.riskLevel || "Medium"}
+                        {getCombinedSeverityPriority(assessment)}
                       </span>
                     </div>
 
@@ -5256,9 +5272,9 @@ export default function ResourceOptimizationPage() {
                         <Sparkles size={11} /> Agent 03 | Resource Optimization
                       </span>
                       <span className={`rounded-full border px-2.5 py-1 text-[8px] font-black ${getPriorityBadge(
-                        getAgent03Priority(assessmentActionModal) || "High"
+                        getCombinedSeverityPriority(assessmentActionModal)
                       )}`}>
-                        {getAgent03Priority(assessmentActionModal) || "High"}
+                        {getCombinedSeverityPriority(assessmentActionModal)}
                       </span>
                     </div>
                     <h3 className="mt-2 truncate text-lg font-black tracking-tight text-slate-900 md:text-xl">
@@ -5322,7 +5338,7 @@ export default function ResourceOptimizationPage() {
                           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/10 to-transparent" />
                           <div className="absolute left-4 top-4 flex flex-wrap gap-2">
                             <span className="rounded-full border border-white/30 bg-white/90 px-2.5 py-1 text-[8px] font-black text-slate-700">{assessmentActionModal.disasterType || "Disaster"}</span>
-                            <span className={`rounded-full border px-2.5 py-1 text-[8px] font-black ${getPriorityBadge(getAgent03Priority(assessmentActionModal) || "High")}`}>{getAgent03Priority(assessmentActionModal) || "High"}</span>
+                            <span className={`rounded-full border px-2.5 py-1 text-[8px] font-black ${getPriorityBadge(getCombinedSeverityPriority(assessmentActionModal))}`}>{getCombinedSeverityPriority(assessmentActionModal)}</span>
                           </div>
                           <div className="absolute bottom-4 left-4 right-4">
                             <p className="text-[9px] font-bold uppercase tracking-wider text-white/70">Selected Assessment</p>
@@ -5410,7 +5426,7 @@ export default function ResourceOptimizationPage() {
                     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                       <ContextValue label="Affected Population" value={Number(assessmentActionModal.affectedPopulation || 0).toLocaleString()} />
                       <ContextValue label="Severity Index" value={`${getSeverityScore(assessmentActionModal).toFixed(1)} / 100`} />
-                      <ContextValue label="Priority" value={getAgent03Priority(assessmentActionModal) || "High"} />
+                      <ContextValue label="Priority" value={getCombinedSeverityPriority(assessmentActionModal)} />
                       <ContextValue label="Inventory Records" value={String(inventory.length)} />
                     </div>
 
@@ -6070,6 +6086,9 @@ function MiniMetric({
     </div>
   );
 }
+
+
+
 
 
 
