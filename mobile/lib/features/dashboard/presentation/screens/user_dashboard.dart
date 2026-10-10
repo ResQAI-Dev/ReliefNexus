@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import '../../../ai_optimization/presentation/screens/ai_optimization_page.dart';
+import 'package:flutter/material.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -7,6 +8,7 @@ import '../widgets/dashboard_widgets.dart';
 
 import '../../../disaster_reports/presentation/screens/report_disaster_screen.dart';
 import '../../../risk_predictions/presentation/screens/risk_predictions_screen.dart';
+import '../../../disaster_reports/presentation/screens/field_volunteer_operations_screen.dart';
 import '../../../emergency_alerts/presentation/screens/affected_user_emergency_alerts_screen.dart';
 import '../../../resource_optimization/presentation/screens/resource_optimization_screen.dart';
 
@@ -78,6 +80,34 @@ class _UserDashboardState extends State<UserDashboard> {
                             badge: _roleTitle.toUpperCase(),
                           ),
                           const SizedBox(height: 16),
+                          const DashboardSectionTitle(
+                            title: 'Response Pulse',
+                            subtitle:
+                                'A quick overview of disaster response activity.',
+                          ),
+                          GridView.count(
+                            crossAxisCount: 2,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            crossAxisSpacing: 10,
+                            mainAxisSpacing: 10,
+                            childAspectRatio: 1.35,
+                            children: [
+                              PremiumKpiCard(
+                                icon: Icons.assignment_rounded,
+                                value: '${data.requests}',
+                                label: 'My Requests',
+                                accent: const Color(0xFF875CF6),
+                              ),
+                              PremiumKpiCard(
+                                icon: Icons.shield_rounded,
+                                value: data.riskLevel,
+                                label: 'Current Risk',
+                                accent: const Color(0xFFFF5570),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
                           _KpiGrid(data: data),
                           const SizedBox(height: 28),
                           DashboardSectionTitle(
@@ -110,10 +140,29 @@ class _UserDashboardState extends State<UserDashboard> {
                     showUsers: false,
                     selected: _selected,
                     onChanged: (v) {
-                      if (v == 4) {
+                      if (v == 3) {
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (_) => const ProfileScreen(),
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (v == 1) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                const AffectedUserEmergencyAlertsPage(),
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (v == 2) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const ResourceOptimizationPage(),
                           ),
                         );
                         return;
@@ -154,84 +203,96 @@ class _UserDashboardState extends State<UserDashboard> {
   List<Widget> get _actions {
     if (_role.contains('volunteer')) {
       return [
-        const PremiumActionCard(
-          icon: Icons.task_alt_rounded,
-          title: 'My Tasks',
-          subtitle: 'Assigned operations',
-          accent: Color(0xFF1769FF),
+        PremiumActionCard(
+          icon: Icons.assignment_rounded,
+          title: 'Field Operations',
+          subtitle: 'View assigned tasks and submit field updates',
+          accent: const Color(0xFF059669),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const FieldVolunteerOperationsScreen(),
+            ),
+          ),
         ),
-        const PremiumActionCard(
-          icon: Icons.location_on_rounded,
-          title: 'Live Location',
-          subtitle: 'Share field location',
-          accent: Color(0xFF19C7E8),
-        ),
-        const PremiumActionCard(
-          icon: Icons.warning_amber_rounded,
-          title: 'Incidents',
-          subtitle: 'Report field incidents',
-          accent: Color(0xFFFF5570),
-        ),
-        const PremiumActionCard(
-          icon: Icons.notifications_active_rounded,
-          title: 'Alerts',
-          subtitle: 'Emergency updates',
-          accent: Color(0xFF875CF6),
+        PremiumActionCard(
+          icon: Icons.auto_graph_rounded,
+          title: 'Risk Prediction',
+          subtitle: 'View AI risk assessment',
+          accent: const Color(0xFF1769FF),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const RiskPredictionsPage()),
+          ),
         ),
       ];
     }
+
     if (_role.contains('coordinator')) {
       return [
-        const PremiumActionCard(
+        PremiumActionCard(
+          icon: Icons.auto_awesome_rounded,
+          title: 'AI Optimization',
+          subtitle: 'AI planning and resource intelligence',
+          accent: const Color(0xFF7C3AED),
+          onTap: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const AiOptimizationPage())),
+        ),
+        PremiumActionCard(
           icon: Icons.description_rounded,
           title: 'Disaster Reports',
           subtitle: 'Review incidents',
-          accent: Color(0xFFFF5570),
+          accent: const Color(0xFFFF5570),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ReportDisasterScreen()),
+          ),
         ),
-        const PremiumActionCard(
+        PremiumActionCard(
           icon: Icons.inventory_2_rounded,
           title: 'Resources',
           subtitle: 'Coordinate resources',
-          accent: Color(0xFF16B77A),
+          accent: const Color(0xFF16B77A),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ResourceOptimizationPage()),
+          ),
         ),
-        const PremiumActionCard(
+        PremiumActionCard(
           icon: Icons.auto_graph_rounded,
           title: 'Risk Predictions',
           subtitle: 'Agent 01 intelligence',
-          accent: Color(0xFF1769FF),
+          accent: const Color(0xFF1769FF),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const RiskPredictionsPage()),
+          ),
         ),
-        const PremiumActionCard(
+        PremiumActionCard(
           icon: Icons.notifications_active_rounded,
           title: 'Alerts',
           subtitle: 'Emergency coordination',
-          accent: Color(0xFF875CF6),
+          accent: const Color(0xFF875CF6),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const AffectedUserEmergencyAlertsPage(),
+            ),
+          ),
         ),
       ];
     }
+
     return [
       PremiumActionCard(
-        icon: Icons.report_problem_rounded,
+        icon: Icons.description_rounded,
         title: 'Report Disaster',
-        subtitle: 'Submit a new report',
+        subtitle: 'Submit a disaster or incident report',
         accent: const Color(0xFFFF5570),
         onTap: () => Navigator.of(
           context,
         ).push(MaterialPageRoute(builder: (_) => const ReportDisasterScreen())),
       ),
       PremiumActionCard(
-        icon: Icons.auto_graph_rounded,
-        title: 'Risk Prediction',
-        subtitle: 'View AI assessment',
-        accent: const Color(0xFF1769FF),
-        onTap: () => Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const RiskPredictionsPage())),
-      ),
-      PremiumActionCard(
         icon: Icons.notifications_active_rounded,
         title: 'Emergency Alerts',
-        subtitle: 'Stay informed',
-        accent: const Color(0xFFFF5570),
+        subtitle: 'View emergency notifications',
+        accent: const Color(0xFF1769FF),
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => const AffectedUserEmergencyAlertsPage(),
@@ -239,13 +300,31 @@ class _UserDashboardState extends State<UserDashboard> {
         ),
       ),
       PremiumActionCard(
-        icon: Icons.volunteer_activism_rounded,
-        title: 'Relief Resources',
-        subtitle: 'Find available support',
-        accent: const Color(0xFF16B77A),
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const ResourceOptimizationPage()),
-        ),
+        icon: Icons.auto_graph_rounded,
+        title: 'Risk Prediction',
+        subtitle: 'View AI risk assessment',
+        accent: const Color(0xFF7C3AED),
+        onTap: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const RiskPredictionsPage())),
+      ),
+      PremiumActionCard(
+        icon: Icons.auto_awesome_rounded,
+        title: 'AI Optimization',
+        subtitle: 'AI-powered disaster response intelligence',
+        accent: const Color(0xFF7C3AED),
+        onTap: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const AiOptimizationPage())),
+      ),
+      PremiumActionCard(
+        icon: Icons.location_on_rounded,
+        title: 'Location Sharing',
+        subtitle: 'Manage your location',
+        accent: const Color(0xFF0891B2),
+        onTap: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const ProfileScreen())),
       ),
     ];
   }
@@ -351,18 +430,6 @@ class _KpiGrid extends StatelessWidget {
         label: 'Emergency Alerts',
         accent: const Color(0xFF1769FF),
       ),
-      PremiumKpiCard(
-        icon: Icons.assignment_rounded,
-        value: '${data.requests}',
-        label: 'Assistance Requests',
-        accent: const Color(0xFF875CF6),
-      ),
-      PremiumKpiCard(
-        icon: Icons.shield_rounded,
-        value: data.riskLevel,
-        label: 'Current Risk',
-        accent: const Color(0xFF16B77A),
-      ),
     ],
   );
 }
@@ -447,5 +514,3 @@ class _RiskCard extends StatelessWidget {
     ),
   );
 }
-
-

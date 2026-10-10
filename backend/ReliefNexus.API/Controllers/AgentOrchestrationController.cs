@@ -15,7 +15,7 @@ namespace ReliefNexus.API.Controllers;
 
 [ApiController]
 [Route("api/ai/orchestrator")]
-[Authorize(Policy = "Permission:AI Agent Monitoring")]
+[Authorize]
 public sealed class AgentOrchestrationController : ControllerBase
 {
     private readonly IPythonOrchestratorService _orchestrator;
@@ -63,6 +63,32 @@ public sealed class AgentOrchestrationController : ControllerBase
         Dictionary<string, object>? State = null,
         Dictionary<string, double>? Changes = null);
 
+    private bool CanExecuteAgentForCurrentRole(string agent)
+    {
+        var isAdmin = User.IsInRole("SystemAdministrator");
+        var isCoordinator = User.IsInRole("ReliefCoordinator");
+        var isAffectedUser = User.IsInRole("AffectedUser");
+        var isVolunteer = User.IsInRole("FieldVolunteer");
+
+        var isKnownAgent = agent is
+            "Risk Prediction Agent" or
+            "Vulnerability & Impact Agent" or
+            "Resource Optimization Agent" or
+            "Early Warning & Coordination Agent" or
+            "Volunteer Assignment Agent";
+
+        if (!isKnownAgent)
+            return false;
+
+        if (isAdmin || isCoordinator)
+            return true;
+
+        return (isAffectedUser || isVolunteer) &&
+            string.Equals(
+                agent,
+                "Risk Prediction Agent",
+                StringComparison.OrdinalIgnoreCase);
+    }
     private Guid? GetCurrentUserId()
     {
         var value =
@@ -155,6 +181,13 @@ Guid? riskPredictionId = null;
             // Mark the selected agent as completed before execution.
             // This prevents a skipped/continued step from looping forever.
             completedAgents.Add(step.Agent);
+
+            if (!CanExecuteAgentForCurrentRole(step.Agent))
+            {
+                decisions.Add(
+                    $"Agent '{step.Agent}' was skipped because the current role is not authorized to execute it.");
+                continue;
+            }
 
             switch (step.Agent)
             {
@@ -741,6 +774,7 @@ Guid? riskPredictionId = null;
         string Objective,
         bool ApprovalRequired);
 }
+
 
 
 

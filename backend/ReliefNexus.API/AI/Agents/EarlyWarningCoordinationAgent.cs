@@ -1,4 +1,4 @@
-﻿using ReliefNexus.API.AI.Policies;
+using ReliefNexus.API.AI.Policies;
 using ReliefNexus.API.AI.Services;
 using Microsoft.EntityFrameworkCore;
 using ReliefNexus.API.Data;
@@ -135,29 +135,7 @@ public class EarlyWarningCoordinationAgent
                             vulnerabilityAssessmentId
                     );
 
-            if (existingAlert != null)
-            {
-                completedSteps.Add(
-                    "Existing emergency alert found"
-                );
-
-                await _agentExecutionService.CompleteAsync(
-                    execution.Id,
-                    assessment.RiskPredictionId,
-                    $"Existing emergency alert reused. " +
-                    $"AlertId={existingAlert.Id}; " +
-                    $"Severity={existingAlert.Severity}; " +
-                    $"Status={existingAlert.Status}",
-
-                    "Existing alert found and validated.",
-
-                    "Agent 04 completed using the existing emergency alert.",
-
-                    "NotRequired"
-                );
-
-                return existingAlert;
-            }
+            if (existingAlert != null) { completedSteps.Add("Existing emergency alert found; AI analysis will still run."); }
 
             completedSteps.Add(
                 "No existing emergency alert found"
@@ -297,6 +275,11 @@ public class EarlyWarningCoordinationAgent
             // =========================================================
 
             
+        Console.WriteLine($"[Agent04] Python response has value: {pythonEarlyWarningAnalysis.HasValue}");
+        if (pythonEarlyWarningAnalysis.HasValue)
+        {
+            Console.WriteLine($"[Agent04] Python response JSON: {pythonEarlyWarningAnalysis.Value.GetRawText()}");
+        }
         if (pythonEarlyWarningAnalysis.HasValue &&
             pythonEarlyWarningAnalysis.Value.TryGetProperty("usage", out var usage))
         {
@@ -847,6 +830,7 @@ await _agentExecutionService.UpdateStepAsync(
         return errors;
     }
 }
+
 
 
 

@@ -1,4 +1,4 @@
-﻿import AdvancedAIAgentWorkspace from "../../ai-assistant/pages/AdvancedAIAgentWorkspace";
+import AdvancedAIAgentWorkspace from "../../ai-assistant/pages/AdvancedAIAgentWorkspace";
 import "../../ai-assistant/styles/agent-experience.css";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -4423,34 +4423,43 @@ const AIAgentMonitoringSection = ({
     item?.completed_at ||
     null;
 
-  const getTokens = (item: any) => {
+  const getTokens = (item: any): number | null => {
     const direct =
       item?.totalTokens ??
       item?.tokens ??
       item?.tokenUsage?.total ??
       item?.usage?.totalTokens;
 
-    if (typeof direct === "number") return direct;
+    if (direct !== undefined && direct !== null) {
+      const numeric = Number(direct);
+      return Number.isFinite(numeric) && numeric > 0 ? numeric : null;
+    }
 
-    const input = Number(
+    const inputValue =
       item?.inputTokens ??
-        item?.inputTokenCount ??
-        item?.tokenUsage?.input ??
-        item?.usage?.promptTokens ??
-        0
-    );
+      item?.inputTokenCount ??
+      item?.tokenUsage?.input ??
+      item?.usage?.promptTokens;
 
-    const output = Number(
+    const outputValue =
       item?.outputTokens ??
-        item?.outputTokenCount ??
-        item?.tokenUsage?.output ??
-        item?.usage?.completionTokens ??
-        0
-    );
+      item?.outputTokenCount ??
+      item?.tokenUsage?.output ??
+      item?.usage?.completionTokens;
+
+    if (inputValue == null && outputValue == null) {
+      return null;
+    }
+
+    const input = Number(inputValue ?? 0);
+    const output = Number(outputValue ?? 0);
+
+    if (!Number.isFinite(input) || !Number.isFinite(output)) {
+      return null;
+    }
 
     return input + output;
   };
-
   const getLatencySeconds = (item: any) => {
     const startValue = getTimestamp(item);
     const endValue = getEndTimestamp(item);
@@ -4701,6 +4710,12 @@ const AIAgentMonitoringSection = ({
           "completed"
       ).length;
 
+      const awaitingApproval = rows.filter((item) => {
+        const status = String(item?.status || "").toLowerCase().replace(/[\s_-]/g, "");
+        const approval = String(item?.approvalStatus || "").toLowerCase();
+        return status === "awaitingapproval" || approval === "pending";
+      }).length;
+
       const retryCount = rows.reduce(
         (total, item) => total + getRetryCount(item),
         0
@@ -4714,8 +4729,17 @@ const AIAgentMonitoringSection = ({
             Number.isFinite(value)
         );
 
-      const tokens = rows.reduce(
-        (total, item) => total + getTokens(item),
+      const reportedTokenValues = rows
+        .map(getTokens)
+        .filter(
+          (value): value is number =>
+            value !== null && Number.isFinite(value)
+        );
+
+      const tokensReported = reportedTokenValues.length > 0;
+
+      const tokens = reportedTokenValues.reduce(
+        (total, value) => total + value,
         0
       );
 
@@ -4738,14 +4762,18 @@ const AIAgentMonitoringSection = ({
         runs,
         failed,
         completed,
+        awaitingApproval,
         failedRate:
           runs > 0 ? (failed / runs) * 100 : 0,
         retryCount,
         medianLatency: median(latencies),
         p95Latency: percentile(latencies, 95),
         averageTokens:
-          runs > 0 ? Math.round(tokens / runs) : 0,
-        totalTokens: tokens,
+          tokensReported && reportedTokenValues.length > 0
+            ? Math.round(tokens / reportedTokenValues.length)
+            : null,
+        totalTokens: tokensReported ? tokens : null,
+        tokensReported,
         totalCost:
           costs.length > 0
             ? costs.reduce((a, b) => a + b, 0)
@@ -5000,6 +5028,8 @@ const AIAgentMonitoringSection = ({
                 <th className="px-4 py-4">Agent</th>
                 <th className="px-4 py-4">Runs</th>
                 <th className="px-4 py-4">Failed</th>
+                <th className="px-4 py-4">Completed</th>
+                <th className="px-4 py-4">Pending Approval</th>
                 <th className="px-4 py-4">Retried</th>
                 <th className="px-4 py-4">Median</th>
                 <th className="px-4 py-4">P95</th>
@@ -5011,7 +5041,7 @@ const AIAgentMonitoringSection = ({
 
             <tbody className="divide-y divide-slate-100">
 
-              {agentRows.map((agent) => (
+              {agentRows.filter((agent) => agent.name?.trim().toLowerCase() !== "volunteer assignment agent").map((agent) => (
                 <tr
                   key={agent.name}
                   className="hover:bg-slate-50"
@@ -5051,7 +5081,12 @@ const AIAgentMonitoringSection = ({
                   </td>
 
                   <td className="px-4 py-4 font-bold text-slate-700">
-                    {agent.retryCount}
+                    {agent.completed}
+                  </td>
+
+                  <td className="px-4 py-4 font-bold text-amber-700">{agent.awaitingApproval}</td>
+
+                  <td className="px-4 py-4 font-bold text-slate-700">{agent.retryCount}
                   </td>
 
                   <td className="px-4 py-4 font-semibold text-slate-700">
@@ -5064,12 +5099,12 @@ const AIAgentMonitoringSection = ({
 
                   <td className="px-4 py-4 font-mono text-slate-700">
                     {agent.runs > 0
-                      ? formatNumber(agent.averageTokens)
+                      ? (agent.averageTokens != null ? formatNumber(agent.averageTokens) : "Not reported")
                       : "N/A"}
                   </td>
 
                   <td className="px-4 py-4 font-mono text-slate-700">
-                    {formatNumber(agent.totalTokens)}
+                    {(agent.tokensReported && agent.totalTokens != null ? formatNumber(agent.totalTokens) : "Not reported")}
                   </td>
 
                   <td className="px-4 py-4 font-mono text-slate-700">
@@ -5083,7 +5118,7 @@ const AIAgentMonitoringSection = ({
               {agentRows.length === 0 && (
                 <tr>
                   <td
-                    colSpan={9}
+                    colSpan={11}
                     className="px-5 py-12 text-center text-sm text-slate-500"
                   >
                     No agent execution data is available for
@@ -5230,7 +5265,7 @@ const AIAgentMonitoringSection = ({
                       <span>
                         Tokens:{" "}
                         {formatNumber(
-                          getTokens(execution)
+                          (getTokens(execution) ?? 0)
                         )}
                       </span>
 
@@ -5845,6 +5880,13 @@ const EmptyState = ({ text }: { text: string }) => (
 );
 
 export default SystemAdministratorDashboard;
+
+
+
+
+
+
+
 
 
 

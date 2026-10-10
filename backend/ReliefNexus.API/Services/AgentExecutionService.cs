@@ -141,6 +141,8 @@ public class AgentExecutionService : IAgentExecutionService
         execution.TotalTokens = totalTokens;
         execution.ModelName = modelName ?? string.Empty;
 
+        Console.WriteLine(
+            $"[TokenUsage] ExecutionId={execution.Id}, Agent={execution.AgentName}, Input={inputTokens}, Output={outputTokens}, Total={totalTokens}, Model={modelName}");
         await _context.SaveChangesAsync();
 
         return execution;
@@ -206,6 +208,7 @@ public class AgentExecutionService : IAgentExecutionService
             .ToListAsync();
     }
 }
+
 
 
 

@@ -1,3 +1,4 @@
+﻿import 'package:reliefnexus_mobile/features/admin_control/system_monitoring_pro_page.dart';
 import 'package:reliefnexus_mobile/core/network/api_client.dart';
 import 'package:reliefnexus_mobile/features/admin_control/admin_control_center_entry.dart';
 import 'package:reliefnexus_mobile/features/admin_control/admin_control_center_screen.dart';
@@ -14,6 +15,7 @@ import '../../../vulnerability_impact/presentation/screens/vulnerability_impact_
 import '../../../users/presentation/screens/user_management_screen.dart';
 import '../../../resource_optimization/presentation/screens/resource_optimization_screen.dart';
 import '../../../emergency_alerts/presentation/screens/emergency_alerts_screen.dart';
+import '../../../ai_optimization/presentation/screens/ai_optimization_page.dart';
 
 // ============================================================================
 // RELIEFNEXUS  PREMIUM ADMIN DASHBOARD
@@ -937,6 +939,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     _push(const ResourceOptimizationPage()),
                               ),
                               PremiumActionCard(
+                                icon: Icons.auto_awesome_rounded,
+                                title: 'AI Optimization',
+                                subtitle: 'AI planning and resource intelligence',
+                                accent: const Color(0xFF7C3AED),
+                                onTap: () => _push(const AiOptimizationPage()),
+                              ),
+                              PremiumActionCard(
                                 icon: Icons.notifications_active_rounded,
                                 title: 'Emergency Alerts',
                                 subtitle: 'Live emergency network',
@@ -948,7 +957,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                 title: 'System Monitoring',
                                 subtitle: 'Live platform status',
                                 accent: const Color(0xFF119B91),
-                                onTap: () => _push(const _AdminHealthPage()),
+                                onTap: () => _push(const SystemMonitoringProPage()),
                               ),
                             ]),
 
@@ -2414,5 +2423,6 @@ class _AdminHealthPageState extends State<_AdminHealthPage> {
     );
   }
 }
+
 
 

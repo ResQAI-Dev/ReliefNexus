@@ -205,6 +205,11 @@ public class ResourceOptimizationAgent
                     coverage_status = x.CoverageStatus
                 }).ToList()
             });
+        Console.WriteLine($"[Agent03] Python response has value: {pythonResourceAnalysis.HasValue}");
+        if (pythonResourceAnalysis.HasValue)
+        {
+            Console.WriteLine($"[Agent03] Python response JSON: {pythonResourceAnalysis.Value.GetRawText()}");
+        }
         if (pythonResourceAnalysis.HasValue &&
             pythonResourceAnalysis.Value.TryGetProperty("usage", out var usage))
         {
@@ -880,6 +885,7 @@ public class ResourceOptimizationAgent
         };
     }
 }
+
 
 
 

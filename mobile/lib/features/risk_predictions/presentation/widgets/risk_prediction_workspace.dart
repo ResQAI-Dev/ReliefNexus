@@ -24,6 +24,7 @@ class _RiskPredictionWorkspaceState extends State<RiskPredictionWorkspace> {
 
   Timer? _locationDebounce;
   bool _geocoding = false;
+  int _geocodeRequestId = 0;
 
   final location = TextEditingController();
   final latitude = TextEditingController(text: '7.8731');
@@ -436,6 +437,18 @@ class _RiskPredictionWorkspaceState extends State<RiskPredictionWorkspace> {
                     decoration: InputDecoration(
                       labelText: 'Location',
                       prefixIcon: const Icon(Icons.location_on_outlined),
+                      suffixIcon: _geocoding
+                          ? const Padding(
+                              padding: EdgeInsets.all(12),
+                              child: SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            )
+                          : null,
                       filled: true,
                       fillColor: const Color(0xFFF8FAFC),
                       border: OutlineInputBorder(
@@ -952,7 +965,9 @@ class _RiskPredictionWorkspaceState extends State<RiskPredictionWorkspace> {
   }
 
   Future<void> _geocodeLocation(String query) async {
-    if (_geocoding) return;
+    final requestId = ++_geocodeRequestId;
+
+    if (!mounted || query.trim().length < 3) return;
 
     setState(() {
       _geocoding = true;
@@ -962,39 +977,53 @@ class _RiskPredictionWorkspaceState extends State<RiskPredictionWorkspace> {
       final response = await Dio().get(
         'https://nominatim.openstreetmap.org/search',
         queryParameters: {
-          'q': query,
+          'q': query.trim(),
           'format': 'jsonv2',
           'limit': 1,
           'countrycodes': 'lk',
         },
-        options: Options(headers: {'User-Agent': 'ReliefNexus-Mobile/1.0'}),
+        options: Options(
+          headers: {'User-Agent': 'ReliefNexus-Mobile/1.0'},
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 15),
+        ),
       );
 
+      if (!mounted || requestId != _geocodeRequestId) return;
+
       final data = response.data;
-
-      if (data is List && data.isNotEmpty) {
-        final item = data.first;
-
-        final lat = double.tryParse('${item['lat']}');
-        final lon = double.tryParse('${item['lon']}');
-        final displayName = '${item['display_name'] ?? query}'.toString();
-
-        if (lat != null && lon != null && mounted) {
-          setState(() {
-            location.text = displayName;
-            latitude.text = lat.toStringAsFixed(6);
-            longitude.text = lon.toStringAsFixed(6);
-          });
-
-          _mapController.move(LatLng(lat, lon), 13);
-
-          await _loadLiveEnvironment();
-        }
+      if (data is! List || data.isEmpty) {
+        debugPrint('No location found for: $query');
+        return;
       }
+
+      final item = data.first;
+      final lat = double.tryParse('${item['lat']}');
+      final lon = double.tryParse('${item['lon']}');
+      final displayName = '${item['display_name'] ?? query}';
+
+      if (lat == null || lon == null) {
+        debugPrint('Invalid coordinates for: $query');
+        return;
+      }
+
+      setState(() {
+        location.value = TextEditingValue(
+          text: displayName,
+          selection: TextSelection.collapsed(offset: displayName.length),
+        );
+        latitude.text = lat.toStringAsFixed(6);
+        longitude.text = lon.toStringAsFixed(6);
+      });
+
+      _mapController.move(LatLng(lat, lon), 13);
+      await _loadLiveEnvironment();
     } catch (e) {
-      debugPrint('Location geocoding failed: $e');
+      if (requestId == _geocodeRequestId) {
+        debugPrint('Location geocoding failed: $e');
+      }
     } finally {
-      if (mounted) {
+      if (mounted && requestId == _geocodeRequestId) {
         setState(() {
           _geocoding = false;
         });

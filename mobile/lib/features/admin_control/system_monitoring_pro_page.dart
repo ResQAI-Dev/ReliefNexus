@@ -285,82 +285,179 @@ class _SystemMonitoringProPageState extends State<SystemMonitoringProPage> {
 
   Widget _buildHero() {
     final overall = _percent(_health['overallHealth']);
+    final color = _healthColor(overall);
+    final checkedAt = _text(_health['checkedAt'], '');
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [_navy, Color(0xFF0B315C), _cyan],
+          colors: [Color(0xFF06152F), Color(0xFF102F56), Color(0xFF075985)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: _navy.withOpacity(.12),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: const Color(0xFF06152F).withOpacity(.16),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
+            children: [
+              Container(
+                width: 30,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF67E8F9),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+              ),
+              const SizedBox(width: 9),
+              const Text(
+                'RELIEFNEXUS  /  OPERATIONS',
+                style: TextStyle(
+                  color: Color(0xFFBAE6FD),
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 9, vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(.10),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white.withOpacity(.16)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.circle, color: Color(0xFF34D399), size: 7),
+                    SizedBox(width: 6),
+                    Text(
+                      'MONITORING',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 22),
+          const Text(
+            'System Monitoring',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 29,
+              height: 1.1,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -.7,
+            ),
+          ),
+          const SizedBox(height: 9),
+          Text(
+            'Infrastructure health, service availability and AI operations in one place.',
+            style: TextStyle(
+              color: Colors.white.withOpacity(.76),
+              fontSize: 12,
+              height: 1.55,
+            ),
+          ),
+          const SizedBox(height: 22),
+          Container(
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(.09),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.white.withOpacity(.15)),
+            ),
+            child: Row(
               children: [
-                const Text(
-                  'SYSTEM INTELLIGENCE',
-                  style: TextStyle(
-                    color: Color(0xFF7DD3FC),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.5,
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(.17),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Icon(
+                    overall >= 70
+                        ? Icons.monitor_heart_rounded
+                        : Icons.warning_amber_rounded,
+                    color: color == _blue
+                        ? const Color(0xFF7DD3FC)
+                        : color,
+                    size: 27,
                   ),
                 ),
-                const SizedBox(height: 7),
-                const Text(
-                  'Live System Health',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 23,
-                    fontWeight: FontWeight.w900,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'OVERALL SYSTEM HEALTH',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: .8,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        _healthLabel(overall),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      if (checkedAt.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Checked ${_formatDate(checkedAt)}',
+                          style: const TextStyle(
+                            color: Colors.white60,
+                            fontSize: 9,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(width: 8),
                 Text(
-                  'Platform status, infrastructure and agentic AI execution monitoring.',
+                  '${overall.toStringAsFixed(0)}%',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(.78),
-                    fontSize: 12,
-                    height: 1.35,
+                    color: color == _blue
+                        ? const Color(0xFF7DD3FC)
+                        : color,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -1,
                   ),
                 ),
               ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Container(
-            width: 62,
-            height: 62,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(.14),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Colors.white.withOpacity(.18)),
-            ),
-            child: const Icon(
-              Icons.monitor_heart_rounded,
-              color: Colors.white,
-              size: 30,
             ),
           ),
         ],
       ),
     );
   }
-
   Widget _buildHealthOverview() {
-    final overall = _percent(_health['overallHealth']);
     final api = _percent(_health['apiAvailability']);
     final database = _percent(_health['databaseHealth']);
     final ai = _percent(_health['aiServices']);
@@ -371,126 +468,109 @@ class _SystemMonitoringProPageState extends State<SystemMonitoringProPage> {
     final disk = _percent(_health['diskUtilization']);
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _card(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: _healthColor(overall).withOpacity(.10),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  overall >= 70
-                      ? Icons.check_circle_rounded
-                      : Icons.warning_rounded,
-                  color: _healthColor(overall),
-                  size: 22,
-                ),
+        _sectionLabel('01 / SERVICE HEALTH'),
+        const SizedBox(height: 5),
+        const Text(
+          'Platform Overview',
+          style: TextStyle(
+            color: _navy,
+            fontSize: 21,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -.4,
+          ),
+        ),
+        const SizedBox(height: 13),
+        Row(
+          children: [
+            Expanded(
+              child: _compactMetric(
+                'API Availability', api, Icons.cloud_done_rounded,
               ),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'All Systems Operational',
-                      style: TextStyle(
-                        color: _blue,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Overall health ${overall.toStringAsFixed(0)}% • ${_healthLabel(overall)}',
-                      style: const TextStyle(color: _muted, fontSize: 9.5),
-                    ),
-                  ],
-                ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _compactMetric(
+                'Database Health', database, Icons.storage_rounded,
               ),
-              Text(
-                '${overall.toStringAsFixed(0)}%',
-                style: TextStyle(
-                  color: _healthColor(overall),
-                  fontSize: 17,
-                  fontWeight: FontWeight.w900,
-                ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _compactMetric(
+                'AI Services', ai, Icons.auto_awesome_rounded,
               ),
-            ],
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _compactMetric(
+                'Storage Health', storage, Icons.folder_rounded,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 23),
+        _sectionLabel('02 / INFRASTRUCTURE'),
+        const SizedBox(height: 5),
+        const Text(
+          'Resource Utilization',
+          style: TextStyle(
+            color: _navy,
+            fontSize: 21,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -.4,
           ),
         ),
         const SizedBox(height: 12),
-
-        _smallHeading('SYSTEM SERVICES'),
-        const SizedBox(height: 8),
-
-        Row(
-          children: [
-            Expanded(
-              child: _compactMetric(
-                'API Availability',
-                api,
-                Icons.cloud_done_rounded,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _compactMetric(
-                'Database Health',
-                database,
-                Icons.storage_rounded,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-
-        Row(
-          children: [
-            Expanded(
-              child: _compactMetric(
-                'AI Services',
-                ai,
-                Icons.auto_awesome_rounded,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _compactMetric(
-                'API Response',
-                response,
-                Icons.speed_rounded,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-
-        Row(
-          children: [
-            Expanded(
-              child: _compactMetric('Storage', storage, Icons.folder_rounded),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _compactMetric('Disk', disk, Icons.sd_storage_rounded),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 12),
-
         _card(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(17),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _smallHeading('RESOURCE UTILIZATION'),
-              const SizedBox(height: 11),
+              Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: _blue.withOpacity(.09),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.query_stats_rounded,
+                      color: _blue,
+                      size: 21,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Runtime Telemetry',
+                          style: TextStyle(
+                            color: _navy,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        SizedBox(height: 3),
+                        Text(
+                          'Latest values from the monitoring API',
+                          style: TextStyle(color: _muted, fontSize: 10),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _pill('LIVE', _blue),
+                ],
+              ),
+              const SizedBox(height: 20),
               _progressRow('CPU Utilization', cpu, Icons.memory_rounded),
               _divider(),
               _progressRow(
@@ -498,13 +578,24 @@ class _SystemMonitoringProPageState extends State<SystemMonitoringProPage> {
                 memory,
                 Icons.developer_board_rounded,
               ),
+              _divider(),
+              _progressRow(
+                'Disk Utilization',
+                disk,
+                Icons.sd_storage_rounded,
+              ),
+              _divider(),
+              _progressRow(
+                'API Response Health',
+                response,
+                Icons.speed_rounded,
+              ),
             ],
           ),
         ),
       ],
     );
   }
-
   Widget _compactMetric(String title, double value, IconData icon) {
     final color = _healthColor(value);
 

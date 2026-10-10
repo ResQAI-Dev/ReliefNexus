@@ -168,10 +168,78 @@ class _Agent03WorkflowPageState extends State<Agent03WorkflowPage> {
 
     if (raw is! List) return [];
 
-    return raw
-        .whereType<Map>()
-        .map((e) => Map<String, dynamic>.from(e))
-        .toList();
+    final disaster = _disasterType().toLowerCase();
+    final List<String> preferred;
+
+    if (disaster.contains('flood')) {
+      preferred = [
+        'water',
+        'food',
+        'medical',
+        'hygiene',
+        'shelter',
+        'blanket',
+        'clothing',
+        'transport',
+      ];
+    } else if (disaster.contains('drought')) {
+      preferred = ['water', 'food', 'hygiene', 'medical', 'shelter'];
+    } else if (disaster.contains('earthquake')) {
+      preferred = [
+        'shelter',
+        'medical',
+        'water',
+        'food',
+        'hygiene',
+        'blanket',
+        'clothing',
+        'transport',
+      ];
+    } else if (disaster.contains('landslide')) {
+      preferred = [
+        'shelter',
+        'medical',
+        'water',
+        'food',
+        'hygiene',
+        'transport',
+      ];
+    } else if (disaster.contains('fire')) {
+      preferred = [
+        'medical',
+        'water',
+        'shelter',
+        'hygiene',
+        'food',
+        'transport',
+      ];
+    } else if (disaster.contains('cyclone') || disaster.contains('storm')) {
+      preferred = [
+        'shelter',
+        'water',
+        'food',
+        'medical',
+        'hygiene',
+        'blanket',
+        'clothing',
+        'transport',
+      ];
+    } else {
+      preferred = ['medical', 'water', 'food', 'hygiene', 'shelter'];
+    }
+
+    return raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).where((
+      line,
+    ) {
+      final category = _value(line, [
+        'resourceType',
+        'ResourceType',
+        'resourceName',
+        'ResourceName',
+      ], '').toLowerCase();
+
+      return preferred.any((item) => category.contains(item));
+    }).toList();
   }
 
   String _value(

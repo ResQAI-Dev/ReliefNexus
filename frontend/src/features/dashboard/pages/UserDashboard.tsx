@@ -13,7 +13,6 @@ import { useAuth } from "../../../context/AuthContext";
 import DashboardLayout from "../../../components/layout/DashboardLayout";
 import RiskPredictionPage from "../../risk-prediction/pages/RiskPredictionPage";
 import ResourceOptimizationPage from "../../resource-optimization/pages/ResourceOptimizationPage";
-import AgenticVisualCommandCenter from "../../ai-assistant/components/AgenticVisualCommandCenter";
 import AdvancedAIAgentWorkspace from "../../ai-assistant/pages/AdvancedAIAgentWorkspace";
 import FieldVolunteerDisasterReports from "../components/FieldVolunteerDisasterReports";
 
@@ -232,11 +231,7 @@ const UserDashboard = () => {
     }
 
     if (section === "ai-warning") {
-      return (
-        role === "AffectedUser" ||
-        role === "FieldVolunteer" ||
-        role === "ReliefCoordinator"
-      );
+      return role === "ReliefCoordinator";
     }
 
     if (section === "ai-risk") {
@@ -600,7 +595,7 @@ const UserDashboard = () => {
              ===================================================== */}
 
           {currentSection === "ai-operations" && (
-            <AgenticVisualCommandCenter />
+            <AdvancedAIAgentWorkspace agent="risk" />
           )}
 
           {currentSection === "dashboard" && (
@@ -3018,6 +3013,7 @@ const getCurrentSection = (pathname: string): SectionId => {
   }
 
   if (pathname.endsWith("/emergency-alerts")) return "alerts";
+  if (pathname.endsWith("/ai-operations")) return "ai-operations";
   if (pathname.endsWith("/ai-risk")) return "ai-risk";
   if (pathname.endsWith("/ai-vulnerability")) return "ai-vulnerability";
   if (pathname.endsWith("/ai-resource")) return "ai-resource";
@@ -3184,6 +3180,11 @@ const ShieldCheckIcon = () => (
 
 
 export default UserDashboard;
+
+
+
+
+
 
 
 

@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import '../../../auth/presentation/screens/login_screen.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../auth/providers/auth_provider.dart';
 
@@ -14,9 +15,7 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => ProfileProvider(
-        ProfileRepository(
-          ProfileRemoteDataSource(ApiClient()),
-        ),
+        ProfileRepository(ProfileRemoteDataSource(ApiClient())),
       )..loadProfile(),
       child: const _ProfileView(),
     );
@@ -127,10 +126,7 @@ class _ProfileViewState extends State<_ProfileView> {
             scrolledUnderElevation: 0,
             leading: IconButton(
               onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(
-                Icons.arrow_back_rounded,
-                color: textDark,
-              ),
+              icon: const Icon(Icons.arrow_back_rounded, color: textDark),
             ),
             title: const Text(
               'My Profile',
@@ -149,52 +145,42 @@ class _ProfileViewState extends State<_ProfileView> {
                       _editing = true;
                     });
                   },
-                  icon: const Icon(
-                    Icons.edit_rounded,
-                    color: darkMint,
-                  ),
+                  icon: const Icon(Icons.edit_rounded, color: darkMint),
                 ),
             ],
           ),
           body: provider.isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(
-                    color: mint,
-                  ),
-                )
+              ? const Center(child: CircularProgressIndicator(color: mint))
               : provider.profile == null
-                  ? _buildError(provider)
-                  : RefreshIndicator(
-                      color: mint,
-                      onRefresh: provider.loadProfile,
-                      child: Form(
-                        key: _formKey,
-                        child: ListView(
-                          physics: const AlwaysScrollableScrollPhysics(
-                            parent: BouncingScrollPhysics(),
-                          ),
-                          padding: const EdgeInsets.fromLTRB(
-                            18,
-                            10,
-                            18,
-                            32,
-                          ),
-                          children: [
-                            _buildProfileHeader(provider),
-                            const SizedBox(height: 20),
-                            _buildAccountCard(provider),
-                            const SizedBox(height: 18),
-                            _buildPersonalCard(provider),
-                            const SizedBox(height: 18),
-                            _buildContactCard(provider),
-                            if (_editing) ...[
-                              const SizedBox(height: 22),
-                              _buildSaveButtons(provider),
-                            ],
-                          ],
-                        ),
+              ? _buildError(provider)
+              : RefreshIndicator(
+                  color: mint,
+                  onRefresh: provider.loadProfile,
+                  child: Form(
+                    key: _formKey,
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: BouncingScrollPhysics(),
                       ),
+                      padding: const EdgeInsets.fromLTRB(18, 10, 18, 32),
+                      children: [
+                        _buildProfileHeader(provider),
+                        const SizedBox(height: 20),
+                        _buildAccountCard(provider),
+                        const SizedBox(height: 18),
+                        _buildPersonalCard(provider),
+                        const SizedBox(height: 18),
+                        _buildContactCard(provider),
+                        const SizedBox(height: 24),
+                        if (!_editing) _buildSignOutButton(context),
+                        if (_editing) ...[
+                          const SizedBox(height: 22),
+                          _buildSaveButtons(provider),
+                        ],
+                      ],
                     ),
+                  ),
+                ),
         );
       },
     );
@@ -206,27 +192,22 @@ class _ProfileViewState extends State<_ProfileView> {
     final initials = profile.fullName.trim().isEmpty
         ? '?'
         : profile.fullName
-            .trim()
-            .split(RegExp(r'\s+'))
-            .take(2)
-            .map((e) => e[0].toUpperCase())
-            .join();
+              .trim()
+              .split(RegExp(r'\s+'))
+              .take(2)
+              .map((e) => e[0].toUpperCase())
+              .join();
 
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFFE7FAF5),
-            Color(0xFFD9F4EE),
-          ],
+          colors: [Color(0xFFE7FAF5), Color(0xFFD9F4EE)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: mint.withValues(alpha: 0.12),
-        ),
+        border: Border.all(color: mint.withValues(alpha: 0.12)),
       ),
       child: Column(
         children: [
@@ -264,10 +245,7 @@ class _ProfileViewState extends State<_ProfileView> {
                 decoration: BoxDecoration(
                   color: darkMint,
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 3,
-                  ),
+                  border: Border.all(color: Colors.white, width: 3),
                 ),
                 child: const Icon(
                   Icons.person_rounded,
@@ -291,17 +269,11 @@ class _ProfileViewState extends State<_ProfileView> {
           Text(
             profile.email,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: textGrey,
-              fontSize: 12.5,
-            ),
+            style: const TextStyle(color: textGrey, fontSize: 12.5),
           ),
           const SizedBox(height: 13),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 13,
-              vertical: 7,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.85),
               borderRadius: BorderRadius.circular(30),
@@ -381,8 +353,7 @@ class _ProfileViewState extends State<_ProfileView> {
           icon: Icons.circle,
           label: 'Account Status',
           value: profile.isActive ? 'Active' : 'Inactive',
-          valueColor:
-              profile.isActive ? darkMint : const Color(0xFFB42318),
+          valueColor: profile.isActive ? darkMint : const Color(0xFFB42318),
         ),
       ],
     );
@@ -407,8 +378,8 @@ class _ProfileViewState extends State<_ProfileView> {
           value: profile.dateOfBirth == null
               ? 'Not provided'
               : '${profile.dateOfBirth!.day.toString().padLeft(2, '0')}/'
-                  '${profile.dateOfBirth!.month.toString().padLeft(2, '0')}/'
-                  '${profile.dateOfBirth!.year}',
+                    '${profile.dateOfBirth!.month.toString().padLeft(2, '0')}/'
+                    '${profile.dateOfBirth!.year}',
         ),
         const SizedBox(height: 14),
         _InfoRow(
@@ -459,9 +430,7 @@ class _ProfileViewState extends State<_ProfileView> {
       children: [
         Expanded(
           child: OutlinedButton(
-            onPressed: provider.isSaving
-                ? null
-                : () => _cancelEdit(provider),
+            onPressed: provider.isSaving ? null : () => _cancelEdit(provider),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size.fromHeight(52),
               foregroundColor: darkMint,
@@ -472,9 +441,7 @@ class _ProfileViewState extends State<_ProfileView> {
             ),
             child: const Text(
               'Cancel',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w700),
             ),
           ),
         ),
@@ -502,9 +469,7 @@ class _ProfileViewState extends State<_ProfileView> {
                   )
                 : const Text(
                     'Save Changes',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w800),
                   ),
           ),
         ),
@@ -545,17 +510,12 @@ class _ProfileViewState extends State<_ProfileView> {
             Text(
               provider.error ?? 'Please try again.',
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: textGrey,
-                fontSize: 13,
-              ),
+              style: const TextStyle(color: textGrey, fontSize: 13),
             ),
             const SizedBox(height: 20),
             FilledButton(
               onPressed: provider.loadProfile,
-              style: FilledButton.styleFrom(
-                backgroundColor: darkMint,
-              ),
+              style: FilledButton.styleFrom(backgroundColor: darkMint),
               child: const Text('Try Again'),
             ),
           ],
@@ -593,7 +553,10 @@ class _ProfileViewState extends State<_ProfileView> {
 
           if (!context.mounted) return;
 
-          Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const LoginPage()),
+            (route) => false,
+          );
         },
         icon: const Icon(Icons.logout_rounded),
         label: const Text('Sign Out'),
@@ -636,9 +599,7 @@ class _ProfileCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: const Color(0xFFE3ECEA),
-        ),
+        border: Border.all(color: const Color(0xFFE3ECEA)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.025),
@@ -659,11 +620,7 @@ class _ProfileCard extends StatelessWidget {
                   color: const Color(0xFFE8F8F4),
                   borderRadius: BorderRadius.circular(11),
                 ),
-                child: Icon(
-                  icon,
-                  color: const Color(0xFF087F70),
-                  size: 20,
-                ),
+                child: Icon(icon, color: const Color(0xFF087F70), size: 20),
               ),
               const SizedBox(width: 11),
               Text(
@@ -702,11 +659,7 @@ class _InfoRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          size: 19,
-          color: const Color(0xFF19B89A),
-        ),
+        Icon(icon, size: 19, color: const Color(0xFF19B89A)),
         const SizedBox(width: 11),
         Expanded(
           child: Column(
@@ -759,40 +712,25 @@ class _InputField extends StatelessWidget {
       controller: controller,
       keyboardType: keyboardType,
       validator: validator,
-      style: const TextStyle(
-        fontSize: 13.5,
-        fontWeight: FontWeight.w600,
-      ),
+      style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(
-          icon,
-          color: const Color(0xFF19B89A),
-          size: 21,
-        ),
+        prefixIcon: Icon(icon, color: const Color(0xFF19B89A), size: 21),
         filled: true,
         fillColor: const Color(0xFFF8FBFA),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(
-            color: Color(0xFFE0EAE7),
-          ),
+          borderSide: const BorderSide(color: Color(0xFFE0EAE7)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(
-            color: Color(0xFFE0EAE7),
-          ),
+          borderSide: const BorderSide(color: Color(0xFFE0EAE7)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(
-            color: Color(0xFF19B89A),
-            width: 1.5,
-          ),
+          borderSide: const BorderSide(color: Color(0xFF19B89A), width: 1.5),
         ),
       ),
     );
   }
 }
-

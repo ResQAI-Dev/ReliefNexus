@@ -226,8 +226,8 @@ const Sidebar = ({ items }: SidebarProps) => {
               <button
                 type="button"
                 onClick={() => {
-                  setAiOpen((open) => !open);
-                  aiParent.onClick?.();
+                  setAiOpen(false);
+                  window.location.href = "/dashboard/user/ai-operations";
                 }}
                 className={`
                   group flex w-full items-center gap-3
@@ -256,21 +256,6 @@ const Sidebar = ({ items }: SidebarProps) => {
 
                 <span className="min-w-0 flex-1 leading-5 font-semibold">
                   AI Operations Center
-                </span>
-
-                <span
-                  className={`
-                    flex h-5 w-5 shrink-0 items-center justify-center
-                    text-slate-400
-                    transition-transform duration-200
-                    ${
-                      aiOpen
-                        ? "rotate-180 text-white"
-                        : "group-hover:text-white"
-                    }
-                  `}
-                >
-                  <ChevronIcon />
                 </span>
               </button>
 
@@ -383,24 +368,6 @@ const Sidebar = ({ items }: SidebarProps) => {
   );
 };
 
-const ChevronIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 20 20"
-    fill="none"
-    aria-hidden="true"
-  >
-    <path
-      d="m5.5 7.5 4.5 4.5 4.5-4.5"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
 const ShieldIcon = () => (
   <svg
     width="20"
@@ -417,6 +384,9 @@ const ShieldIcon = () => (
 );
 
 export default Sidebar;
+
+
+
 
 
 

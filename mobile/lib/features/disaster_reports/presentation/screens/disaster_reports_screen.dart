@@ -108,6 +108,7 @@ class _DisasterReportsView extends StatelessWidget {
                   );
                 },
               ),
+              SliverToBoxAdapter(child: _Agent01PredictionsSection()),
             ],
           ),
         ),
@@ -137,16 +138,18 @@ class _Agent01PredictionsSectionState
 
   Future<List<Map<String, dynamic>>> _load() async {
     final response = await _client.dio.get('/risk-predictions/history');
+    debugPrint('RISK HISTORY STATUS: ${response.statusCode}');
+    debugPrint('RISK HISTORY RESPONSE: ${response.data}');
     final data = response.data;
 
     final dynamic raw = data is List
         ? data
         : (data is Map
-            ? (data['items'] ??
-                data['data'] ??
-                data['results'] ??
-                <dynamic>[])
-            : <dynamic>[]);
+              ? (data['items'] ??
+                    data['data'] ??
+                    data['results'] ??
+                    <dynamic>[])
+              : <dynamic>[]);
 
     final List<dynamic> items = raw is List ? raw : <dynamic>[];
 
@@ -183,10 +186,8 @@ class _Agent01PredictionsSectionState
     final seen = <String>{};
 
     return flattened.where((row) {
-      final type =
-          row['disasterType']?.toString().trim().toLowerCase() ?? '';
-      final location =
-          row['location']?.toString().trim().toLowerCase() ?? '';
+      final type = row['disasterType']?.toString().trim().toLowerCase() ?? '';
+      final location = row['location']?.toString().trim().toLowerCase() ?? '';
       final key = "$type|$location|${row['riskPredictionId'] ?? row['id']}";
 
       if (type.isEmpty || seen.contains(key)) {
@@ -197,6 +198,7 @@ class _Agent01PredictionsSectionState
       return true;
     }).toList();
   }
+
   String _text(dynamic value, String fallback) {
     final v = value?.toString().trim() ?? '';
     return v.isEmpty ? fallback : v;
@@ -448,7 +450,16 @@ class _Agent01PredictionsSectionState
               padding: EdgeInsets.all(20),
               child: Center(child: CircularProgressIndicator()),
             );
-          if (snapshot.hasError) return const SizedBox.shrink();
+          if (snapshot.hasError) {
+            debugPrint('RISK HISTORY ERROR: ${snapshot.error}');
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'Unable to load AI predictions: ${snapshot.error}',
+                style: const TextStyle(color: Colors.red),
+              ),
+            );
+          }
           final predictions = snapshot.data ?? <Map<String, dynamic>>[];
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -4088,8 +4099,80 @@ pw.Widget _pdfLine(String label, String value) {
   );
 }
 
-class _DisasterReportsMap extends StatelessWidget {
+class _DisasterReportsMap extends StatefulWidget {
   const _DisasterReportsMap();
+
+  @override
+  State<_DisasterReportsMap> createState() => _DisasterReportsMapState();
+}
+
+class _DisasterReportsMapState extends State<_DisasterReportsMap> {
+  final ApiClient _mapApi = ApiClient();
+  List<RiskPredictionModel> _mapPredictions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMapPredictions();
+  }
+
+  Future<void> _loadMapPredictions() async {
+    try {
+      final response = await _mapApi.dio.get('/risk-predictions/history');
+      final data = response.data;
+      final dynamic raw = data is List
+          ? data
+          : data is Map
+          ? (data['items'] ?? data['data'] ?? data['results'] ?? [])
+          : [];
+
+      if (raw is! List) return;
+
+      final predictions = <RiskPredictionModel>[];
+      for (final entry in raw) {
+        if (entry is! Map) continue;
+        try {
+          final prediction = RiskPredictionModel.fromJson(
+            Map<String, dynamic>.from(entry),
+          );
+          final lat = prediction.latitude;
+          final lng = prediction.longitude;
+          final levels = [
+            prediction.riskLevel.toLowerCase(),
+            ...prediction.disasterRisks.map((r) => r.riskLevel.toLowerCase()),
+          ];
+          final urgent = levels.any(
+            (level) => level.contains('high') || level.contains('critical'),
+          );
+
+          if (urgent &&
+              lat != null &&
+              lng != null &&
+              lat.isFinite &&
+              lng.isFinite &&
+              lat.abs() <= 90 &&
+              lng.abs() <= 180) {
+            predictions.add(prediction);
+          }
+        } catch (error) {
+          debugPrint('AI MAP: Invalid prediction skipped: $error');
+        }
+      }
+
+      if (mounted) setState(() => _mapPredictions = predictions);
+      debugPrint('AI MAP: Loaded ${predictions.length} urgent predictions');
+    } catch (error) {
+      debugPrint('AI MAP ERROR: $error');
+    }
+  }
+
+  String _mapRiskLevel(RiskPredictionModel prediction) {
+    final levels = [
+      prediction.riskLevel.toLowerCase(),
+      ...prediction.disasterRisks.map((r) => r.riskLevel.toLowerCase()),
+    ];
+    return levels.any((v) => v.contains('critical')) ? 'Critical' : 'High';
+  }
 
   Color _severityColor(String severity) {
     final value = severity.toLowerCase();
@@ -4257,6 +4340,71 @@ class _DisasterReportsMap extends StatelessWidget {
                               Icons.warning_rounded,
                               color: Colors.white,
                               size: 22,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  MarkerLayer(
+                    markers: _mapPredictions.map((prediction) {
+                      final level = _mapRiskLevel(prediction);
+                      final color = _severityColor(level);
+                      return Marker(
+                        point: LatLng(
+                          prediction.latitude!,
+                          prediction.longitude!,
+                        ),
+                        width: 54,
+                        height: 54,
+                        child: GestureDetector(
+                          onTap: () {
+                            showModalBottomSheet<void>(
+                              context: context,
+                              builder: (_) => SafeArea(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(20),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'AI RISK PREDICTION - $level',
+                                        style: TextStyle(
+                                          color: color,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Text(
+                                        'Disaster: ${prediction.disasterType}',
+                                      ),
+                                      Text('Location: ${prediction.location}'),
+                                      Text(
+                                        'Risk score: ${prediction.riskScore}',
+                                      ),
+                                      Text(
+                                        'Confidence: ${prediction.confidence}',
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 3),
+                            ),
+                            child: Icon(
+                              level == 'Critical'
+                                  ? Icons.priority_high_rounded
+                                  : Icons.warning_rounded,
+                              color: Colors.white,
+                              size: 25,
                             ),
                           ),
                         ),
@@ -4446,7 +4594,3 @@ class _MapReportSheet extends StatelessWidget {
     );
   }
 }
-
-
-
-

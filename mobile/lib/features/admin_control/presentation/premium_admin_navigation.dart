@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../admin_control_center_screen.dart';
 import 'screens/admin_profile_screen.dart';
@@ -6,6 +6,7 @@ import 'screens/admin_profile_screen.dart';
 import '../../users/presentation/screens/user_management_screen.dart';
 import '../../emergency_alerts/presentation/screens/emergency_alerts_screen.dart';
 import '../../resource_optimization/presentation/screens/resource_optimization_screen.dart';
+import '../../ai_optimization/presentation/screens/ai_optimization_page.dart';
 import '../../vulnerability_impact/presentation/screens/vulnerability_impact_screen.dart';
 import '../../risk_predictions/presentation/screens/risk_predictions_screen.dart';
 import '../../disaster_reports/presentation/screens/disaster_reports_screen.dart';
@@ -628,6 +629,13 @@ class _PremiumAdminNavigationState extends State<PremiumAdminNavigation>
         subtitle: 'Agent 03 optimization',
         color: const Color(0xFF0798D5),
         onTap: () => _open(context, const ResourceOptimizationPage()),
+      ),
+      _premiumAction(
+        icon: Icons.auto_awesome_rounded,
+        title: 'AI Optimization',
+        subtitle: 'AI planning and resource intelligence',
+        color: const Color(0xFF7C3AED),
+        onTap: () => _open(context, const AiOptimizationPage()),
       ),
       _premiumAction(
         icon: Icons.notifications_active_rounded,
@@ -1521,4 +1529,8 @@ class _PremiumStatCard extends StatelessWidget {
     );
   }
 }
+
+
+
+
 
