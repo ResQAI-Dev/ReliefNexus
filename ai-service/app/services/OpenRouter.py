@@ -89,6 +89,24 @@ async def generate_text_with_usage(prompt: str) -> dict[str, Any]:
         usage.get("total_tokens", 0) or 0
     )
 
+    # Estimate only when OpenRouter does not report a cost.
+    # Listed standard-routing rates; estimates are not exact billed costs.
+    if cost is None:
+        rates = {
+            "openai/gpt-oss-20b": (0.02, 0.10),
+            "google/gemini-2.5-flash": (0.30, 2.50),
+            "gemini-2.5-flash": (0.30, 2.50),
+        }
+        input_rate, output_rate = rates.get(
+            model_name, (None, None)
+        )
+        if input_rate is not None:
+            cost = (
+                input_tokens * input_rate
+                + output_tokens * output_rate
+            ) / 1_000_000
+
+
     return {
         "text": text,
         "model": model_name,
