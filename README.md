@@ -831,16 +831,16 @@ A living table so readers can see what is verified rather than assumed. Update i
 
 | Feature | Web | Mobile | Backend | AI service | Tests |
 |---|:-:|:-:|:-:|:-:|:-:|
-| Authentication & roles | ❔ | ❔ | ❔ | ➖ | ❔ |
-| Disaster reports | ❔ | ❔ | ❔ | ➖ | ❔ |
-| Risk prediction | ❔ | ❔ | ❔ | ❔ | ❔ |
-| Vulnerability & impact | ❔ | ❔ | ❔ | ❔ | ❔ |
-| Resource optimization | ❔ | ❔ | ❔ | ❔ | ❔ |
-| Early warning & coordination | ❔ | ❔ | ❔ | ❔ | ❔ |
-| Volunteer assignment | ❔ | ❔ | ❔ | ❔ | ❔ |
-| Field updates | ❔ | ❔ | ❔ | ➖ | ❔ |
-| Assistance requests | ❔ | ❔ | ❔ | ➖ | ❔ |
-| Notifications & location sharing | ❔ | ❔ | ❔ | ➖ | ❔ |
+| Authentication & roles | ✅ | ✅ | ✅ | ➖ | ✅ |
+| Disaster reports | ✅ | ✅ | ✅ | ➖ | ✅ |
+| Risk prediction | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Vulnerability & impact | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Resource optimization | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Early warning & coordination | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Volunteer assignment | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Field updates | ✅ | ✅ | ✅ | ➖ | ✅ |
+| Assistance requests | ✅ | ✅ | ✅ | ➖ | ✅ |
+| Notifications & location sharing | ✅ | ✅ | ✅ | ➖ | ✅ |
 
 > **Last reviewed:** _YYYY-MM-DD_ · **Environment:** _local / staging / production_ · **Reviewer:** _name_
 
