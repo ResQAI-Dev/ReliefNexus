@@ -1,4 +1,4 @@
-﻿using ReliefNexus.API.AI.Services;
+using ReliefNexus.API.AI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.FileProviders;
 using ReliefNexus.API.AI.Tools;
@@ -336,6 +336,16 @@ builder.Services.AddHttpClient<IPythonOrchestratorService, PythonOrchestratorSer
 });
 
 var app = builder.Build();
+
+if (app.Environment.IsEnvironment("Testing"))
+{
+    using var migrationScope = app.Services.CreateScope();
+
+    var migrationDb = migrationScope.ServiceProvider
+        .GetRequiredService<AppDbContext>();
+
+    await migrationDb.Database.MigrateAsync();
+}
 
 var uploadsPath = Path.Combine(
     builder.Environment.ContentRootPath,
