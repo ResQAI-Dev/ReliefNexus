@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 
@@ -16,7 +16,7 @@ public sealed class ReliefNexusWebApplicationFactory
             var settings = new Dictionary<string, string?>
             {
                 ["ConnectionStrings:DefaultConnection"] =
-                    "Host=localhost;Port=5432;Database=reliefnexus_test_db;Username=postgres",
+                    "Host=localhost;Port=5432;Database=reliefnexus_test_db;Username=postgres;Password=postgres",
 
                 ["Jwt:Key"] =
                     "SE3110-Test-Only-Key-2026-ReliefNexus-Integration-Testing-1234567890",
