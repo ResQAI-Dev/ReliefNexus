@@ -1,4 +1,4 @@
-name: ReliefNexus CI
+﻿name: ReliefNexus CI
 
 on:
   push:
@@ -15,6 +15,23 @@ jobs:
     name: Backend Build and Tests
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: reliefnexus_test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d reliefnexus_test_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=reliefnexus_test_db;Username=postgres;Password=postgres"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
